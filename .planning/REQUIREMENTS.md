@@ -72,6 +72,36 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 
 | REQ-ID | Phase |
 |--------|-------|
+| CORE-01 | Phase 1 |
+| CORE-02 | Phase 1 |
+| CORE-03 | Phase 1 |
+| CORE-04 | Phase 1 |
+| CORE-05 | Phase 1 |
+| ADMIN-01 | Phase 1 |
+| ADMIN-02 | Phase 1 |
+| ADMIN-03 | Phase 1 |
+| ADMIN-04 | Phase 1 |
+| ADMIN-05 | Phase 1 |
+| ADMIN-06 | Phase 1 |
+| GAME-01 | Phase 1 |
+| GAME-02 | Phase 1 |
+| UX-01 | Phase 1 |
+| UX-02 | Phase 1 |
+| GAME-03 | Phase 2 |
+| GAME-06 | Phase 2 |
+| GAME-04 | Phase 3 |
+| GAME-05 | Phase 3 |
+| GAME-07 | Phase 3 |
+| SCORE-01 | Phase 4 |
+| SCORE-02 | Phase 4 |
+| SCORE-03 | Phase 4 |
+| SCORE-04 | Phase 4 |
+| SCORE-05 | Phase 4 |
+| ADMIN-07 | Phase 4 |
+| DEPL-01 | Phase 5 |
+| DEPL-02 | Phase 5 |
+
+**Coverage:** 28/28 v1 requirements mapped ✓
 
 ---
-*Last updated: 2026-07-01 after initial requirements definition*
+*Last updated: 2026-07-01 after roadmap creation*
