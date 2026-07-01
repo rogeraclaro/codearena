@@ -1,0 +1,1 @@
+{"content":"Confirms Nginx WS proxy requirements; also recommends wss:// (TLS) in production and disabling proxy buffering for polling responses.","source":"web","provider":"websearch","confidence":"MEDIUM","fetched_at":"2026-07-01T20:28:47.124Z","ttl":86400000,"kind":"web"}
