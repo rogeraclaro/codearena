@@ -46,7 +46,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — Graella de monitoratge + resync forçat (Wave 3)
+- [x] 01-03-PLAN.md — Graella de monitoratge + resync forçat (Wave 3)
 - [ ] 01-04-PLAN.md — Estats de la pantalla d'equip (espera/interstici/split/congelat) + preview aïllada (Wave 3)
 
 **UI hint**: yes
