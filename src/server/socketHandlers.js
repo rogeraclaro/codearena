@@ -113,6 +113,69 @@ export function registerSocketHandlers(io) {
       }),
     );
 
+    // --- Timer/phase control (CORE-04, CORE-05, ADMIN-02/03/04) ---
+    // Every handler re-checks admin-room membership server-side (V4 Access
+    // Control / Pitfall 4) — never trust the client. Broadcasts only fire
+    // when the mutation actually changed something (gameState.* return
+    // true/false), which is also what keeps Test A's "one broadcast per
+    // action, no per-second tick" guarantee honest.
+    socket.on(
+      EVENTS.ADMIN_START_PHASE,
+      safeHandler((payload) => {
+        if (!socket.rooms.has('admin')) return;
+        const phase = payload?.phase;
+        const durationMs = payload?.durationMs;
+        if (!['html', 'css', 'js'].includes(phase)) return;
+        if (!(Number.isFinite(durationMs) && durationMs > 0)) return;
+        if (gameState.startPhase(phase, durationMs)) {
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    socket.on(
+      EVENTS.ADMIN_NEXT_PHASE,
+      safeHandler((payload) => {
+        if (!socket.rooms.has('admin')) return;
+        const durationMs = payload?.durationMs;
+        if (!(Number.isFinite(durationMs) && durationMs > 0)) return;
+        if (gameState.nextPhase(durationMs)) {
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    socket.on(
+      EVENTS.ADMIN_TIMER_PAUSE,
+      safeHandler(() => {
+        if (!socket.rooms.has('admin')) return;
+        if (gameState.pauseTimer()) {
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    socket.on(
+      EVENTS.ADMIN_TIMER_RESUME,
+      safeHandler(() => {
+        if (!socket.rooms.has('admin')) return;
+        if (gameState.resumeTimer()) {
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    socket.on(
+      EVENTS.ADMIN_TIMER_EXTEND,
+      safeHandler((payload) => {
+        if (!socket.rooms.has('admin')) return;
+        const ms = Number.isFinite(payload?.ms) ? payload.ms : 60000;
+        if (gameState.extendTimer(ms)) {
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
     socket.on(
       'disconnect',
       safeHandler(() => {

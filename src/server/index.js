@@ -3,6 +3,8 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import { registerSocketHandlers } from './socketHandlers.js';
+import { EVENTS } from './events.js';
+import { gameState } from './gameState.js';
 
 export function startServer(port = process.env.PORT || 3000) {
   const app = express();
@@ -19,6 +21,18 @@ export function startServer(port = process.env.PORT || 3000) {
   });
 
   registerSocketHandlers(io);
+
+  // D-11: internal server bookkeeping only — polls for the timer's
+  // zero-crossing every 1s and freezes it (never advances phase). This is
+  // NOT a per-client tick: it only broadcasts when checkExpiry() reports an
+  // actual state change (01-RESEARCH.md Anti-Patterns — no per-second
+  // broadcast to clients).
+  const expiryInterval = setInterval(() => {
+    if (gameState.checkExpiry()) {
+      io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+    }
+  }, 1000);
+  httpServer.once('close', () => clearInterval(expiryInterval));
 
   return new Promise((resolve, reject) => {
     httpServer.once('error', reject);

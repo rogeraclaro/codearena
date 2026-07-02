@@ -2,12 +2,15 @@
 // compute or store canonical state themselves — they only render whatever
 // getPublicState() projects to them.
 //
-// Timer/phase mutation functions (startPhase, nextPhase, pauseTimer,
-// resumeTimer, extendTimer, checkExpiry) are stubs in Phase 1 — Plan 02
-// implements the real countdown logic. getPublicState() already exposes
-// the shape so the wire protocol never needs a breaking change later.
+// Timer/phase functions use an absolute end-timestamp (phaseEndsAt, epoch
+// ms) per 01-RESEARCH.md Pattern 3: broadcast only on state-change events,
+// never a per-second tick. checkExpiry() is internal server bookkeeping
+// (polled by a 1s setInterval in index.js) — at zero it freezes the timer
+// but NEVER advances the phase automatically (D-11).
 
 import { randomUUID } from 'node:crypto';
+
+const PHASE_ORDER = ['html', 'css', 'js'];
 
 const state = {
   phase: null, // null | 'html' | 'css' | 'js'
@@ -60,13 +63,65 @@ function getPublicState() {
   };
 }
 
-// --- Timer/phase stubs (Plan 02 implements the real behavior) ---
-function startPhase(_phase, _durationMs) {}
-function nextPhase(_durationMs) {}
-function pauseTimer() {}
-function resumeTimer() {}
-function extendTimer(_ms) {}
-function checkExpiry() {}
+// --- Timer/phase functions (all return true if they mutated state, so
+// callers — socketHandlers.js, index.js's expiry poll — only broadcast
+// session:full-state when something actually changed). ---
+
+function startPhase(phase, durationMs) {
+  if (!PHASE_ORDER.includes(phase)) return false;
+  if (!(Number.isFinite(durationMs) && durationMs > 0)) return false;
+  state.phase = phase;
+  state.phaseEndsAt = Date.now() + durationMs;
+  state.timerStatus = 'running';
+  state.remainingMsAtPause = null;
+  return true;
+}
+
+function nextPhase(durationMs) {
+  const currentIndex = state.phase ? PHASE_ORDER.indexOf(state.phase) : -1;
+  const nextIndex = currentIndex + 1;
+  if (nextIndex >= PHASE_ORDER.length) return false; // ja és l'última fase, no fa res (CORE-05)
+  return startPhase(PHASE_ORDER[nextIndex], durationMs);
+}
+
+function pauseTimer() {
+  if (state.timerStatus !== 'running') return false;
+  state.remainingMsAtPause = state.phaseEndsAt - Date.now();
+  state.timerStatus = 'paused';
+  state.phaseEndsAt = null;
+  return true;
+}
+
+function resumeTimer() {
+  if (state.timerStatus !== 'paused') return false;
+  state.phaseEndsAt = Date.now() + state.remainingMsAtPause;
+  state.timerStatus = 'running';
+  state.remainingMsAtPause = null;
+  return true;
+}
+
+function extendTimer(ms = 60000) {
+  if (!Number.isFinite(ms)) return false;
+  if (state.timerStatus === 'running') {
+    state.phaseEndsAt += ms;
+    return true;
+  }
+  if (state.timerStatus === 'paused') {
+    state.remainingMsAtPause += ms;
+    return true;
+  }
+  return false; // idle/frozen: res a allargar
+}
+
+// D-11: at zero-crossing, freeze the timer but NEVER touch state.phase —
+// freezing ≠ advancing. The admin always presses "Següent fase" explicitly.
+function checkExpiry() {
+  if (state.timerStatus === 'running' && state.phaseEndsAt !== null && Date.now() >= state.phaseEndsAt) {
+    state.timerStatus = 'frozen';
+    return true;
+  }
+  return false;
+}
 
 export const gameState = {
   registerTeams,
