@@ -5,16 +5,16 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Nucli en temps real i control de sessió
 status: executing
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-07-02T06:37:17.407Z"
-last_activity: 2026-07-01
-last_activity_desc: Roadmap created from REQUIREMENTS.md + research/SUMMARY.md
+stopped_at: Phase 1 Wave 1 complete (01-01)
+last_updated: "2026-07-02T11:30:00.000Z"
+last_activity: 2026-07-02
+last_activity_desc: Plan 01-01 complete — nucli servidor autoritatiu + skeleton clients (WebSocket-only)
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 4
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-07-01)
 ## Current Position
 
 Phase: 1 of 5 (Nucli en temps real i control de sessió)
-Plan: 0 of TBD in current phase
-Status: Ready to execute
-Last activity: 2026-07-01 — Roadmap created from REQUIREMENTS.md + research/SUMMARY.md
+Plan: 1 of 4 complete in current phase (Wave 1 ✓)
+Status: Executing — Wave 2 next (01-02 timer/fases)
+Last activity: 2026-07-02 — Plan 01-01 complete (nucli servidor + skeleton, WebSocket-only)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 25% (plans de la fase)
 
 ## Performance Metrics
 

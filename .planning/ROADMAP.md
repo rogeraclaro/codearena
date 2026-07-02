@@ -38,7 +38,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Walking Skeleton: scaffold + round-trip registre→tria + identitat per token (Wave 1)
+- [x] 01-01-PLAN.md — Walking Skeleton: scaffold + round-trip registre→tria + identitat per token (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
