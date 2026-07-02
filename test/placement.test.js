@@ -1,0 +1,154 @@
+// Integration test: exercises the real server (Express + Socket.io) over a real
+// ephemeral-port HTTP listener, using socket.io-client — no mocks. Copies the
+// race-safe harness from roundtrip.test.js.
+//
+// Covers the placement round-trip of the HTML phase:
+//   - PLACE-OK:            un place valid -> l'owner rep team:board-state (autoritatiu, GAME-03).
+//   - PLACE-TYPE-REJECT:   un tipus incompatible NO produeix board-state (type-check server-side, D-07).
+//   - ADMIN-COUNT:         un place OK projecta progress {placed, total:8} a l'admin; el token mai s'exposa.
+//   - NO-SESSION-BROADCAST: un segon equip NO rep res del place del primer (emissio dirigida, Pitfall 1).
+//
+// Event names s'importen d'src/server/events.js — cap literal d'event-name al test.
+
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { io as ioClient } from 'socket.io-client';
+import { startServer } from '../src/server/index.js';
+import { EVENTS } from '../src/server/events.js';
+
+let httpServer;
+let baseUrl;
+
+before(async () => {
+  const started = await startServer(0); // port 0 = ephemeral, avoids collisions
+  httpServer = started.httpServer;
+  baseUrl = `http://localhost:${started.port}`;
+});
+
+after(async () => {
+  await new Promise((resolve) => httpServer.close(resolve));
+});
+
+function once(socket, event) {
+  return new Promise((resolve) => socket.once(event, resolve));
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Race-safe: resolves with the payload if `event` fires within `ms`, or with
+// `undefined` on timeout — so a genuinely-RED assertion FAILS fast instead of
+// hanging the whole test file when the server has no handler yet.
+function onceOrTimeout(socket, event, ms = 600) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(undefined), ms);
+    socket.once(event, (payload) => {
+      clearTimeout(timer);
+      resolve(payload);
+    });
+  });
+}
+
+// See roundtrip.test.js: register listeners in the same synchronous tick before
+// any `await` yields, so the server's first synchronous emit is never missed.
+function connectAndAwait(auth, firstEvent) {
+  const socket = ioClient(baseUrl, { auth, forceNew: true, transports: ['websocket'] });
+  const ready = Promise.all([once(socket, 'connect'), once(socket, firstEvent)]).then(
+    ([, payload]) => payload,
+  );
+  return { socket, ready };
+}
+
+// Shared fixtures across the ordered round-trip (node:test runs tests in
+// declaration order within a single file).
+let adminSocket;
+let teamClient1;
+let teamClient2;
+let team1Id;
+let team2Id;
+
+test('setup: registra equips, dos equips trien, i s\'inicia la fase html', async () => {
+  const admin = connectAndAwait({ role: 'admin' }, 'session:full-state');
+  adminSocket = admin.socket;
+  await admin.ready;
+
+  const t1 = connectAndAwait({}, 'team:available-list');
+  teamClient1 = t1.socket;
+  await t1.ready;
+
+  const listPromise = once(teamClient1, 'team:available-list');
+  const adminRegisterBroadcast = once(adminSocket, 'session:full-state');
+  adminSocket.emit('admin:register-teams', { names: ['A', 'B', 'C', 'D'] });
+  const [list] = await Promise.all([listPromise, adminRegisterBroadcast]);
+  team1Id = list.teams[0].id;
+  team2Id = list.teams[1].id;
+
+  const claimed1 = once(teamClient1, 'team:claimed');
+  teamClient1.emit('team:select', { teamId: team1Id });
+  await claimed1;
+
+  const t2 = connectAndAwait({}, 'team:available-list');
+  teamClient2 = t2.socket;
+  await t2.ready;
+  const claimed2 = once(teamClient2, 'team:claimed');
+  teamClient2.emit('team:select', { teamId: team2Id });
+  await claimed2;
+
+  const started = once(adminSocket, 'session:full-state');
+  adminSocket.emit('admin:start-phase', { phase: 'html', durationMs: 60000 });
+  await started;
+});
+
+test('PLACE-OK: un place valid retorna team:board-state a l\'owner (GAME-03)', async () => {
+  const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 800);
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-esquerra', pieceType: 'antena' });
+
+  const board = await boardPromise;
+  assert.ok(board, 'l\'owner ha de rebre team:board-state en un place valid');
+  assert.equal(board.placement['antena-esquerra'], 'antena');
+});
+
+test('PLACE-TYPE-REJECT: un tipus incompatible no produeix board-state (D-07)', async () => {
+  const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'nas', pieceType: 'antena' });
+
+  const board = await boardPromise;
+  assert.equal(board, undefined, 'un tipus incompatible mai ha de produir board-state');
+});
+
+test('ADMIN-COUNT: un place OK projecta progress {placed, total:8} a l\'admin, sense token', async () => {
+  const statePromise = onceOrTimeout(adminSocket, 'session:full-state', 800);
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena' });
+
+  const state = await statePromise;
+  assert.ok(state, 'l\'admin ha de rebre session:full-state en un place OK');
+  const team = state.teams.find((t) => t.id === team1Id);
+  assert.ok(team.progress, 'progress ha d\'estar present durant la fase html');
+  assert.equal(team.progress.total, 8);
+  assert.ok(team.progress.placed >= 1, 'placed ha de comptar les peces col·locades');
+  assert.equal(team.token, undefined, 'el token mai s\'ha d\'exposar a la projeccio');
+});
+
+test('NO-SESSION-BROADCAST: un segon equip no rep res del place del primer (Pitfall 1)', async () => {
+  let team2GotBoard = false;
+  let team2GotState = false;
+  teamClient2.once(EVENTS.TEAM_BOARD_STATE, () => {
+    team2GotBoard = true;
+  });
+  teamClient2.once('session:full-state', () => {
+    team2GotState = true;
+  });
+
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'orella-esquerra', pieceType: 'orella' });
+  await wait(150);
+
+  assert.equal(team2GotBoard, false, 'team2 no ha de rebre team:board-state del place de team1');
+  assert.equal(team2GotState, false, 'team2 no ha de rebre session:full-state del place de team1');
+});
+
+test('cleanup: tanca sockets restants', () => {
+  adminSocket?.close();
+  teamClient1?.close();
+  teamClient2?.close();
+});
