@@ -72,7 +72,7 @@ Reuses Phase 1 roles (Body 16/400/1.5, Label 14/600/1.4, Heading 24/600/1.2, Dis
 | Display | 56px | 600 | 1.0 | (inherited — timer) |
 
 Notes:
-- **Code labels carry NO angle brackets.** Show the bare class/tag name — `antena`, `orella`, `ull`, `contenidor-ulls`, `nas`, `boca` — not `<antena>` or `< >`. Brackets add visual noise for zero-experience adults (UX-01); monospace already communicates "code". This is the resolution of the D-12 discretion ("chip net sense puntuació `< >`" chosen over "tira de codi read-only").
+- **Code labels ARE the literal HTML tag, with angle brackets.** Show the real tag — `<img class="antena">`, `<span class="ull">`, `<button id="nas">`, `<output id="boca">`, and the container frames `<section id="robot-contenidor">`, `<div id="robot-cap">`, `<div class="contenidor-ulls">`. Rendered as read-only monospace **text** (plain characters, never interpreted as markup — no `innerHTML`, no editable field; GAME-06 preserved). **Override (2026-07-03, Plan 02-03 checkpoint):** this REVERSES the earlier "NO angle brackets / bare name" UI-discretion resolution of the D-12 dilemma. The user explicitly requested the real HTML tags "tal i com et vaig passar el esquema html" (D-01) at the human-verify checkpoint; the bracketed literal is now the chosen form, aligning the labels with the actual schema instead of a simplified alias.
 - Code labels are **read-only, never editable** — no `<input>`, no `contenteditable` (GAME-06). Rendered as plain text nodes.
 
 ---
@@ -192,7 +192,7 @@ Language: **Catalan** (all UI copy). This phase is deliberately near-textless (U
 
 Additional fixed copy:
 - Progress label: **"N/8 peces"** (team screen own progress, D-14; and Admin card, D-15) — where N is the placed-good-pieces count and total is 8.
-- Slot / empty-slot labels and piece labels: the **real tag+class** only — `antena`, `orella`, `ull`, `contenidor-ulls`, `nas`, `boca` — monospace, no brackets, never editable (D-12).
+- Slot / empty-slot labels and piece labels: the **real literal HTML tag** — `<img class="antena">`, `<span class="ull">`, `<button id="nas">`, `<output id="boca">`, container frames `<section id="robot-contenidor">` etc. — monospace, with angle brackets, read-only text, never editable (D-12, override 2026-07-03 per user request at the Plan 02-03 checkpoint).
 - Preview internal text: **"BEEP BEEP"** — fixed, predefined, part of the template, never user-entered (D-04/GAME-06).
 
 **Destructive-action inventory (Phase 2):** none. No delete/release actions. Piece removal is non-destructive undo. Freeze-at-zero is inherited from Phase 1 and requires no new copy.
