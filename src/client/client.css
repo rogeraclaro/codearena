@@ -157,6 +157,44 @@
   color: var(--color-muted);
 }
 
+/* Distractor (D-11): mateix chip base, sense code label — glyph emoji. "No color,
+   motion only" (UI-SPEC §Color): cap accent de color propi; només el rebot amb
+   shake el distingeix quan s'hi interactua. */
+.piece-chip__glyph {
+  font-size: var(--font-size-heading);
+  line-height: 1;
+}
+
+/* Shake de rebot del distractor (UI-SPEC §Motion) — ±desplaçament curt, sense
+   text ni color d'error, nomes dins prefers-reduced-motion (patró tokens.css). */
+@keyframes piece-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(calc(-1 * var(--space-sm)));
+  }
+  75% {
+    transform: translateX(var(--space-sm));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .piece-chip--shake {
+    animation: piece-shake var(--motion-snap) var(--motion-ease);
+  }
+}
+
+/* Estat congelat (D-11/Pitfall 4): SortableJS ja esta desactivat (option
+   'disabled'); aixo nomes hi afegeix el senyal visual — cursor no-agafable i un
+   lleu esvaïment — dirigit per la presencia de .frozen-overlay, sense tocar el JS
+   del render. Tokens/valors relatius, cap literal de color/mida. */
+.active-split:has(.frozen-overlay) .piece-chip,
+.active-split:has(.frozen-overlay) .slot {
+  cursor: default;
+  opacity: 0.7;
+}
+
 /* Pista inicial (D-14) */
 .drag-hint {
   display: flex;

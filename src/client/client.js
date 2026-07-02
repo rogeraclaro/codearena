@@ -11,7 +11,7 @@ import Sortable from 'sortablejs';
 import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
 import { EVENTS } from '../server/events.js';
-import { SLOTS, PIECES } from '../shared/robotTemplate.js';
+import { SLOTS, PIECES, DISTRACTORS } from '../shared/robotTemplate.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -206,6 +206,40 @@ function createChip(type) {
   return chip;
 }
 
+// Distractor còmic (D-11): glyph emoji + SENSE code label — són deliberadament
+// "no HTML". dataset.type no coincideix amb cap slot.accepts, així que el revert
+// natiu de SortableJS els retorna sols al calaix (cap mecànica ni error nous).
+const DISTRACTOR_GLYPHS = { banana: '🍌', roda: '🛞', sabata: '👟' };
+function createDistractorChip(type) {
+  const chip = document.createElement('div');
+  chip.className = 'piece-chip piece-chip--distractor';
+  chip.dataset.type = type;
+  const glyph = document.createElement('span');
+  glyph.className = 'piece-chip__glyph';
+  glyph.textContent = DISTRACTOR_GLYPHS[type] || '';
+  chip.appendChild(glyph);
+  return chip;
+}
+
+// Ordre estable del calaix: peces bones restants amb els 3 distractors intercalats
+// de forma determinista (barrejats visualment) — mai un shuffle aleatori, que
+// reordenaria el calaix a cada board-state i afegiria soroll cognitiu.
+function fillDrawer(calaix, placement) {
+  const good = remainingPieces(placement);
+  let di = 0;
+  good.forEach((type, i) => {
+    calaix.appendChild(createChip(type));
+    if ((i + 1) % 2 === 0 && di < DISTRACTORS.length) {
+      calaix.appendChild(createDistractorChip(DISTRACTORS[di]));
+      di += 1;
+    }
+  });
+  while (di < DISTRACTORS.length) {
+    calaix.appendChild(createDistractorChip(DISTRACTORS[di]));
+    di += 1;
+  }
+}
+
 function createSlot(slot, placement) {
   const el = document.createElement('div');
   el.className = 'slot';
@@ -314,6 +348,25 @@ function initSortables(calaixEl, slotEls) {
     sort: false,
     animation: 150,
     emptyInsertThreshold: 40,
+    onAdd: (evt) => {
+      // Una peça que torna des d'un slot cap al calaix = treure (D-10). El
+      // board-state autoritatiu reconciliarà el DOM; cap diàleg de confirmació
+      // (undo sense fricció, UI-SPEC §Copywriting).
+      if (evt.from.dataset.slotId) {
+        socket.emit(EVENTS.TEAM_REMOVE_PIECE, { slotId: evt.from.dataset.slotId });
+      }
+    },
+    onEnd: (evt) => {
+      // Distractor rebotat (cap slot l'accepta → revert natiu al calaix, from===to):
+      // shake breu sense text ni color d'error (D-11, UI-SPEC §Motion).
+      if (evt.item.classList.contains('piece-chip--distractor') && evt.from === evt.to) {
+        const el = evt.item;
+        el.classList.remove('piece-chip--shake');
+        void el.offsetWidth; // reflow → re-dispara l'animació en rebots repetits
+        el.classList.add('piece-chip--shake');
+        setTimeout(() => el.classList.remove('piece-chip--shake'), 320);
+      }
+    },
   });
   sortables.push(drawer);
 
@@ -351,7 +404,7 @@ function mountGame(gameContainer, placement) {
 
   const calaix = document.createElement('div');
   calaix.className = 'calaix';
-  for (const type of remainingPieces(placement)) calaix.appendChild(createChip(type));
+  fillDrawer(calaix, placement); // peces restants (Pitfall 5) + distractors (D-11)
   gameContainer.appendChild(calaix);
 
   const hint = buildHint(placement);
