@@ -64,3 +64,59 @@ body {
   background: var(--color-bg);
   font-display: swap;
 }
+
+/* Display timer (CORE-04) — shared by admin.js and client.js so both
+   screens render the exact same synchronized countdown via shared/timer.js. */
+.timer-display {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-display);
+  line-height: var(--line-height-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Timer urgency (Claude's discretion, UI-SPEC §Color): color/pulse only,
+   digits never change meaning (UX-01). */
+.timer-display.timer-warning {
+  color: var(--timer-warning);
+}
+.timer-display.timer-critical {
+  color: var(--timer-critical);
+}
+
+@keyframes timer-critical-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .timer-display.timer-critical {
+    animation: timer-critical-pulse 1s ease-in-out infinite;
+  }
+}
+
+/* Phase color-coding (UX-02) — reused identically across Phases 1-5. */
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  color: #fff;
+}
+.phase-badge[data-phase='html'] {
+  background: var(--phase-html);
+}
+.phase-badge[data-phase='css'] {
+  background: var(--phase-css);
+}
+.phase-badge[data-phase='js'] {
+  background: var(--phase-js);
+}

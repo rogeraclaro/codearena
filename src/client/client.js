@@ -4,6 +4,7 @@
 // scope for Phase 1 (arrives with the phase content in later plans).
 
 import { io } from 'socket.io-client';
+import { renderCountdown } from './shared/timer.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -109,6 +110,34 @@ function renderWaitingScreen(team) {
   app.appendChild(container);
 }
 
+// Fase activa (CORE-04, CORE-05): nomes el timer sincronitzat + el badge de
+// fase amb el color correcte — el layout complet panell/preview (GAME-01)
+// arriba al Pla 04. Reutilitza shared/timer.js per garantir el mateix valor
+// que l'admin (D-12).
+function renderActivePhaseScreen(team, state) {
+  const app = clearApp();
+  const container = document.createElement('div');
+  container.className = 'fullscreen-screen';
+
+  const badge = document.createElement('span');
+  badge.className = 'phase-badge';
+  badge.dataset.phase = state.phase;
+  badge.textContent = state.phase.toUpperCase();
+  container.appendChild(badge);
+
+  const nameEl = document.createElement('h1');
+  nameEl.className = 'waiting-team-name';
+  nameEl.textContent = team.name;
+  container.appendChild(nameEl);
+
+  const timerEl = document.createElement('div');
+  timerEl.className = 'timer-display';
+  container.appendChild(timerEl);
+
+  app.appendChild(container);
+  renderCountdown(timerEl, state);
+}
+
 function bootClient() {
   injectStyles();
 
@@ -135,7 +164,12 @@ function bootClient() {
     const teamId = localStorage.getItem(TEAM_ID_KEY);
     if (!teamId) return; // identity not resolved yet — awaiting team:available-list
     const team = state.teams.find((t) => t.id === teamId);
-    if (team) renderWaitingScreen(team);
+    if (!team) return;
+    if (state.phase) {
+      renderActivePhaseScreen(team, state);
+    } else {
+      renderWaitingScreen(team);
+    }
   });
 
   socket.on('team:reload', () => {

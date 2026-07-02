@@ -6,8 +6,12 @@
 
 import { io } from 'socket.io-client';
 import { createElement, CircleCheckBig, WifiOff } from 'lucide';
+import { renderCountdown } from './shared/timer.js';
 
 const STYLE_ID = 'admin-styles';
+// Durada provisional de cada fase; el contingut real de joc (Fase 2+)
+// substituira aquest valor fix per una durada configurable per fase.
+const PHASE_DURATION_MS = 5 * 60 * 1000;
 
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -21,6 +25,16 @@ function injectStyles() {
       display: flex;
       flex-direction: column;
       gap: var(--space-2xl);
+    }
+    .control-bar {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: var(--space-lg);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-lg);
     }
     .registration-block {
       background: var(--color-surface);
@@ -119,6 +133,69 @@ function statusIcon(connected) {
   return icon;
 }
 
+function buildPhaseBadge(phase) {
+  const badge = document.createElement('span');
+  badge.className = 'phase-badge';
+  badge.dataset.phase = phase;
+  badge.textContent = phase.toUpperCase();
+  return badge;
+}
+
+// Timer display + primary CTA ("Iniciar Fase" / "Següent fase") + secondary
+// controls (Pausar/Reprendre, +1 minut). Re-derived entirely from
+// session:full-state on every broadcast (D-12: instant sync across screens).
+function buildControlBar(socket, state) {
+  const bar = document.createElement('section');
+  bar.className = 'control-bar';
+
+  const timerEl = document.createElement('div');
+  timerEl.className = 'timer-display';
+  bar.appendChild(timerEl);
+
+  if (state.phase) {
+    bar.appendChild(buildPhaseBadge(state.phase));
+  }
+
+  const ctaBtn = document.createElement('button');
+  ctaBtn.type = 'button';
+  ctaBtn.className = 'btn btn-accent';
+  ctaBtn.textContent = state.phase ? 'Següent fase' : 'Iniciar Fase';
+  ctaBtn.addEventListener('click', () => {
+    if (state.phase) {
+      socket.emit('admin:next-phase', { durationMs: PHASE_DURATION_MS });
+    } else {
+      socket.emit('admin:start-phase', { phase: 'html', durationMs: PHASE_DURATION_MS });
+    }
+  });
+  bar.appendChild(ctaBtn);
+
+  if (state.phase) {
+    const pauseBtn = document.createElement('button');
+    pauseBtn.type = 'button';
+    pauseBtn.className = 'btn';
+    const isPaused = state.timerStatus === 'paused';
+    pauseBtn.textContent = isPaused ? 'Reprendre' : 'Pausar';
+    pauseBtn.disabled = state.timerStatus === 'frozen';
+    pauseBtn.addEventListener('click', () => {
+      socket.emit(isPaused ? 'admin:timer-resume' : 'admin:timer-pause');
+    });
+    bar.appendChild(pauseBtn);
+
+    const extendBtn = document.createElement('button');
+    extendBtn.type = 'button';
+    extendBtn.className = 'btn';
+    extendBtn.textContent = '+1 minut';
+    extendBtn.addEventListener('click', () => {
+      socket.emit('admin:timer-extend', { ms: 60000 });
+    });
+    bar.appendChild(extendBtn);
+  }
+
+  renderCountdown(timerEl, state);
+
+  return bar;
+}
+
 function buildRegistrationBlock(socket) {
   const block = document.createElement('section');
   block.className = 'registration-block';
@@ -196,6 +273,7 @@ function renderAdmin(socket, state) {
 
   const container = document.createElement('div');
   container.className = 'admin-container';
+  container.appendChild(buildControlBar(socket, state));
   container.appendChild(buildRegistrationBlock(socket));
 
   const grid = document.createElement('section');
