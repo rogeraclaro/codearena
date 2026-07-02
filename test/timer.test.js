@@ -137,6 +137,30 @@ test('Test D: freeze a zero sense auto-avanç (D-11)', async () => {
   assert.equal(frozen.phase, 'html', 'D-11: el freeze mai avança de fase automaticament');
 });
 
+test('Test D-bis: +1 minut reviu una fase congelada (ADMIN-04, D-11 preservat)', async () => {
+  // Precondició: Test D ha deixat la fase 'html' en estat 'frozen'.
+  const revivePromise = once(observerSocket, 'session:full-state');
+  adminSocket.emit('admin:timer-extend', { ms: 60000 });
+  const revived = await revivePromise;
+  assert.equal(revived.timerStatus, 'running', 'frozen + extend ha de tornar a running');
+  assert.equal(revived.phase, 'html', 'extend mai avança de fase (D-11)');
+  assert.ok(
+    Math.abs(revived.phaseEndsAt - (Date.now() + 60000)) < 500,
+    'phaseEndsAt ha de reiniciar-se a ~ara+60000ms des del freeze',
+  );
+
+  // Repetible: una segona extensió en marxa continua allargant.
+  const beforeEndsAt = revived.phaseEndsAt;
+  const secondPromise = once(observerSocket, 'session:full-state');
+  adminSocket.emit('admin:timer-extend', { ms: 60000 });
+  const second = await secondPromise;
+  assert.equal(second.timerStatus, 'running');
+  assert.ok(
+    Math.abs(second.phaseEndsAt - (beforeEndsAt + 60000)) < 200,
+    'la segona extensió suma ~60000ms addicionals',
+  );
+});
+
 test('Test E: avanç de fase en lockstep (CORE-05)', async () => {
   const toCssPromise = once(observerSocket, 'session:full-state');
   adminSocket.emit('admin:next-phase', { durationMs: 60000 });

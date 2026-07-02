@@ -110,7 +110,15 @@ function extendTimer(ms = 60000) {
     state.remainingMsAtPause += ms;
     return true;
   }
-  return false; // idle/frozen: res a allargar
+  if (state.timerStatus === 'frozen') {
+    // ADMIN-04: +1 minut reviu una fase congelada — l'admin dóna més temps
+    // sense haver d'avançar de fase. Repetible: cada extensió reinicia el
+    // compte enrere des d'ara. Mai auto-avança (D-11 preservat).
+    state.phaseEndsAt = Date.now() + ms;
+    state.timerStatus = 'running';
+    return true;
+  }
+  return false; // idle: no hi ha cap fase activa a allargar
 }
 
 // D-11: at zero-crossing, freeze the timer but NEVER touch state.phase —
