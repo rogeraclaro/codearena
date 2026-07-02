@@ -5,7 +5,7 @@
 // var(--...) tokens from shared/tokens.css.
 
 import { io } from 'socket.io-client';
-import { createElement, CircleCheckBig, WifiOff } from 'lucide';
+import { createElement, CircleCheckBig, WifiOff, RefreshCw } from 'lucide';
 import { renderCountdown } from './shared/timer.js';
 
 const STYLE_ID = 'admin-styles';
@@ -74,6 +74,34 @@ function injectStyles() {
       border-color: var(--color-accent);
       color: var(--color-surface);
     }
+    .btn-destructive {
+      color: var(--color-destructive);
+      border-color: var(--color-destructive);
+    }
+    .team-card-actions {
+      margin-top: auto;
+    }
+    .confirm-dialog {
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: var(--space-lg);
+      max-width: 320px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-family: var(--font-family);
+    }
+    .confirm-dialog::backdrop {
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .confirm-message {
+      font-size: var(--font-size-body);
+      margin: 0 0 var(--space-lg);
+    }
+    .confirm-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--space-sm);
+    }
     .team-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -131,6 +159,51 @@ function statusIcon(connected) {
   icon.setAttribute('height', '20');
   icon.classList.add(connected ? 'status-connected' : 'status-disconnected');
   return icon;
+}
+
+// Resync is the ONLY destructive-styled action in Phase 1 (D-04: no
+// release/delete team action exists). Uses a native <dialog> for modality
+// (Escape/backdrop dismiss for free) with the exact copy from the UI-SPEC
+// Copywriting Contract — resolves true only if the admin explicitly confirms.
+function showResyncConfirm() {
+  return new Promise((resolve) => {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'confirm-dialog';
+
+    const message = document.createElement('p');
+    message.className = 'confirm-message';
+    message.textContent = 'Resincronitzar equip? Recarregarà la seva pantalla immediatament.';
+    dialog.appendChild(message);
+
+    const actions = document.createElement('div');
+    actions.className = 'confirm-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = 'Cancel·la';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'btn btn-destructive';
+    confirmBtn.textContent = 'Sí, resincronitza';
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    dialog.appendChild(actions);
+    document.body.appendChild(dialog);
+
+    const settle = (result) => {
+      dialog.close();
+      dialog.remove();
+      resolve(result);
+    };
+    cancelBtn.addEventListener('click', () => settle(false));
+    confirmBtn.addEventListener('click', () => settle(true));
+    dialog.addEventListener('cancel', () => settle(false)); // Escape key
+
+    dialog.showModal();
+  });
 }
 
 function buildPhaseBadge(phase) {
@@ -246,7 +319,7 @@ function buildEmptyState() {
   return empty;
 }
 
-function buildTeamCard(team) {
+function buildTeamCard(team, socket) {
   const card = document.createElement('article');
   card.className = 'team-card';
 
@@ -261,9 +334,29 @@ function buildTeamCard(team) {
   const progressEl = document.createElement('div');
   progressEl.className = 'team-card-progress'; // reserved, empty in Phase 1 (D-08)
 
+  const actionsEl = document.createElement('div');
+  actionsEl.className = 'team-card-actions';
+
+  const resyncBtn = document.createElement('button');
+  resyncBtn.type = 'button';
+  resyncBtn.className = 'btn btn-destructive';
+  const resyncIcon = createElement(RefreshCw);
+  resyncIcon.setAttribute('width', '16');
+  resyncIcon.setAttribute('height', '16');
+  resyncBtn.appendChild(resyncIcon);
+  resyncBtn.appendChild(document.createTextNode(' Resincronitza'));
+  resyncBtn.addEventListener('click', async () => {
+    const confirmed = await showResyncConfirm();
+    if (confirmed) {
+      socket.emit('admin:force-resync', { teamId: team.id });
+    }
+  });
+  actionsEl.appendChild(resyncBtn);
+
   card.appendChild(nameEl);
   card.appendChild(statusEl);
   card.appendChild(progressEl);
+  card.appendChild(actionsEl);
   return card;
 }
 
@@ -282,7 +375,7 @@ function renderAdmin(socket, state) {
     grid.appendChild(buildEmptyState());
   } else {
     for (const team of state.teams) {
-      grid.appendChild(buildTeamCard(team));
+      grid.appendChild(buildTeamCard(team, socket));
     }
   }
   container.appendChild(grid);
