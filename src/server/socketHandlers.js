@@ -176,6 +176,22 @@ export function registerSocketHandlers(io) {
       }),
     );
 
+    // Directed force-resync (ADMIN-06, D-09): admin forces a full page reload
+    // on a single hung team's PC. Emits ONLY to that team's room — never a
+    // session/global broadcast (T-03-02 DoS via broadcast storm). The client
+    // reload triggers the existing token-based reconnection path (Pla 01),
+    // so no state-recovery logic is reimplemented here.
+    socket.on(
+      EVENTS.ADMIN_FORCE_RESYNC,
+      safeHandler((payload) => {
+        if (!socket.rooms.has('admin')) return; // T-03-01: never trust a client-sent role flag
+        const teamId = payload?.teamId;
+        if (typeof teamId !== 'string' || !teamId) return;
+        if (!gameState.getPublicState().teams.some((t) => t.id === teamId)) return; // T-03-02: teamId must exist
+        io.to(`team:${teamId}`).emit(EVENTS.TEAM_RELOAD);
+      }),
+    );
+
     socket.on(
       'disconnect',
       safeHandler(() => {
