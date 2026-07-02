@@ -7,6 +7,11 @@
 //   - PLACE-TYPE-REJECT:   un tipus incompatible NO produeix board-state (type-check server-side, D-07).
 //   - ADMIN-COUNT:         un place OK projecta progress {placed, total:8} a l'admin; el token mai s'exposa.
 //   - NO-SESSION-BROADCAST: un segon equip NO rep res del place del primer (emissio dirigida, Pitfall 1).
+//   - REMOVE round-trip:   treure una peça col·locada la retira del board i baixa el comptador (D-10).
+//   - REMOVE no-op:        treure un slot buit NO emet board-state (mutation-returns-bool).
+//   - INVENTORY cap:       no es poden col·locar més peces d'un tipus de les disponibles (Pitfall 5).
+//   - V4 forge:            un equip no pot mutar el board d'un altre forjant teamId al payload (T-02-04).
+//   - F5 recovery:         reconnectar amb el token recupera el placement previ (CORE-03).
 //
 // Event names s'importen d'src/server/events.js — cap literal d'event-name al test.
 
@@ -67,6 +72,7 @@ let teamClient1;
 let teamClient2;
 let team1Id;
 let team2Id;
+let team1Token;
 
 test('setup: registra equips, dos equips trien, i s\'inicia la fase html', async () => {
   const admin = connectAndAwait({ role: 'admin' }, 'session:full-state');
@@ -86,7 +92,8 @@ test('setup: registra equips, dos equips trien, i s\'inicia la fase html', async
 
   const claimed1 = once(teamClient1, 'team:claimed');
   teamClient1.emit('team:select', { teamId: team1Id });
-  await claimed1;
+  const claim1 = await claimed1;
+  team1Token = claim1.token; // per al cas F5 recovery
 
   const t2 = connectAndAwait({}, 'team:available-list');
   teamClient2 = t2.socket;
@@ -145,6 +152,77 @@ test('NO-SESSION-BROADCAST: un segon equip no rep res del place del primer (Pitf
 
   assert.equal(team2GotBoard, false, 'team2 no ha de rebre team:board-state del place de team1');
   assert.equal(team2GotState, false, 'team2 no ha de rebre session:full-state del place de team1');
+});
+
+// Estat de team1 en entrar aquí: { antena-esquerra, antena-dreta, orella-esquerra }.
+test('REMOVE round-trip: treure una peça col·locada la retira del board (D-10)', async () => {
+  const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 800);
+  const adminPromise = onceOrTimeout(adminSocket, 'session:full-state', 800);
+  teamClient1.emit(EVENTS.TEAM_REMOVE_PIECE, { slotId: 'antena-esquerra' });
+
+  const board = await boardPromise;
+  assert.ok(board, 'l\'owner ha de rebre team:board-state en un remove valid');
+  assert.equal(
+    board.placement['antena-esquerra'],
+    undefined,
+    'l\'slot retirat ja no ha de constar al board autoritatiu',
+  );
+
+  const state = await adminPromise;
+  assert.ok(state, 'l\'admin ha de rebre session:full-state en un remove OK');
+  const team = state.teams.find((t) => t.id === team1Id);
+  assert.equal(team.progress.total, 8);
+});
+
+test('REMOVE no-op: treure un slot buit no emet board-state (mutation-returns-bool)', async () => {
+  // antena-esquerra ja s'ha retirat al test anterior → aquest remove és un no-op.
+  const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
+  teamClient1.emit(EVENTS.TEAM_REMOVE_PIECE, { slotId: 'antena-esquerra' });
+
+  const board = await boardPromise;
+  assert.equal(board, undefined, 'treure un slot buit no ha de produir cap board-state');
+});
+
+test('INVENTORY cap: no es poden col·locar més antenes de les disponibles (Pitfall 5)', async () => {
+  // Reomple antena-esquerra (2a antena, l'altra ja és a antena-dreta) — OK.
+  const okBoard = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 800);
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-esquerra', pieceType: 'antena' });
+  const board = await okBoard;
+  assert.ok(board, 'la 2a antena s\'ha de poder col·locar');
+  assert.equal(board.placement['antena-esquerra'], 'antena');
+
+  // Amb totes dues antenes col·locades, un tercer intent (slot ja ocupat / inventari
+  // esgotat) es rebutja sense board-state.
+  const rejected = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena' });
+  const board2 = await rejected;
+  assert.equal(board2, undefined, 'no es pot col·locar una 3a antena (slot ocupat / inventari esgotat)');
+});
+
+test('V4 forge: un equip no pot mutar el board d\'un altre forjant teamId (T-02-04)', async () => {
+  let team1GotBoard = false;
+  teamClient1.once(EVENTS.TEAM_BOARD_STATE, () => {
+    team1GotBoard = true;
+  });
+
+  // team2 forja el teamId de team1 al payload — el servidor deriva la identitat de
+  // socket.data.teamId (team2), mai del payload, així que el board de team1 no es toca.
+  teamClient2.emit(EVENTS.TEAM_PLACE_PIECE, { teamId: team1Id, slotId: 'boca', pieceType: 'boca' });
+  await wait(150);
+
+  assert.equal(team1GotBoard, false, 'team1 no ha de rebre cap board-state d\'un intent forjat per team2');
+});
+
+test('F5 recovery: reconnectar amb el token recupera el placement previ (CORE-03)', async () => {
+  const reconnect = connectAndAwait({ token: team1Token }, EVENTS.TEAM_BOARD_STATE);
+  const board = await reconnect.ready;
+  assert.ok(board, 'la reconnexió per token ha de rebre team:board-state en connectar');
+  assert.equal(
+    board.placement['antena-dreta'],
+    'antena',
+    'el board recuperat ha de mantenir el placement col·locat abans de la reconnexió',
+  );
+  reconnect.socket.close();
 });
 
 test('cleanup: tanca sockets restants', () => {
