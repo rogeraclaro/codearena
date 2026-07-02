@@ -1,0 +1,66 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/600.css';
+
+:root {
+  /* Spacing scale (multiples of 4) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Touch/click target minimum */
+  --hit-target-min: 44px;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-size-body: 16px;
+  --font-weight-body: 400;
+  --line-height-body: 1.5;
+  --font-size-label: 14px;
+  --font-weight-label: 600;
+  --line-height-label: 1.4;
+  --font-size-heading: 24px;
+  --font-weight-heading: 600;
+  --line-height-heading: 1.2;
+  --font-size-display: 56px;
+  --font-weight-display: 600;
+  --line-height-display: 1.0;
+
+  /* Surface colors (60/30/10) */
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-accent: #059669;
+  --color-destructive: #DC2626;
+
+  /* Text colors */
+  --color-text: #0F172A;
+  --color-muted: #64748B;
+
+  /* Semantic status colors */
+  --status-connected: #16A34A;
+  --status-disconnected: #94A3B8;
+
+  /* Phase color-coding (UX-02, reused Phases 2-5) */
+  --phase-html: #E44D26;
+  --phase-css: #264DE4;
+  --phase-js: #D4B106;
+
+  /* Timer urgency */
+  --timer-warning: #D97706;
+  --timer-critical: #DC2626;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-display: swap;
+}
