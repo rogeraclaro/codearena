@@ -9,6 +9,7 @@
 // but NEVER advances the phase automatically (D-11).
 
 import { randomUUID } from 'node:crypto';
+import { SLOTS, PIECES } from '../shared/robotTemplate.js';
 
 const PHASE_ORDER = ['html', 'css', 'js'];
 
@@ -23,7 +24,9 @@ const state = {
 function registerTeams(names) {
   for (const name of names) {
     const id = randomUUID();
-    state.teams.set(id, { id, name, claimed: false, connected: false, progress: null });
+    // placement: mapa autoritatiu slot->tipus per equip (GAME-03). Es projecta
+    // dirigit via getTeamBoard(); getPublicState() només en deriva el count N/8.
+    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {} });
   }
 }
 
@@ -54,13 +57,49 @@ function getPublicState() {
     phaseEndsAt: state.phaseEndsAt,
     timerStatus: state.timerStatus,
     remainingMsAtPause: state.remainingMsAtPause,
-    teams: [...state.teams.values()].map(({ id, name, connected, progress }) => ({
+    teams: [...state.teams.values()].map(({ id, name, connected, placement }) => ({
       id,
       name,
       connected,
-      progress,
+      // N/8 count derivat del board autoritatiu (D-15). Segur difondre (no revela
+      // QUINS slots estan ocupats). null fora de la fase html.
+      progress:
+        state.phase === 'html'
+          ? { placed: Object.keys(placement).length, total: SLOTS.length }
+          : null,
     })),
   };
+}
+
+// Inventari disponible d'un tipus = count de PIECES menys les ocurrències ja
+// col·locades (Pitfall 5: antena/orella/ull tenen count 2).
+function countAvailable(team, type) {
+  const piece = PIECES.find((p) => p.type === type);
+  if (!piece) return 0;
+  const used = Object.values(team.placement).filter((t) => t === type).length;
+  return piece.count - used;
+}
+
+// mutation-returns-bool (com claimTeam/pauseTimer): true només si ha mutat, així
+// el caller emet el board dirigit únicament quan hi ha canvi real (anti-storm).
+function placePiece(teamId, slotId, pieceType) {
+  const team = state.teams.get(teamId);
+  if (!team) return false;
+  if (state.phase !== 'html' || state.timerStatus === 'frozen') return false; // GAME-07 / D-11
+  const slot = SLOTS.find((s) => s.id === slotId); // enum de la plantilla (V5)
+  if (!slot || slot.accepts !== pieceType) return false; // type-check server-side (D-07)
+  if (team.placement[slotId]) return false; // slot ja ocupat -> no-op
+  if (countAvailable(team, pieceType) <= 0) return false; // inventari esgotat
+  team.placement[slotId] = pieceType;
+  return true;
+}
+
+// Board privat de l'equip (mai a getPublicState, mai a 'session'). Còpia
+// superficial — no filtra mai la referència viva.
+function getTeamBoard(teamId) {
+  const team = state.teams.get(teamId);
+  if (!team) return { placement: {} };
+  return { placement: { ...team.placement } };
 }
 
 // --- Timer/phase functions (all return true if they mutated state, so
@@ -137,6 +176,8 @@ export const gameState = {
   setConnected,
   getUnclaimedTeams,
   getPublicState,
+  placePiece,
+  getTeamBoard,
   startPhase,
   nextPhase,
   pauseTimer,

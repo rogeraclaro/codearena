@@ -12,10 +12,15 @@ export const EVENTS = Object.freeze({
   ADMIN_TIMER_RESUME: 'admin:timer-resume',
   ADMIN_TIMER_EXTEND: 'admin:timer-extend',
   ADMIN_FORCE_RESYNC: 'admin:force-resync',
+  // Fase HTML — intents de col·locació (identitat SEMPRE de socket.data.teamId, mai del payload).
+  TEAM_PLACE_PIECE: 'team:place-piece',
+  TEAM_REMOVE_PIECE: 'team:remove-piece', // declarat aquí; s'implementa al Pla 02
 
   // --- Server -> Client (authoritative broadcasts) ---
   SESSION_FULL_STATE: 'session:full-state',
   TEAM_CLAIMED: 'team:claimed',
   TEAM_AVAILABLE_LIST: 'team:available-list',
   TEAM_RELOAD: 'team:reload',
+  // Fase HTML — board privat de l'equip, emès DIRIGIT a team:<id> (mai a 'session', Pitfall 1).
+  TEAM_BOARD_STATE: 'team:board-state',
 });

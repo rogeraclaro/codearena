@@ -67,6 +67,9 @@ export function registerSocketHandlers(io) {
         socket.join(`team:${socket.data.teamId}`);
         socket.join('session');
         socket.emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        // F5/reconnexió recupera el robot mig muntat (CORE-03) — dirigit a
+        // l'owner, sense protocol de resync nou (reutilitza el board autoritatiu).
+        socket.emit(EVENTS.TEAM_BOARD_STATE, gameState.getTeamBoard(socket.data.teamId));
         socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       } else {
         // Unclaimed PC awaiting selection (D-01) — no token minted yet.
@@ -189,6 +192,28 @@ export function registerSocketHandlers(io) {
         if (typeof teamId !== 'string' || !teamId) return;
         if (!gameState.getPublicState().teams.some((t) => t.id === teamId)) return; // T-03-02: teamId must exist
         io.to(`team:${teamId}`).emit(EVENTS.TEAM_RELOAD);
+      }),
+    );
+
+    // --- Fase HTML: col·locació de peça (GAME-03) ---
+    // V4: la identitat SEMPRE ve de socket.data.teamId (middleware), MAI del
+    // payload — un equip no pot mutar el board d'un altre. V5: slotId/pieceType
+    // validats com a strings abans de passar a gameState (que revalida contra
+    // els enums de la plantilla). Divergència crítica respecte als handlers
+    // admin: en un place OK NO s'emet mai a io.to('session') — només board
+    // dirigit a l'owner + comptador N/8 a l'admin (Pitfall 1, tempesta de re-render).
+    socket.on(
+      EVENTS.TEAM_PLACE_PIECE,
+      safeHandler((payload) => {
+        const teamId = socket.data.teamId;
+        if (!teamId) return;
+        const slotId = payload?.slotId;
+        const pieceType = payload?.pieceType;
+        if (typeof slotId !== 'string' || typeof pieceType !== 'string') return;
+        if (gameState.placePiece(teamId, slotId, pieceType)) {
+          io.to(`team:${teamId}`).emit(EVENTS.TEAM_BOARD_STATE, gameState.getTeamBoard(teamId));
+          io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
       }),
     );
 

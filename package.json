@@ -16,7 +16,9 @@
     "socket.io": "4.8.3",
     "socket.io-client": "4.8.3",
     "lucide": "1.23.0",
-    "@fontsource/inter": "5.2.8"
+    "@fontsource/inter": "5.2.8",
+    "sortablejs": "1.15.7",
+    "dompurify": "3.4.11"
   },
   "devDependencies": {
     "vite": "7.3.6"
