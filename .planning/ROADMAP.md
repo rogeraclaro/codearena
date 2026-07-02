@@ -63,11 +63,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. La preview de la dreta es re-renderitza a l'instant amb cada bloc col·locat, reutilitzant la canonada de Fase 1
   3. En cap moment de la fase HTML l'equip pot escriure text de codi lliure — totes les interaccions són blocs predefinits arrossegables
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Llesca vertical caminant: plantilla del robot + autoritat de col·locació + preview real (SortableJS/DOMPurify) (Wave 1)
+- [x] 02-01-PLAN.md — Llesca vertical caminant: plantilla del robot + autoritat de col·locació + preview real (SortableJS/DOMPurify) (Wave 1)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
-| 2. Joc — Fase HTML (blocs drag & drop) | 0/3 | Planned | - |
+| 2. Joc — Fase HTML (blocs drag & drop) | 1/3 | In Progress|  |
 | 3. Joc — Fases CSS i JS | 0/TBD | Not started | - |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |

@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 1
-current_phase_name: Nucli en temps real i control de sessió
+current_phase: 02
+current_phase_name: joc-fase-html-blocs-drag-drop
 status: executing
 stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-07-02T16:33:50.760Z"
+last_updated: "2026-07-02T17:09:41.248Z"
 last_activity: 2026-07-02
-last_activity_desc: Fase 1 verificada (PASS 15/15, 19/19 tests)
+last_activity_desc: Phase 02 execution started
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 4
+  total_plans: 7
   completed_plans: 4
   percent: 20
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-01)
 
 **Core value:** Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (HTML = estructura, CSS = aparença, JS = comportament) manipulant-los directament, sense poder cometre errors de sintaxi i sense frustració.
-**Current focus:** Phase 1 — Nucli en temps real i control de sessió
+**Current focus:** Phase 02 — joc-fase-html-blocs-drag-drop
 
 ## Current Position
 
-Phase: 1 of 5 (Nucli en temps real i control de sessió)
-Plan: 4 of 4 complete in current phase (01-01, 01-02, 01-03, 01-04 ✓)
-Status: Fase 1 COMPLETA i verificada (PASS). Fase 2 disponible.
-Last activity: 2026-07-02 — Fase 1 verificada (PASS 15/15, 19/19 tests)
+Phase: 02 (joc-fase-html-blocs-drag-drop) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 02
+Last activity: 2026-07-02 — Phase 02 execution started
 
 Progress: [██████████] 100% (Fase 1 completa)
 
