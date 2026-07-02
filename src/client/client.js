@@ -151,6 +151,10 @@ let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd
 let latestPlacement = {};
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
 let boardMounted = false;
+// Flag de sessió de pàgina (D-14): un cop es col·loca la primera peça la pista
+// inicial desapareix PER SEMPRE aquesta càrrega — no reapareix ni quan el
+// recompte torna a 0 (l'equip retira totes les peces). Es reinicia només amb F5.
+let hintDismissed = false;
 
 function destroySortables() {
   sortables.forEach((s) => s.destroy());
@@ -326,10 +330,14 @@ function buildProgress(placement) {
 // Pista inicial (D-14): fletxa calaix→tauler + micro-copy. Es descarta
 // permanentment quan es col·loca la primera peça.
 function buildHint(placement) {
-  if (Object.keys(placement).length > 0) return null;
+  // El primer placement (recompte 0→1) descarta la pista permanentment via
+  // hintDismissed; un cop marcada, mai més es reconstrueix aquesta càrrega.
+  if (Object.keys(placement).length > 0) hintDismissed = true;
+  if (hintDismissed) return null;
   const hint = document.createElement('div');
   hint.className = 'drag-hint';
   const arrow = createElement(MoveRight);
+  arrow.classList.add('drag-hint__arrow'); // objectiu del loop ±4px (CSS)
   arrow.setAttribute('width', '20');
   arrow.setAttribute('height', '20');
   hint.appendChild(arrow);

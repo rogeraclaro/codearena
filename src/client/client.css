@@ -204,6 +204,24 @@
   font-size: var(--font-size-body);
 }
 
+/* Loop suau de la fletxa calaix→tauler (±4px = var(--space-xs)) — decoratiu,
+   nomes dins prefers-reduced-motion:no-preference (mateix patró que el pulse
+   del timer). Amb reduced-motion la fletxa queda estatica. */
+@keyframes drag-hint-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(var(--space-xs));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drag-hint__arrow {
+    animation: drag-hint-nudge 1s var(--motion-ease) infinite;
+  }
+}
+
 /* Tauler de slots niats (D-06/D-08) */
 .tauler {
   display: flex;
