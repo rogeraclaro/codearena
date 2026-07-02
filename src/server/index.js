@@ -10,6 +10,8 @@ export function startServer(port = process.env.PORT || 3000) {
 
   const httpServer = createServer(app);
   const io = new Server(httpServer, {
+    // WebSocket-only: sense fallback a long-polling (must-have CORE-01, robustesa rere Nginx).
+    transports: ['websocket'],
     connectionStateRecovery: {
       maxDisconnectionDuration: 2 * 60 * 1000,
       skipMiddlewares: false,

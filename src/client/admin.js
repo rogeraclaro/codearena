@@ -214,7 +214,7 @@ function renderAdmin(socket, state) {
 
 function bootAdmin() {
   injectStyles();
-  const socket = io({ auth: { role: 'admin' } });
+  const socket = io({ transports: ['websocket'], auth: { role: 'admin' } });
   socket.on('session:full-state', (state) => renderAdmin(socket, state));
 }
 

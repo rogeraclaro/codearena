@@ -113,7 +113,9 @@ function bootClient() {
   injectStyles();
 
   const token = localStorage.getItem(TOKEN_KEY);
-  const socket = io(token ? { auth: { token } } : {});
+  // WebSocket-only: evita el handshake per long-polling (fràgil rere Nginx) i
+  // garanteix connexió directa via 101 Switching Protocols (must-have CORE-01).
+  const socket = io({ transports: ['websocket'], ...(token ? { auth: { token } } : {}) });
 
   socket.on('team:available-list', (payload) => {
     // Server no longer recognizes a stale token (e.g. process restart) —
