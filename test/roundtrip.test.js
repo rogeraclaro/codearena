@@ -22,20 +22,26 @@ after(async () => {
   await new Promise((resolve) => httpServer.close(resolve));
 });
 
-function connect(auth = {}) {
-  return new Promise((resolve, reject) => {
-    const socket = ioClient(baseUrl, { auth, forceNew: true, transports: ['websocket'] });
-    socket.once('connect', () => resolve(socket));
-    socket.once('connect_error', reject);
-  });
-}
-
 function once(socket, event) {
   return new Promise((resolve) => socket.once(event, resolve));
 }
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Creates a raw socket and, in the SAME synchronous tick, attaches listeners
+// for 'connect' plus whatever first event the caller expects — the server
+// may emit its first event (session:full-state / team:available-list)
+// synchronously right after the connection handshake, so the listener must
+// be registered before any `await` yields back to the event loop, otherwise
+// the event is missed (classic Socket.io test race condition).
+function connectAndAwait(auth, firstEvent) {
+  const socket = ioClient(baseUrl, { auth, forceNew: true, transports: ['websocket'] });
+  const ready = Promise.all([once(socket, 'connect'), once(socket, firstEvent)]).then(
+    ([, payload]) => payload,
+  );
+  return { socket, ready };
 }
 
 // Shared fixtures across the ordered A-E round-trip (node:test runs tests in
@@ -49,16 +55,23 @@ let claimedTeamId;
 let adminFullStateAfterClaim;
 
 test('Test A: admin registra equips, el client rep la llista disponible', async () => {
-  adminSocket = await connect({ role: 'admin' });
-  await once(adminSocket, 'session:full-state'); // initial emit on admin connect
+  const admin = connectAndAwait({ role: 'admin' }, 'session:full-state');
+  adminSocket = admin.socket;
+  await admin.ready; // initial emit on admin connect
 
-  teamClient1 = await connect();
-  await once(teamClient1, 'team:available-list'); // initial (empty) list on connect
+  const team1 = connectAndAwait({}, 'team:available-list');
+  teamClient1 = team1.socket;
+  await team1.ready; // initial (empty) list on connect
 
   const listPromise = once(teamClient1, 'team:available-list');
+  // Drain admin's own session:full-state broadcast triggered by this same
+  // register-teams call here — otherwise it lingers as an unconsumed event
+  // and a later once('session:full-state') listener (Test B) could catch
+  // this stale in-flight packet instead of the one it actually expects.
+  const adminRegisterBroadcast = once(adminSocket, 'session:full-state');
   adminSocket.emit('admin:register-teams', { names: ['A', 'B', 'C', 'D'] });
 
-  const payload = await listPromise;
+  const [payload] = await Promise.all([listPromise, adminRegisterBroadcast]);
   assert.equal(payload.teams.length, 4);
   availableTeamsAfterRegister = payload.teams;
 });
@@ -77,8 +90,9 @@ test('Test B: tria equip + bloqueig fort (D-03)', async () => {
   claimedTeamId = claimed.teamId;
   adminFullStateAfterClaim = adminStatePromise;
 
-  teamClient2 = await connect();
-  const list2 = await once(teamClient2, 'team:available-list');
+  const team2 = connectAndAwait({}, 'team:available-list');
+  teamClient2 = team2.socket;
+  const list2 = await team2.ready;
   assert.equal(list2.teams.length, 3);
   assert.ok(!list2.teams.some((t) => t.id === claimedTeamId));
 });
@@ -93,13 +107,13 @@ test("Test C: l'estat autoritatiu reflecteix l'equip triat com a connectat", asy
 });
 
 test('Test D: reconnexio per token (CORE-03) sense tornar a demanar tria', async () => {
+  const reconnect = connectAndAwait({ token: claimedToken }, 'session:full-state');
   let sawAvailableList = false;
-  const reconnected = await connect({ token: claimedToken });
-  reconnected.once('team:available-list', () => {
+  reconnect.socket.once('team:available-list', () => {
     sawAvailableList = true;
   });
 
-  const state = await once(reconnected, 'session:full-state');
+  const state = await reconnect.ready;
   const team = state.teams.find((t) => t.id === claimedTeamId);
   assert.ok(team, 'la reconnexio ha de rebre el mateix equip a session:full-state');
   assert.equal(team.connected, true);
@@ -107,19 +121,19 @@ test('Test D: reconnexio per token (CORE-03) sense tornar a demanar tria', async
   await wait(100);
   assert.equal(sawAvailableList, false, 'un socket reconnectat per token mai ha de rebre team:available-list');
 
-  reconnected.close();
+  reconnect.socket.close();
 });
 
 test('Test E: un socket no-admin no pot mutar equips (V4 access control)', async () => {
   teamClient2.emit('admin:register-teams', { names: ['X', 'Y'] });
   await wait(150);
 
-  const checkSocket = await connect();
-  const list = await once(checkSocket, 'team:available-list');
+  const check = connectAndAwait({}, 'team:available-list');
+  const list = await check.ready;
   assert.equal(list.teams.length, 3, 'admin:register-teams des dun socket no-admin no ha de mutar l\'estat');
   assert.ok(!list.teams.some((t) => t.name === 'X' || t.name === 'Y'));
 
-  checkSocket.close();
+  check.socket.close();
 });
 
 test('cleanup: tanca sockets restants', () => {

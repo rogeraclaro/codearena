@@ -9,7 +9,7 @@
     "server": "node src/server/index.js",
     "build": "vite build",
     "start": "node src/server/index.js",
-    "test": "node --test test/"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "express": "4.22.2",

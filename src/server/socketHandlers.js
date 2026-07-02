@@ -1,0 +1,126 @@
+// Socket.io event wiring: identity middleware + connection lifecycle +
+// per-event handlers. Every admin:* handler re-validates room membership
+// server-side (V4 Access Control / Pitfall 4) — a client-sent role flag is
+// never trusted for authorization, only for the initial room join.
+
+import { EVENTS } from './events.js';
+import { gameState } from './gameState.js';
+import * as sessionStore from './sessionStore.js';
+
+const MAX_TEAMS = 6;
+const MAX_TEAM_NAME_LENGTH = 40;
+
+// Wrap every handler so a thrown exception inside one event never crashes
+// the shared Node process for every team (V5 / Pitfall: DoS via malformed
+// payload).
+function safeHandler(fn) {
+  return (...args) => {
+    try {
+      fn(...args);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[socketHandlers] handler error:', err);
+    }
+  };
+}
+
+function isValidTeamNamesPayload(names) {
+  return (
+    Array.isArray(names) &&
+    names.length > 0 &&
+    names.length <= MAX_TEAMS &&
+    names.every(
+      (name) => typeof name === 'string' && name.trim().length > 0 && name.length <= MAX_TEAM_NAME_LENGTH,
+    )
+  );
+}
+
+export function registerSocketHandlers(io) {
+  io.use((socket, next) => {
+    try {
+      const { token, role } = socket.handshake.auth || {};
+      if (role === 'admin') {
+        socket.data.isAdmin = true;
+      }
+      if (typeof token === 'string' && token) {
+        const teamId = sessionStore.resolve(token);
+        if (teamId) {
+          socket.data.teamId = teamId;
+          socket.data.token = token;
+        }
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  io.on('connection', (socket) => {
+    try {
+      if (socket.data.isAdmin) {
+        socket.join('admin');
+        socket.join('session');
+        socket.emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+      } else if (socket.data.teamId) {
+        // Reconnection by token (CORE-03): reassociate without re-asking selection.
+        gameState.setConnected(socket.data.teamId, true);
+        socket.join(`team:${socket.data.teamId}`);
+        socket.join('session');
+        socket.emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+      } else {
+        // Unclaimed PC awaiting selection (D-01) — no token minted yet.
+        socket.join('session');
+        socket.join('unclaimed');
+        socket.emit(EVENTS.TEAM_AVAILABLE_LIST, { teams: gameState.getUnclaimedTeams() });
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[socketHandlers] connection handler error:', err);
+    }
+
+    socket.on(
+      EVENTS.TEAM_SELECT,
+      safeHandler((payload) => {
+        const teamId = payload?.teamId;
+        if (typeof teamId !== 'string' || !teamId) return;
+
+        const claimed = gameState.claimTeam(teamId); // false if already claimed (D-03 bloqueig fort)
+        if (!claimed) return;
+
+        const token = sessionStore.mintToken(teamId);
+        socket.data.teamId = teamId;
+        socket.leave('unclaimed');
+        socket.join(`team:${teamId}`);
+
+        socket.emit(EVENTS.TEAM_CLAIMED, { token, teamId });
+        io.to('unclaimed').emit(EVENTS.TEAM_AVAILABLE_LIST, { teams: gameState.getUnclaimedTeams() });
+        io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+      }),
+    );
+
+    socket.on(
+      EVENTS.ADMIN_REGISTER_TEAMS,
+      safeHandler((payload) => {
+        if (!socket.rooms.has('admin')) return; // V4: never trust a client-sent role flag
+
+        const names = payload?.names;
+        if (!isValidTeamNamesPayload(names)) return;
+
+        gameState.registerTeams(names);
+        io.to('unclaimed').emit(EVENTS.TEAM_AVAILABLE_LIST, { teams: gameState.getUnclaimedTeams() });
+        io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+      }),
+    );
+
+    socket.on(
+      'disconnect',
+      safeHandler(() => {
+        if (socket.data.teamId) {
+          gameState.setConnected(socket.data.teamId, false);
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+  });
+}
