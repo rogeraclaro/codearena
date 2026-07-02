@@ -267,7 +267,7 @@
   border-radius: 8px;
 }
 .slot:empty::before {
-  content: attr(data-accepts);
+  content: attr(data-label);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-body);

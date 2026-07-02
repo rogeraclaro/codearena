@@ -63,6 +63,42 @@ export const SLOTS = Object.freeze([
   }),
 ]);
 
+// Container frames (D-06): the system pre-builds these; the student never drags
+// them. Single source of truth for their tag+identity so the read-only frame
+// labels (D-12) don't hand-duplicate tag knowledge. The ACTUAL nested markup is
+// assembled in client.js assemblePreview() and mirrors these exactly (D-01).
+export const CONTAINERS = Object.freeze([
+  Object.freeze({ tag: 'section', attr: 'id', name: 'robot-contenidor' }),
+  Object.freeze({ tag: 'div', attr: 'id', name: 'robot-cap' }),
+  Object.freeze({ tag: 'div', attr: 'class', name: 'contenidor-ulls' }),
+]);
+
+// D-12 (override at the 02-03 checkpoint, 2026-07-03): a piece/slot label is the
+// REAL literal HTML tag with angle brackets — e.g. `<img class="antena">` — not
+// the bare class/type name. Derived from SLOTS[].html (single source, D-01/D-07),
+// never hand-written. The shown attribute is the one that identifies the TYPE
+// (value === type): class for antena/orella/ull, id for nas/boca. The per-slot
+// id (`antena-esquerra`) is per-INSTANCE and deliberately not shown — a type has
+// 2 slots but one label. Read-only text only (GAME-06/V5): the brackets are plain
+// characters, never interpreted as markup.
+export function pieceLabel(type) {
+  const slot = SLOTS.find((s) => s.accepts === type);
+  if (!slot) return type; // defensive fallback
+  const tag = slot.html.match(/<(\w+)/)?.[1] ?? type;
+  const attr = ['class', 'id'].find((a) => {
+    const m = slot.html.match(new RegExp(`\\b${a}="([^"]*)"`));
+    return m?.[1] === type;
+  });
+  return attr ? `<${tag} ${attr}="${type}">` : `<${tag}>`;
+}
+
+// Same literal-tag treatment for the pre-built container frames (D-12 override):
+// `robot-contenidor` → `<section id="robot-contenidor">`, etc.
+export function containerLabel(name) {
+  const c = CONTAINERS.find((x) => x.name === name);
+  return c ? `<${c.tag} ${c.attr}="${c.name}">` : name;
+}
+
 // Drawer inventory (good pieces, generic per type). 8 leaf pieces total across
 // 5 types — antena/orella/ull have count 2 (Pitfall 5: don't treat each type as
 // unique or the second slot can never be filled).

@@ -11,7 +11,7 @@ import Sortable from 'sortablejs';
 import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
 import { EVENTS } from '../server/events.js';
-import { SLOTS, PIECES, DISTRACTORS } from '../shared/robotTemplate.js';
+import { SLOTS, PIECES, DISTRACTORS, pieceLabel, containerLabel } from '../shared/robotTemplate.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -183,8 +183,9 @@ function remainingPieces(placement) {
 }
 
 // Chip read-only (D-12): thumbnail (antena/orella) o glyph Lucide (ull/nas/boca)
-// + etiqueta = el tag/class real en monospace, sense angle brackets. data-type
-// genèric (D-07). Cap camp editable (GAME-06).
+// + etiqueta = el tag HTML literal real en monospace amb angle brackets (p.ex.
+// `<img class="antena">`, derivat de SLOTS via pieceLabel — override del
+// checkpoint 02-03). data-type genèric (D-07). Cap camp editable (GAME-06).
 function createChip(type) {
   const chip = document.createElement('div');
   chip.className = 'piece-chip';
@@ -205,7 +206,8 @@ function createChip(type) {
 
   const label = document.createElement('span');
   label.className = 'piece-chip__label';
-  label.textContent = type; // DOM text API only (V5 anti-XSS)
+  // textContent, no innerHTML: els `< >` són text pla, mai markup (V5 anti-XSS).
+  label.textContent = pieceLabel(type);
   chip.appendChild(label);
   return chip;
 }
@@ -248,7 +250,8 @@ function createSlot(slot, placement) {
   const el = document.createElement('div');
   el.className = 'slot';
   el.dataset.slotId = slot.id;
-  el.dataset.accepts = slot.accepts; // etiqueta fantasma via CSS :empty::before
+  el.dataset.accepts = slot.accepts; // type-check de capacitat (SortableJS put)
+  el.dataset.label = pieceLabel(slot.accepts); // etiqueta fantasma via CSS :empty::before
   const placed = placement[slot.id];
   if (placed) {
     el.classList.add('slot--filled');
@@ -274,7 +277,7 @@ function buildBoard(placement) {
   const board = document.createElement('div');
   board.className = 'tauler';
 
-  const section = createFrame('robot-contenidor');
+  const section = createFrame(containerLabel('robot-contenidor'));
 
   const antenaRow = document.createElement('div');
   antenaRow.className = 'slot-row';
@@ -288,9 +291,9 @@ function buildBoard(placement) {
   orellaRow.appendChild(createSlot(slotById('orella-dreta'), placement));
   section.appendChild(orellaRow);
 
-  const cap = createFrame('robot-cap');
+  const cap = createFrame(containerLabel('robot-cap'));
 
-  const ulls = createFrame('contenidor-ulls');
+  const ulls = createFrame(containerLabel('contenidor-ulls'));
   const ullRow = document.createElement('div');
   ullRow.className = 'slot-row';
   ullRow.appendChild(createSlot(slotById('ull-1'), placement));
@@ -446,6 +449,9 @@ function assemblePreview(placement) {
   const nas = placement.nas ? slotById('nas').html : '';
   const boca = placement.boca ? slotById('boca').html : '';
 
+  // Markup de render real (mai text d'usuari, GAME-06). Els contenidors reflecteixen
+  // CONTAINERS de robotTemplate.js (D-01) — es manté inline i explícit per llegibilitat
+  // de l'estructura niada; CONTAINERS n'és la definició canònica per a les etiquetes.
   const raw = `<section id="robot-contenidor">${antenesOrelles}<div id="robot-cap"><div class="contenidor-ulls">${ulls}</div>${nas}${boca}</div></section>`;
   const clean = DOMPurify.sanitize(raw, {
     ADD_TAGS: ['output'],
