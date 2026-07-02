@@ -134,6 +134,9 @@ function injectStyles() {
     }
     .team-card-progress {
       min-height: var(--space-lg);
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+      color: var(--color-muted);
     }
     .empty-state {
       text-align: center;
@@ -332,7 +335,13 @@ function buildTeamCard(team, socket) {
   statusEl.appendChild(statusIcon(team.connected));
 
   const progressEl = document.createElement('div');
-  progressEl.className = 'team-card-progress'; // reserved, empty in Phase 1 (D-08)
+  progressEl.className = 'team-card-progress'; // espai reservat a la Fase 1 (D-08)
+  // D-15: durant la Fase HTML el servidor projecta team.progress {placed,total}
+  // (getPublicState); fora d'aquesta fase és null i el card queda buit (Fase 1).
+  // textContent (mai innerHTML) — comptador numèric del servidor, anti-XSS T-02-07.
+  if (team.progress && typeof team.progress.placed === 'number') {
+    progressEl.textContent = `${team.progress.placed}/${team.progress.total} peces`;
+  }
 
   const actionsEl = document.createElement('div');
   actionsEl.className = 'team-card-actions';
