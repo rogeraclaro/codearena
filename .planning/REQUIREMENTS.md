@@ -26,10 +26,10 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 
 - [ ] **GAME-01**: La pantalla d'equip està dividida: panell d'acció a l'esquerra, preview a la dreta
 - [ ] **GAME-02**: La preview es re-renderitza en temps real a cada acció, dins un iframe aïllat (sandbox)
-- [ ] **GAME-03**: Fase HTML: blocs drag & drop amb snap fort — un bloc deixat en lloc invàlid torna al calaix o encaixa a l'slot vàlid més proper
+- [x] **GAME-03**: Fase HTML: blocs drag & drop amb snap fort — un bloc deixat en lloc invàlid torna al calaix o encaixa a l'slot vàlid més proper
 - [ ] **GAME-04**: Fase CSS: codi "foradat" amb sintaxi CSS real i valors controlats (color pickers, sliders)
 - [ ] **GAME-05**: Fase JS: constructor de regles "Quan passi X → A l'element Y → Fes Z" amb desplegables
-- [ ] **GAME-06**: Cap fase permet escriptura lliure de codi
+- [x] **GAME-06**: Cap fase permet escriptura lliure de codi
 - [ ] **GAME-07**: En esgotar-se el temps l'equip passa de fase tal com estigui; les fases CSS i JS operen sobre el DOM produït encara que sigui incomplet
 
 ### Puntuació i resultats (SCORE)
