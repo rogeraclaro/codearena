@@ -217,6 +217,26 @@ export function registerSocketHandlers(io) {
       }),
     );
 
+    // --- Fase HTML: retirada de peça (D-10, GAME-03) ---
+    // Còpia EXACTA de la forma de team:place-piece: identitat SEMPRE de
+    // socket.data.teamId (V4 — un equip no pot retirar del board d'un altre
+    // forjant teamId al payload), slotId validat com a string (V5), i en una
+    // retirada real emissió dirigida board→owner + N/8→admin, MAI a io.to('session')
+    // (Pitfall 1). removePiece és no-op en slot buit → cap re-broadcast (T-02-06).
+    socket.on(
+      EVENTS.TEAM_REMOVE_PIECE,
+      safeHandler((payload) => {
+        const teamId = socket.data.teamId;
+        if (!teamId) return;
+        const slotId = payload?.slotId;
+        if (typeof slotId !== 'string') return;
+        if (gameState.removePiece(teamId, slotId)) {
+          io.to(`team:${teamId}`).emit(EVENTS.TEAM_BOARD_STATE, gameState.getTeamBoard(teamId));
+          io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
     socket.on(
       'disconnect',
       safeHandler(() => {

@@ -94,6 +94,20 @@ function placePiece(teamId, slotId, pieceType) {
   return true;
 }
 
+// Mirall de placePiece (D-10): retirar una peça col·locada perquè "desfer" sigui
+// trivial i sense càstig. mutation-returns-bool → true només si ha mutat, així el
+// caller emet el board dirigit únicament quan hi ha canvi real (anti-storm, T-02-06).
+// No-op (false, sense broadcast) si l'equip no existeix, fora de la fase html,
+// timer congelat (D-11 — no es toca el robot un cop congelat), o slot ja buit.
+function removePiece(teamId, slotId) {
+  const team = state.teams.get(teamId);
+  if (!team) return false;
+  if (state.phase !== 'html' || state.timerStatus === 'frozen') return false; // GAME-07 / D-11
+  if (!team.placement[slotId]) return false; // slot buit -> no-op
+  delete team.placement[slotId];
+  return true;
+}
+
 // Board privat de l'equip (mai a getPublicState, mai a 'session'). Còpia
 // superficial — no filtra mai la referència viva.
 function getTeamBoard(teamId) {
@@ -177,6 +191,7 @@ export const gameState = {
   getUnclaimedTeams,
   getPublicState,
   placePiece,
+  removePiece,
   getTeamBoard,
   startPhase,
   nextPhase,
