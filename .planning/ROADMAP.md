@@ -42,7 +42,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Timer autoritatiu sincronitzat + control de fase de l'admin (Wave 2)
+- [x] 01-02-PLAN.md — Timer autoritatiu sincronitzat + control de fase de l'admin (Wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
