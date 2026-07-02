@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 1
 current_phase_name: Nucli en temps real i control de sessió
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-07-02T14:06:23.826Z"
+stopped_at: Phase 2 UI-SPEC approved
+last_updated: "2026-07-02T16:33:50.760Z"
 last_activity: 2026-07-02
 last_activity_desc: Fase 1 verificada (PASS 15/15, 19/19 tests)
 progress:
@@ -90,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-02T14:06:23.815Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-joc-fase-html-blocs-drag-drop/02-CONTEXT.md
+Last session: 2026-07-02T16:33:50.749Z
+Stopped at: Phase 2 UI-SPEC approved
+Resume file: .planning/phases/02-joc-fase-html-blocs-drag-drop/02-UI-SPEC.md
