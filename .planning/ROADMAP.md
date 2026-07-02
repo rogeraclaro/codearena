@@ -31,7 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Un equip que refresca la pàgina o pateix una desconnexió recupera exactament el mateix estat (fase, timer) sense cap intervenció manual
   4. L'admin pot forçar un resync d'un equip penjat i veure l'estat de connexió de tots els equips en tot moment
   5. Cada pantalla d'equip mostra el panell d'acció (esquerra) i la preview en temps real (dreta) amb un llenguatge visual consistent, iconografia clara i text mínim
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 01-01-PLAN.md — Walking Skeleton: scaffold + round-trip registre→tria + identitat per token (Wave 1)
+- [ ] 01-02-PLAN.md — Timer autoritatiu sincronitzat + control de fase de l'admin (Wave 2)
+- [ ] 01-03-PLAN.md — Graella de monitoratge + resync forçat (Wave 3)
+- [ ] 01-04-PLAN.md — Estats de la pantalla d'equip (espera/interstici/split/congelat) + preview aïllada (Wave 3)
 **UI hint**: yes
 
 ### Phase 2: Joc — Fase HTML (blocs drag & drop)
@@ -90,7 +94,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Nucli en temps real i control de sessió | 0/TBD | Not started | - |
+| 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
 | 2. Joc — Fase HTML (blocs drag & drop) | 0/TBD | Not started | - |
 | 3. Joc — Fases CSS i JS | 0/TBD | Not started | - |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |
