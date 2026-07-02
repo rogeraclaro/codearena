@@ -81,3 +81,158 @@
   position: relative;
   color: var(--color-muted);
 }
+
+/* ===== Fase HTML: calaix + tauler + peces (GAME-03, D-06..D-14) =====
+   Nomes tokens — cap literal. --phase-html es el color d'interaccio de la
+   fase (mai --color-accent, reservat al CTA d'Admin). */
+
+.html-game {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Progrés propi N/8 (D-14) */
+.progress-pieces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.progress-pieces__label {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+}
+.progress-pieces__pips {
+  display: flex;
+  gap: var(--space-xs);
+}
+.pip {
+  width: var(--space-md);
+  height: var(--space-sm);
+  border-radius: 999px;
+  background: var(--color-border);
+}
+.pip--filled {
+  background: var(--phase-html);
+}
+
+/* Calaix (safata d'origen) */
+.calaix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  min-height: var(--hit-target-min);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+/* Chip de peça (read-only, D-12) — hit area >= 44px per perdonar la punteria */
+.piece-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--hit-target-min);
+  padding: 0 var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: grab;
+  color: var(--color-text);
+}
+.piece-chip:active {
+  cursor: grabbing;
+}
+.piece-chip__thumb {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.piece-chip__label {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-body);
+  color: var(--color-muted);
+}
+
+/* Pista inicial (D-14) */
+.drag-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--font-size-body);
+}
+
+/* Tauler de slots niats (D-06/D-08) */
+.tauler {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.slot-frame {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.slot-frame::before {
+  content: attr(data-label);
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-body);
+  color: var(--color-muted);
+}
+.slot-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Slot fulla — buit: vora discontinua + etiqueta fantasma (pseudo-element, per
+   NO comptar com a fill i preservar el type-check de capacitat 1). */
+.slot {
+  position: relative;
+  flex: 1;
+  min-width: var(--hit-target-min);
+  min-height: var(--hit-target-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs);
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+}
+.slot:empty::before {
+  content: attr(data-accepts);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-body);
+  color: var(--color-muted);
+}
+.slot--filled {
+  border-style: solid;
+  background: var(--color-surface);
+}
+
+/* Accept pulse (D-09) — flaix de vora phase-html a l'encaix. Nomes decoratiu. */
+@keyframes slot-accept-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--phase-html);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .slot--accepting {
+    animation: slot-accept-pulse var(--motion-snap) var(--motion-ease);
+  }
+}

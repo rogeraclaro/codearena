@@ -6,8 +6,12 @@
 // compte (estat autoritatiu al servidor, T-04-03).
 
 import { io } from 'socket.io-client';
-import { createElement, Lock } from 'lucide';
+import { createElement, Lock, Eye, Circle, Minus, MoveRight } from 'lucide';
+import Sortable from 'sortablejs';
+import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
+import { EVENTS } from '../server/events.js';
+import { SLOTS, PIECES } from '../shared/robotTemplate.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -100,6 +104,7 @@ function renderSelectionPrompt(socket, teams) {
 // D-05: pantalla d'espera dedicada a pantalla completa abans que l'admin
 // iniciï la primera fase — prioritza calma cognitiva ("encara no toca res").
 function renderWaitingScreen(team) {
+  teardownBoard();
   const app = clearApp();
   const container = document.createElement('div');
   container.className = 'fullscreen-screen';
@@ -121,6 +126,7 @@ function renderWaitingScreen(team) {
 // accent (UX-02) — reforça el model mental HTML→CSS→JS abans de revelar el
 // split actiu.
 function renderInterstitialScreen(phase) {
+  teardownBoard();
   const app = clearApp();
   const container = document.createElement('div');
   container.className = 'interstitial-screen';
@@ -134,12 +140,310 @@ function renderInterstitialScreen(phase) {
   app.appendChild(container);
 }
 
+// --- Fase HTML: calaix + tauler drag & drop (GAME-03) ---
+// El board autoritatiu viu al servidor; el DOM local després d'un drag és
+// optimista i es reconcilia amb team:board-state. latestPlacement guarda l'últim
+// board rebut perquè un session:full-state (update quirúrgic) no el perdi.
+
+const GLYPHS = { ull: Eye, nas: Circle, boca: Minus };
+
+let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd)
+let latestPlacement = {};
+let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
+let boardMounted = false;
+
+function destroySortables() {
+  sortables.forEach((s) => s.destroy());
+  sortables = [];
+}
+
+// Es crida en sortir del split html (espera/interstici) — el tauler ja no existeix.
+function teardownBoard() {
+  destroySortables();
+  boardMounted = false;
+}
+
+// Inventari restant = PIECES menys les peces ja col·locades (derivat del board
+// autoritatiu, Pitfall 5). Retorna una llista plana de tipus per pintar al calaix.
+function remainingPieces(placement) {
+  const placedCounts = {};
+  for (const type of Object.values(placement)) {
+    placedCounts[type] = (placedCounts[type] || 0) + 1;
+  }
+  const chips = [];
+  for (const { type, count } of PIECES) {
+    const remaining = count - (placedCounts[type] || 0);
+    for (let i = 0; i < remaining; i += 1) chips.push(type);
+  }
+  return chips;
+}
+
+// Chip read-only (D-12): thumbnail (antena/orella) o glyph Lucide (ull/nas/boca)
+// + etiqueta = el tag/class real en monospace, sense angle brackets. data-type
+// genèric (D-07). Cap camp editable (GAME-06).
+function createChip(type) {
+  const chip = document.createElement('div');
+  chip.className = 'piece-chip';
+  chip.dataset.type = type;
+
+  if (type === 'antena' || type === 'orella') {
+    const thumb = document.createElement('img');
+    thumb.className = 'piece-chip__thumb';
+    thumb.src = `/${type}.svg`;
+    thumb.alt = '';
+    chip.appendChild(thumb);
+  } else if (GLYPHS[type]) {
+    const glyph = createElement(GLYPHS[type]);
+    glyph.setAttribute('width', '20');
+    glyph.setAttribute('height', '20');
+    chip.appendChild(glyph);
+  }
+
+  const label = document.createElement('span');
+  label.className = 'piece-chip__label';
+  label.textContent = type; // DOM text API only (V5 anti-XSS)
+  chip.appendChild(label);
+  return chip;
+}
+
+function createSlot(slot, placement) {
+  const el = document.createElement('div');
+  el.className = 'slot';
+  el.dataset.slotId = slot.id;
+  el.dataset.accepts = slot.accepts; // etiqueta fantasma via CSS :empty::before
+  const placed = placement[slot.id];
+  if (placed) {
+    el.classList.add('slot--filled');
+    el.appendChild(createChip(placed)); // 1 fill real → capacitat consumida
+  }
+  return el;
+}
+
+function createFrame(label) {
+  const frame = document.createElement('div');
+  frame.className = 'slot-frame';
+  frame.dataset.label = label; // etiqueta del contenidor via CSS ::before
+  return frame;
+}
+
+function slotById(id) {
+  return SLOTS.find((s) => s.id === id);
+}
+
+// Tauler de slots niats que reflecteix vagament la disposició del robot
+// (UI-SPEC §Layout) perquè esquerra i preview es corresponguin.
+function buildBoard(placement) {
+  const board = document.createElement('div');
+  board.className = 'tauler';
+
+  const section = createFrame('robot-contenidor');
+
+  const antenaRow = document.createElement('div');
+  antenaRow.className = 'slot-row';
+  antenaRow.appendChild(createSlot(slotById('antena-esquerra'), placement));
+  antenaRow.appendChild(createSlot(slotById('antena-dreta'), placement));
+  section.appendChild(antenaRow);
+
+  const orellaRow = document.createElement('div');
+  orellaRow.className = 'slot-row';
+  orellaRow.appendChild(createSlot(slotById('orella-esquerra'), placement));
+  orellaRow.appendChild(createSlot(slotById('orella-dreta'), placement));
+  section.appendChild(orellaRow);
+
+  const cap = createFrame('robot-cap');
+
+  const ulls = createFrame('contenidor-ulls');
+  const ullRow = document.createElement('div');
+  ullRow.className = 'slot-row';
+  ullRow.appendChild(createSlot(slotById('ull-1'), placement));
+  ullRow.appendChild(createSlot(slotById('ull-2'), placement));
+  ulls.appendChild(ullRow);
+  cap.appendChild(ulls);
+
+  cap.appendChild(createSlot(slotById('nas'), placement));
+  cap.appendChild(createSlot(slotById('boca'), placement));
+  section.appendChild(cap);
+
+  board.appendChild(section);
+  return board;
+}
+
+function buildProgress(placement) {
+  const wrap = document.createElement('div');
+  wrap.className = 'progress-pieces';
+  const placed = Object.keys(placement).length;
+
+  const label = document.createElement('span');
+  label.className = 'progress-pieces__label';
+  label.textContent = `${placed}/${SLOTS.length} peces`;
+  wrap.appendChild(label);
+
+  const pips = document.createElement('div');
+  pips.className = 'progress-pieces__pips';
+  for (let i = 0; i < SLOTS.length; i += 1) {
+    const pip = document.createElement('span');
+    pip.className = i < placed ? 'pip pip--filled' : 'pip';
+    pips.appendChild(pip);
+  }
+  wrap.appendChild(pips);
+  return wrap;
+}
+
+// Pista inicial (D-14): fletxa calaix→tauler + micro-copy. Es descarta
+// permanentment quan es col·loca la primera peça.
+function buildHint(placement) {
+  if (Object.keys(placement).length > 0) return null;
+  const hint = document.createElement('div');
+  hint.className = 'drag-hint';
+  const arrow = createElement(MoveRight);
+  arrow.setAttribute('width', '20');
+  arrow.setAttribute('height', '20');
+  hint.appendChild(arrow);
+  const txt = document.createElement('span');
+  txt.textContent = 'Arrossega les peces als forats';
+  hint.appendChild(txt);
+  return hint;
+}
+
+// SortableJS: un Sortable per slot (capacitat 1). group.put com a funció fa el
+// type-check (D-07); emptyInsertThreshold és l'imant (D-09); el revert natiu és
+// el rebot (D-09/D-11, distractors inclosos). onAdd emet l'intent al servidor.
+function initSortables(calaixEl, slotEls) {
+  const drawer = new Sortable(calaixEl, {
+    group: { name: 'robot', pull: true, put: true },
+    sort: false,
+    animation: 150,
+    emptyInsertThreshold: 40,
+  });
+  sortables.push(drawer);
+
+  for (const slotEl of slotEls) {
+    const s = new Sortable(slotEl, {
+      group: {
+        name: 'robot',
+        pull: true,
+        put: (to, _from, dragEl) =>
+          to.el.children.length === 0 && dragEl.dataset.type === to.el.dataset.accepts,
+      },
+      sort: false,
+      animation: 150,
+      emptyInsertThreshold: 40,
+      onAdd: (evt) => {
+        evt.to.classList.add('slot--filled', 'slot--accepting');
+        setTimeout(() => evt.to.classList.remove('slot--accepting'), 250);
+        socket.emit(EVENTS.TEAM_PLACE_PIECE, {
+          slotId: evt.to.dataset.slotId,
+          pieceType: evt.item.dataset.type,
+        });
+      },
+    });
+    sortables.push(s);
+  }
+}
+
+// (Re)construeix calaix+tauler dins .html-game i re-inicialitza SortableJS.
+// Idempotent: destrueix sempre les instàncies velles primer.
+function mountGame(gameContainer, placement) {
+  destroySortables();
+  gameContainer.textContent = '';
+
+  gameContainer.appendChild(buildProgress(placement));
+
+  const calaix = document.createElement('div');
+  calaix.className = 'calaix';
+  for (const type of remainingPieces(placement)) calaix.appendChild(createChip(type));
+  gameContainer.appendChild(calaix);
+
+  const hint = buildHint(placement);
+  if (hint) gameContainer.appendChild(hint);
+
+  const board = buildBoard(placement);
+  gameContainer.appendChild(board);
+
+  initSortables(calaix, [...board.querySelectorAll('.slot')]);
+  boardMounted = true;
+}
+
+// Assembla el robot real des de SLOTS[].html (mai text d'usuari, GAME-06),
+// el saneja amb DOMPurify preservant id/class/src/alt i <output> (Pitfall 2),
+// i l'injecta al srcdoc de l'iframe amb la capa de fons fix (D-03).
+function wrapPreview(inner) {
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    html, body { margin: 0; height: 100%; }
+    #robot-fons { position: fixed; inset: 0; background: url('/fons.svg') center / cover no-repeat; }
+    #robot-contenidor { position: relative; }
+  </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
+}
+
+function assemblePreview(placement) {
+  const antenesOrelles = SLOTS.filter((s) => s.parent === 'section' && placement[s.id])
+    .map((s) => s.html)
+    .join('');
+  const ulls = SLOTS.filter((s) => s.parent === 'contenidor-ulls' && placement[s.id])
+    .map((s) => s.html)
+    .join('');
+  const nas = placement.nas ? slotById('nas').html : '';
+  const boca = placement.boca ? slotById('boca').html : '';
+
+  const raw = `<section id="robot-contenidor">${antenesOrelles}<div id="robot-cap"><div class="contenidor-ulls">${ulls}</div>${nas}${boca}</div></section>`;
+  const clean = DOMPurify.sanitize(raw, {
+    ADD_TAGS: ['output'],
+    ALLOWED_ATTR: ['src', 'alt', 'class', 'id'],
+  });
+
+  const frame = document.querySelector('.preview-frame');
+  if (frame) frame.setAttribute('srcdoc', wrapPreview(clean));
+}
+
+// Board-state autoritatiu (canal privat de l'equip): reconcilia el tauler i la
+// preview. Si el tauler encara no està muntat, latestPlacement l'usarà el
+// pròxim renderActiveSplitScreen (ordre F5: full-state → board-state).
+function renderBoardAndDrawer(placement) {
+  const gameContainer = document.querySelector('.html-game');
+  if (!gameContainer) return;
+  mountGame(gameContainer, placement);
+  const frozen = latestState?.timerStatus === 'frozen';
+  sortables.forEach((s) => s.option('disabled', frozen));
+}
+
+// Overlay de congelat gestionat dinàmicament (D-11) perquè un update quirúrgic
+// el pugui afegir/treure sense reconstruir el tauler.
+function updateFrozenOverlay(state) {
+  const container = document.querySelector('.active-split');
+  if (!container) return;
+  const existing = container.querySelector('.frozen-overlay');
+  if (state.timerStatus === 'frozen') {
+    if (!existing) {
+      const overlay = document.createElement('div');
+      overlay.className = 'frozen-overlay';
+      const lockIcon = createElement(Lock);
+      lockIcon.setAttribute('width', '32');
+      lockIcon.setAttribute('height', '32');
+      overlay.appendChild(lockIcon);
+      container.appendChild(overlay);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
+// Update QUIRÚRGIC durant la fase html: NOMÉS timer/frozen (i disabled de les
+// instàncies SortableJS), MAI teardown del tauler (destruiria el drag en curs
+// d'aquest equip). El (re)build del tauler el fa exclusivament team:board-state.
+function surgicalUpdate(state) {
+  const timerEl = document.querySelector('.timer-display');
+  if (timerEl) renderCountdown(timerEl, state);
+  updateFrozenOverlay(state);
+  const frozen = state.timerStatus === 'frozen';
+  sortables.forEach((s) => s.option('disabled', frozen));
+}
+
 // Estat actiu (GAME-01, GAME-02): split panell d'accio (esquerra, ~40%) +
-// preview aïllada (dreta, ~60%). La preview es una closca buida a la Fase 1
-// (iframe sandbox + srcdoc buit) que les Fases 2-5 reutilitzaran omplint-la
-// amb contingut real via DOMPurify (T-04-01). El bloqueig D-11 es sobreposa
-// aqui mateix, sense canviar de fase ni amagar la feina existent.
+// preview aïllada (dreta, ~60%). A la fase html omple .action-panel amb el
+// calaix+tauler i injecta el robot real al srcdoc via DOMPurify (T-04-01). El
+// bloqueig D-11 es sobreposa aqui mateix, sense canviar de fase.
 function renderActiveSplitScreen(team, state) {
+  destroySortables();
   const app = clearApp();
 
   const container = document.createElement('div');
@@ -163,27 +467,34 @@ function renderActiveSplitScreen(team, state) {
   timerEl.className = 'timer-display';
   panel.appendChild(timerEl);
 
+  let gameContainer = null;
+  if (state.phase === 'html') {
+    gameContainer = document.createElement('div');
+    gameContainer.className = 'html-game';
+    panel.appendChild(gameContainer);
+  }
+
   const preview = document.createElement('iframe');
   preview.className = 'preview-frame';
-  preview.setAttribute('sandbox', 'allow-same-origin');
-  preview.setAttribute('srcdoc', ''); // closca buida a la Fase 1
+  preview.setAttribute('sandbox', 'allow-same-origin'); // sense allow-scripts (T-02-01)
+  preview.setAttribute('srcdoc', '');
   preview.setAttribute('title', 'Previsualització en directe');
 
   container.appendChild(panel);
   container.appendChild(preview);
 
-  if (state.timerStatus === 'frozen') {
-    const overlay = document.createElement('div');
-    overlay.className = 'frozen-overlay';
-    const lockIcon = createElement(Lock);
-    lockIcon.setAttribute('width', '32');
-    lockIcon.setAttribute('height', '32');
-    overlay.appendChild(lockIcon);
-    container.appendChild(overlay);
-  }
-
   app.appendChild(container);
   renderCountdown(timerEl, state);
+  updateFrozenOverlay(state);
+
+  if (gameContainer) {
+    mountGame(gameContainer, latestPlacement);
+    assemblePreview(latestPlacement);
+    const frozen = state.timerStatus === 'frozen';
+    sortables.forEach((s) => s.option('disabled', frozen));
+  } else {
+    boardMounted = false;
+  }
 }
 
 // Estat de la maquina de pantalla: `undefined` fins al primer
@@ -239,6 +550,14 @@ function renderScreenForState(team, state) {
     return;
   }
 
+  // Desacoblament del render (Pitfall 1): amb el tauler html ja muntat, un
+  // session:full-state NO reconstrueix (destruiria SortableJS a mig drag) —
+  // fa un update quirúrgic. El (re)build el fa només team:board-state.
+  if (state.phase === 'html' && boardMounted) {
+    surgicalUpdate(state);
+    return;
+  }
+
   renderActiveSplitScreen(team, state);
 }
 
@@ -248,7 +567,7 @@ function bootClient() {
   const token = localStorage.getItem(TOKEN_KEY);
   // WebSocket-only: evita el handshake per long-polling (fràgil rere Nginx) i
   // garanteix connexió directa via 101 Switching Protocols (must-have CORE-01).
-  const socket = io({ transports: ['websocket'], ...(token ? { auth: { token } } : {}) });
+  socket = io({ transports: ['websocket'], ...(token ? { auth: { token } } : {}) });
 
   socket.on('team:available-list', (payload) => {
     // Server no longer recognizes a stale token (e.g. process restart) —
@@ -270,6 +589,17 @@ function bootClient() {
     const team = state.teams.find((t) => t.id === teamId);
     if (!team) return;
     renderScreenForState(team, state);
+  });
+
+  // Canal privat del board (dirigit a team:<id>): reconstrueix tauler + preview
+  // real (F5 recupera el robot mig muntat, CORE-03). Desacoblat de
+  // session:full-state per no destruir SortableJS en cada re-broadcast (Pitfall 1).
+  socket.on(EVENTS.TEAM_BOARD_STATE, ({ placement }) => {
+    latestPlacement = placement || {};
+    if (latestState?.phase === 'html' && boardMounted) {
+      renderBoardAndDrawer(latestPlacement);
+      assemblePreview(latestPlacement);
+    }
   });
 
   socket.on('team:reload', () => {

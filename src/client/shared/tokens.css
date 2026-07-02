@@ -52,6 +52,14 @@
   /* Timer urgency */
   --timer-warning: #D97706;
   --timer-critical: #DC2626;
+
+  /* Monospace family for code labels (D-12, UI-SPEC §Typography) — system
+     stack, zero bundle cost; signals "això és HTML de veritat". */
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Motion (Fase HTML snap feel — D-09, UI-SPEC §Motion) */
+  --motion-snap: 150ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 body {
