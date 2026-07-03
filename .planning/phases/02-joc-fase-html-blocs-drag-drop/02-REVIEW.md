@@ -154,6 +154,21 @@ if (!isValidTeamNamesPayload(names)) {
 
 ---
 
+## Remediation
+
+Both **critical** findings were fixed on 2026-07-03. The 5 warnings (WR-01…WR-05)
+and 2 info items (IN-01, IN-02) are explicitly deferred and remain open — the
+frontmatter `status: issues_found` is left unchanged to reflect that.
+
+| Finding | Status | Commit | Summary |
+| ------- | ------ | ------ | ------- |
+| CR-01 | Fixed | `5c8f341` | Admin role now requires a server-verified shared secret (`ADMIN_SECRET`). Connection middleware fail-closes when the secret is configured; dev/test fall back to open with a loud startup warning. Teacher enters the secret via an inline login form (localStorage-persisted, `connect_error`-driven retry). Regression test added in `test/adminAuth.test.js`; `ADMIN_SECRET` documented in `.env.example`. |
+| CR-02 | Fixed | `6b13157` | `renderAdmin()` now captures the `#team-names-input` value + focus/selection before its full teardown and restores them after rebuild, so frequent `session:full-state` broadcasts no longer silently discard in-progress team names. |
+
+_Remediation verified: `npm test` (34 passing, incl. 3 new auth tests) and `npm run build` clean._
+
+---
+
 _Reviewed: 2026-07-03T11:36:56Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
