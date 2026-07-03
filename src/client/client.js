@@ -442,7 +442,6 @@ function buildBoard(placement) {
   const antenaRow = document.createElement('div');
   antenaRow.className = 'slot-row';
   antenaRow.appendChild(createSlot(slotById('antena-esquerra'), placement));
-  antenaRow.appendChild(createSlot(slotById('antena-dreta'), placement));
   section.appendChild(antenaRow);
 
   const orellaRow = document.createElement('div');
@@ -634,6 +633,14 @@ function wrapPreview(inner) {
   // (degradació elegant, sense trencar res).
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     html, body { margin: 0; height: 100%; }
+    /* Centra el robot a l'iframe (equivalent al body flex de la font de veritat). */
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    /* Capa de fons fixa (D-03) — es manté EXACTA (URL Unsplash + blend). */
     #robot-fons {
       position: fixed;
       inset: 0;
@@ -645,7 +652,161 @@ function wrapPreview(inner) {
       background-color: rgba(30, 40, 50, 0.75);
       background-blend-mode: overlay;
     }
-    #robot-contenidor { position: relative; }
+
+    /* --- Disseny final del robot Bender: copiat literalment de la font de veritat
+       (/Users/rogermasellas/Desktop/imparticio/index.html, línies 25-179) --- */
+    #robot-contenidor {
+      position: relative;
+      width: 300px;
+      margin: 160px auto;
+    }
+
+    /* --- ESTIL DEL CAP (forma de dipòsit/cilindre a la Bender) --- */
+    #robot-cap {
+      position: relative;
+      z-index: 10;
+      /* Manté el cap sempre per sobre de les orelles */
+      width: 100%;
+      height: 420px;
+      background:
+        linear-gradient(90deg,
+          #7d8798 0%, #a7b1c2 18%, #dbe3ee 32%, #b0b9c9 50%, #8b96a8 72%, #6f7889 100%);
+      border: 6px solid #232c3a;
+      border-radius: 50% 50% 38% 38% / 62% 62% 18% 18%;
+      box-shadow:
+        inset 0 0 30px rgba(255, 255, 255, 0.35),
+        inset 0 0 70px rgba(0, 0, 0, 0.2),
+        0 15px 35px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 34px;
+      padding-top: 150px;
+      box-sizing: border-box;
+    }
+
+    /* --- L'ANTENA (única, centrada, dibuixada per CSS: tija + bola) --- */
+    .antena {
+      position: absolute;
+      top: -55px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 55px;
+      z-index: 5;
+      background: linear-gradient(90deg, #6f7889 0%, #cfd6e0 50%, #6f7889 100%);
+      border-radius: 3px;
+    }
+
+    .antena::before {
+      content: "";
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e6ffff 0%, #7dfcff 45%, #17d8e0 80%);
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+    }
+
+    /* --- LES ORELLES --- */
+    .orella {
+      position: absolute;
+      top: 130px;
+      width: 70px;
+      z-index: 11;
+      filter: grayscale(1) brightness(1.05) sepia(0.1) hue-rotate(175deg) saturate(1.2);
+      opacity: 0.95;
+    }
+
+    #orella-esquerra {
+      left: -52px;
+    }
+
+    #orella-dreta {
+      right: -52px;
+    }
+
+    /* --- ELS ULLS: visor clar amb ull negre i dues pupil·les grogues --- */
+    .contenidor-ulls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 78%;
+      height: 92px;
+      background: #cfe1ee;
+      border: 6px solid #1c2530;
+      border-radius: 46px;
+      box-sizing: border-box;
+      padding: 8px;
+      box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.6), inset 0 -4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .ull {
+      display: inline-block;
+      position: relative;
+      width: 58px;
+      height: 64px;
+      background: #f2e6a8;
+      border-radius: 50% / 55%;
+      box-sizing: border-box;
+      box-shadow: inset 0 0 0 3px #1c2530;
+      margin: 0 -6px;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ull::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      background: #1c1c1c;
+      transform: translate(-50%, -50%);
+    }
+
+    /* --- EL NAS: discret, com un rivet metàl·lic sota el visor --- */
+    #nas {
+      width: 22px;
+      height: 22px;
+      background: radial-gradient(circle at 35% 30%, #cfd6e0 0%, #8b95a5 60%, #5c6576 100%);
+      border-radius: 50%;
+      border: 2px solid #232c3a;
+      cursor: pointer;
+      box-sizing: border-box;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7);
+      transition: filter 0.2s ease;
+    }
+
+    #nas:hover {
+      filter: brightness(1.25);
+    }
+
+    /* --- LA BOCA: reixeta de dents metàl·liques --- */
+    #boca {
+      display: block;
+      width: 60%;
+      background:
+        repeating-linear-gradient(180deg,
+          #f2e6a8 0px, #f2e6a8 16px, #1c2530 16px, #1c2530 19px);
+      color: #1c2530;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 2px;
+      padding: 14px 18px;
+      border-radius: 0 0 40px 40px;
+      border: 4px solid #1c2530;
+      border-top: none;
+      text-align: center;
+      margin: 0 auto;
+      box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.2);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
   </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
 }
 
