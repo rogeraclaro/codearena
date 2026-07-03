@@ -160,6 +160,27 @@ let boardMounted = false;
 // inicial desapareix PER SEMPRE aquesta càrrega — no reapareix ni quan el
 // recompte torna a 0 (l'equip retira totes les peces). Es reinicia només amb F5.
 let hintDismissed = false;
+// Ordre del calaix barrejat UN COP per càrrega de pàgina (checkpoint 02-03 round 4):
+// l'usuari vol que les peces NO apareguin en ordre de declaració. Es calcula un
+// ordre aleatori (Fisher-Yates) la primera vegada i es reutilitza tota la sessió,
+// de manera que col·locar/treure peces només encongeix/creix el conjunt visible
+// sense reordenar-lo — respecta el "mai un reshuffle a cada board-state" de
+// fillDrawer (les peces no salten de posició). Només un F5 (nova càrrega de
+// pàgina) en genera un de nou, cosa acceptable (nova sessió → nova barreja).
+let pieceTypeOrder = null;
+
+// Lazy-init: barreja els 7 tipus distints la primera crida i cacheja el resultat;
+// les crides posteriors retornen sempre el mateix ordre (estabilitat mid-sessió).
+function getPieceTypeOrder() {
+  if (pieceTypeOrder) return pieceTypeOrder;
+  const types = PIECES.map((p) => p.type);
+  for (let i = types.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [types[i], types[j]] = [types[j], types[i]];
+  }
+  pieceTypeOrder = types;
+  return pieceTypeOrder;
+}
 
 function destroySortables() {
   sortables.forEach((s) => s.destroy());
@@ -173,15 +194,22 @@ function teardownBoard() {
 }
 
 // Inventari restant = PIECES menys les peces ja col·locades (derivat del board
-// autoritatiu, Pitfall 5). Retorna una llista plana de tipus per pintar al calaix.
+// autoritatiu, Pitfall 5). Retorna una llista plana de tipus per pintar al calaix,
+// ordenada segons la barreja estable per sessió (getPieceTypeOrder) en comptes de
+// l'ordre de declaració de PIECES — així el calaix es veu mesclat però NO es
+// reordena a cada board-state (només encongeix/creix). Les peces del mateix tipus
+// (p.ex. els 2 `ull`) són visualment idèntiques, així que el seu ordre relatiu
+// intern és irrellevant; només importa l'ordre ENTRE tipus.
 function remainingPieces(placement) {
   const placedCounts = {};
   for (const type of Object.values(placement)) {
     placedCounts[type] = (placedCounts[type] || 0) + 1;
   }
+  const totalByType = {};
+  for (const { type, count } of PIECES) totalByType[type] = count;
   const chips = [];
-  for (const { type, count } of PIECES) {
-    const remaining = count - (placedCounts[type] || 0);
+  for (const type of getPieceTypeOrder()) {
+    const remaining = totalByType[type] - (placedCounts[type] || 0);
     for (let i = 0; i < remaining; i += 1) chips.push(type);
   }
   return chips;
