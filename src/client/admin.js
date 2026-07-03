@@ -152,6 +152,39 @@ function injectStyles() {
       color: var(--color-muted);
       margin: 0;
     }
+    .admin-login {
+      max-width: 360px;
+      margin: var(--space-3xl) auto;
+      padding: var(--space-xl);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+    .admin-login-heading {
+      font-size: var(--font-size-heading);
+      font-weight: var(--font-weight-heading);
+      margin: 0;
+    }
+    .admin-login label {
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+    }
+    .admin-login input {
+      font-family: var(--font-family);
+      font-size: var(--font-size-body);
+      min-height: var(--hit-target-min);
+      padding: 0 var(--space-sm);
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+    }
+    .admin-login-error {
+      font-size: var(--font-size-label);
+      color: var(--color-destructive);
+      margin: 0;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -417,10 +450,96 @@ function renderAdmin(socket, state) {
   }
 }
 
+// CR-01: the admin panel now needs a shared secret the teacher enters once.
+// Persisted in localStorage (reasonable for the teacher's own reused machine —
+// never logged or shown elsewhere) so an F5/reload doesn't force re-entry.
+const ADMIN_SECRET_STORAGE_KEY = 'codearena:admin-secret';
+
+function connectWithSecret(secret) {
+  const socket = io({ transports: ['websocket'], auth: { role: 'admin', adminSecret: secret } });
+  socket.on('session:full-state', (state) => renderAdmin(socket, state));
+  socket.on('connect_error', (err) => {
+    // Only a rejected secret ('unauthorized' from the server middleware) should
+    // clear the stored value and re-prompt. Transient network errors are left
+    // to Socket.io's own reconnection, so a blip never logs the teacher out.
+    if (err && err.message === 'unauthorized') {
+      socket.close();
+      try {
+        localStorage.removeItem(ADMIN_SECRET_STORAGE_KEY);
+      } catch {
+        // localStorage unavailable (private mode) — nothing to clear.
+      }
+      showLogin('Contrasenya d\'administrador incorrecta. Torna-ho a provar.');
+    }
+  });
+  return socket;
+}
+
+function showLogin(errorMessage) {
+  const app = document.getElementById('app');
+  app.textContent = '';
+
+  const form = document.createElement('form');
+  form.className = 'admin-login';
+
+  const heading = document.createElement('h1');
+  heading.className = 'admin-login-heading';
+  heading.textContent = 'Accés Administrador';
+
+  const label = document.createElement('label');
+  label.setAttribute('for', 'admin-secret-input');
+  label.textContent = 'Contrasenya de la sessió';
+
+  const input = document.createElement('input');
+  input.type = 'password';
+  input.id = 'admin-secret-input';
+  input.autocomplete = 'current-password';
+
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.className = 'btn btn-accent';
+  submitBtn.textContent = 'Entrar';
+
+  form.appendChild(heading);
+  if (errorMessage) {
+    const error = document.createElement('p');
+    error.className = 'admin-login-error';
+    error.textContent = errorMessage;
+    form.appendChild(error);
+  }
+  form.appendChild(label);
+  form.appendChild(input);
+  form.appendChild(submitBtn);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const secret = input.value.trim();
+    if (!secret) return;
+    try {
+      localStorage.setItem(ADMIN_SECRET_STORAGE_KEY, secret);
+    } catch {
+      // localStorage unavailable — proceed without persistence.
+    }
+    connectWithSecret(secret);
+  });
+
+  app.appendChild(form);
+  input.focus();
+}
+
 function bootAdmin() {
   injectStyles();
-  const socket = io({ transports: ['websocket'], auth: { role: 'admin' } });
-  socket.on('session:full-state', (state) => renderAdmin(socket, state));
+  let saved = null;
+  try {
+    saved = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY);
+  } catch {
+    saved = null;
+  }
+  if (saved) {
+    connectWithSecret(saved);
+  } else {
+    showLogin();
+  }
 }
 
 bootAdmin();

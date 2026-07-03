@@ -36,10 +36,31 @@ function isValidTeamNamesPayload(names) {
 }
 
 export function registerSocketHandlers(io) {
+  // CR-01: the admin role must be backed by a real server-verified credential,
+  // not just a client-declared flag. Read the shared secret once at wire-up
+  // (mirrors index.js's `process.env.PORT` convention). If it's set, admin
+  // handshakes MUST present a matching `adminSecret` or the connection is
+  // rejected (fail-closed). If it's unset (local dev / the test suite, which
+  // connects as admin without a secret), admin is allowed but we warn loudly
+  // so a production deploy that forgot to set it is obvious in the logs.
+  const ADMIN_SECRET = process.env.ADMIN_SECRET;
+  if (!ADMIN_SECRET) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[socketHandlers] ADMIN_SECRET not set — admin authentication is DISABLED. ' +
+        'Any client can claim the admin role. Set ADMIN_SECRET before deploying.',
+    );
+  }
+
   io.use((socket, next) => {
     try {
-      const { token, role } = socket.handshake.auth || {};
+      const { token, role, adminSecret } = socket.handshake.auth || {};
       if (role === 'admin') {
+        // Reject unless the handshake carries the matching secret. When no
+        // secret is configured (dev/test), fall through and grant admin.
+        if (ADMIN_SECRET && adminSecret !== ADMIN_SECRET) {
+          return next(new Error('unauthorized'));
+        }
         socket.data.isAdmin = true;
       }
       if (typeof token === 'string' && token) {
