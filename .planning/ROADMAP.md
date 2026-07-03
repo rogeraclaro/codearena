@@ -14,7 +14,7 @@ CodeArena porta l'aula d'una pissarra en blanc a una partida en viu completa. Pr
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Nucli en temps real i control de sessió** - Servidor amb estat autoritatiu, identitat persistent, timer sincronitzat i panell Admin de control/recuperació
-- [ ] **Phase 2: Joc — Fase HTML (blocs drag & drop)** - Equips munten l'esquelet HTML amb blocs de snap fort, sense escriptura lliure
+- [x] **Phase 2: Joc — Fase HTML (blocs drag & drop)** - Equips munten l'esquelet HTML amb blocs de snap fort, sense escriptura lliure (completed 2026-07-03)
 - [ ] **Phase 3: Joc — Fases CSS i JS** - Equips vesteixen l'HTML amb CSS foradat i li donen comportament amb regles JS
 - [ ] **Phase 4: Puntuació i rànquing final** - Motor de scoring estructural/d'estil/de comportament i pantalla de resultats
 - [ ] **Phase 5: Desplegament a producció (VPS + Nginx + PM2)** - App verificada en producció amb WebSocket real i reinici automàtic
@@ -63,7 +63,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. La preview de la dreta es re-renderitza a l'instant amb cada bloc col·locat, reutilitzant la canonada de Fase 1
   3. En cap moment de la fase HTML l'equip pot escriure text de codi lliure — totes les interaccions són blocs predefinits arrossegables
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 **Wave 1**
 
@@ -75,7 +75,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 02-03-PLAN.md — Feedback: progrés N/8 (equip + Admin) + pista inicial + checkpoint visual (Wave 3)
+- [x] 02-03-PLAN.md — Feedback: progrés N/8 (equip + Admin) + pista inicial + checkpoint visual (Wave 3)
 
 **UI hint**: yes
 
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
-| 2. Joc — Fase HTML (blocs drag & drop) | 2/3 | In Progress|  |
+| 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete   | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 0/TBD | Not started | - |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
