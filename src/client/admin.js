@@ -371,6 +371,19 @@ function buildTeamCard(team, socket) {
 
 function renderAdmin(socket, state) {
   const app = document.getElementById('app');
+
+  // CR-02: session:full-state fires very frequently (every team's piece
+  // placement/removal during the HTML phase), and this handler tears down and
+  // rebuilds the whole panel — including a fresh #team-names-input textarea.
+  // Capture the live value + focus/selection of any in-progress (unsent) text
+  // BEFORE the teardown and restore it after, so the teacher never silently
+  // loses a team name they were typing when an unrelated broadcast lands.
+  const existingInput = document.getElementById('team-names-input');
+  const preservedValue = existingInput ? existingInput.value : '';
+  const hadFocus = existingInput ? document.activeElement === existingInput : false;
+  const selStart = existingInput ? existingInput.selectionStart : null;
+  const selEnd = existingInput ? existingInput.selectionEnd : null;
+
   app.textContent = '';
 
   const container = document.createElement('div');
@@ -390,6 +403,18 @@ function renderAdmin(socket, state) {
   container.appendChild(grid);
 
   app.appendChild(container);
+
+  // Restore preserved input state now that the new textarea is in the document.
+  const newInput = document.getElementById('team-names-input');
+  if (newInput) {
+    newInput.value = preservedValue;
+    if (hadFocus) {
+      newInput.focus();
+      if (selStart !== null && selEnd !== null) {
+        newInput.setSelectionRange(selStart, selEnd);
+      }
+    }
+  }
 }
 
 function bootAdmin() {
