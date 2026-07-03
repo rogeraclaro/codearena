@@ -214,6 +214,18 @@
   }
 }
 
+/* Separador permanent calaix→tauler (checkpoint 02-03 round 3). Sempre visible
+   (≠ .drag-hint, dismissible D-14). ~50px d'aire a dalt i a baix via --space-2xl
+   (48px, el token de l'escala més proper de 50px) per separar clarament les dues
+   zones — cap literal de mida. */
+.zone-divider {
+  margin: var(--space-2xl) 0;
+  text-align: center;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  color: var(--color-muted);
+}
+
 /* Tauler de slots niats (D-06/D-08) */
 .tauler {
   display: flex;

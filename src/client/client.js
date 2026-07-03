@@ -355,6 +355,19 @@ function buildHint(placement) {
   return hint;
 }
 
+// Separador PERMANENT calaix→tauler (checkpoint 02-03 round 3). A diferència de
+// la pista dismissible (D-14, buildHint) que desapareix al primer placement,
+// aquest sempre és visible: marca la costura entre el calaix (etiquetes d'origen)
+// i el tauler (forats). Text fix demanat per l'usuari; ~50px d'aire a dalt i a
+// baix ho fa el CSS (.zone-divider) via token, no cap literal.
+function buildDivider() {
+  const divider = document.createElement('div');
+  divider.className = 'zone-divider';
+  // textContent (no innerHTML): text pla, coherent amb la resta d'etiquetes (V5).
+  divider.textContent = 'Arrossega les etiquetes cap aquí abaix';
+  return divider;
+}
+
 // SortableJS: un Sortable per slot (capacitat 1). group.put com a funció fa el
 // type-check (D-07); emptyInsertThreshold és l'imant (D-09); el revert natiu és
 // el rebot (D-09/D-11, distractors inclosos). onAdd emet l'intent al servidor.
@@ -425,6 +438,11 @@ function mountGame(gameContainer, placement) {
 
   const hint = buildHint(placement);
   if (hint) gameContainer.appendChild(hint);
+
+  // Separador permanent a la costura calaix→tauler (round 3). Independent de la
+  // pista dismissible: quan la pista encara és visible (abans del 1r placement)
+  // es veuran els dos textos; és el comportament demanat explícitament.
+  gameContainer.appendChild(buildDivider());
 
   const board = buildBoard(placement);
   gameContainer.appendChild(board);
