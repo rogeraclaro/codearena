@@ -107,11 +107,25 @@ function startDragNoise() {
     // previ actiu l'aturem abans de crear-ne un de nou (evita fuites de nodes).
     stopDragNoise();
     const now = audioCtx.currentTime;
-    // Buffer curt de soroll blanc reproduït en loop → textura contínua.
-    const bufLen = Math.floor(audioCtx.sampleRate * 0.5);
+    // Buffer llarg de soroll blanc reproduït en loop → textura contínua. Dues raons
+    // per als 2.5s (abans 0.5s, que sonava a "creck creck" repetit): (1) el punt de
+    // reinici del loop és molt menys freqüent i menys perceptible; (2) sobretot, els
+    // extrems del buffer es fonen a zero (fade-in/out d'uns ~10ms) perquè el salt de
+    // wrap-around vagi de zero→zero en lloc de saltar entre dos valors de soroll
+    // aleatoris no relacionats — és el salt brusc el que produïa el clic al costura
+    // del loop. El fade es cou directament a les dades del buffer, sense nodes extra.
+    const bufLen = Math.floor(audioCtx.sampleRate * 2.5);
     const buffer = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufLen; i += 1) data[i] = Math.random() * 2 - 1;
+    const fadeLen = Math.floor(audioCtx.sampleRate * 0.01); // ~10ms a cada extrem
+    for (let i = 0; i < bufLen; i += 1) {
+      let sample = Math.random() * 2 - 1;
+      // Fade-in lineal sobre els primers fadeLen samples i fade-out sobre els últims:
+      // porta l'amplitud a ~0 a inici i final → la costura del loop és zero→zero.
+      if (i < fadeLen) sample *= i / fadeLen;
+      else if (i >= bufLen - fadeLen) sample *= (bufLen - 1 - i) / fadeLen;
+      data[i] = sample;
+    }
     const src = audioCtx.createBufferSource();
     src.buffer = buffer;
     src.loop = true;
