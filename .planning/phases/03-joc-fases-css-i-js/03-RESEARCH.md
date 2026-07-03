@@ -470,19 +470,18 @@ The connection handler recovery + `mutation-returns-bool` mutators are covered b
 | A4 | `#robot-cap` background-color hole (D-09) may flatten the metallic gradient; simple-color intent assumed | Open Q1, Mapping #14 | If the user wants the gradient preserved, the hole must control one stop or a tint layer instead. |
 | A5 | `ull-esquerre`/`ull-dret` map to `.ull:nth-of-type(1|2)` (spans have no id) | JS Element Map | If Phase-4 scoring expects ids, spans may need ids added in `robotTemplate.js`. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Holes that don't map cleanly to the source CSS (locked existence, open expression).**
+> **RESOLVED during planning.** All three questions below are resolved in `03-01-PLAN.md` (CSS holes: Task 3 preview-wiring `<action>` + end-of-phase `<human-check>`) and `03-02-PLAN.md` (composite catalog: Task 2 `<action>`). The default proposals below were adopted; the 4 ⚠ CSS holes are surfaced for explicit confirmation in the 03-01 human-check rather than chosen silently. Kept here for traceability.
+
+1. **[RESOLVED — 03-01 Task 3]** **Holes that don't map cleanly to the source CSS (locked existence, open expression).** Resolution: holes flatten to the controllable property (accept losing gradient nuance); the 4 ⚠ rows are documented in 03-01 Task 3's `<action>` and confirmed in its `<human-check>` step 3.
    - What we know: D-03/D-05/D-08/D-09 assume simple properties, but the source uses a `::before` radial-gradient ball (D-03), a non-positioned flex visor (D-05 `top`), a `repeating-linear-gradient` for teeth (D-08), and a 6-stop metallic `linear-gradient` cap background (D-09).
    - What's unclear: exactly how each hole's `var()` should be expressed (e.g. does the cap `background-color` hole *replace* the metallic gradient with a flat color, or tint it? Does the antena ball's `background-color` replace the radial-gradient?).
    - Recommendation: planner adds a short **`checkpoint:human-verify`** (or resolves via UI-SPEC discretion, D-Claude) presenting the 4 ⚠ rows and the proposed `var()` strategy. Default proposal: holes flatten to the controllable property (accept losing the gradient nuance) since the pedagogical goal is "student sets a real CSS value and sees it," not pixel-perfect Bender fidelity. **Do not silently choose** — surface the 4 rows.
 
-2. **D-08 dents color target: `#fffcd3` (decision) vs `#f2e6a8` (source CSS).**
-   - What we know: D-08 explicitly says "avui `#fffcd3`"; the source file's light stops are `#f2e6a8`.
-   - Recommendation: treat `#fffcd3` as the locked target (D-08 is a decision), use `#f2e6a8` only as the `var()` fallback default; confirm with user in the same checkpoint.
+2. **[RESOLVED — 03-01 Task 3]** **D-08 dents color target: `#fffcd3` (decision) vs `#f2e6a8` (source CSS).** Resolution adopted: `#fffcd3` is the locked Plana Model target; `#f2e6a8` is used only as the `var(--boca-dents, …)` fallback default. See 03-01 Task 3 `<action>` (discrepància D-08) + human-check.
 
-3. **Composite-action catalog beyond the 2 examples (D-17, Claude's discretion).**
-   - Recommendation: planner authors 3-5 named composites in `JS_COMPOSITE_ACTIONS`; the 2 D-17 examples are the guaranteed minimum. Keep each as a fixed `[{sel, fn}]` list.
+3. **[RESOLVED — 03-02 Task 2]** **Composite-action catalog beyond the 2 examples (D-17, Claude's discretion).** Resolution: 03-02 Task 2 authors 3-5 named composites in `JS_COMPOSITE_KEYS` (guaranteed minimum 2 per D-17: `acluca-tanca` + one more), each a fixed `[{sel, fn}]` list.
 
 ## Environment Availability
 
@@ -548,7 +547,7 @@ The connection handler recovery + `mutation-returns-bool` mutators are covered b
 **Confidence breakdown:**
 - Standard stack: HIGH — no new deps, all verified in `package.json`.
 - Architecture (custom-property injection + parent-driven interpreter): HIGH — grounded in existing patterns + MDN-verified iframe semantics.
-- CSS hole→source mapping: HIGH on mechanics, MEDIUM on 4 flagged holes (design micro-decision pending, §Open Questions).
+- CSS hole→source mapping: HIGH on mechanics, MEDIUM on 4 flagged holes (design micro-decision RESOLVED in 03-01 Task 3 + human-check, §Open Questions (RESOLVED)).
 - Pitfalls & security: HIGH — derived from this repo's proven anti-storm/anti-XSS patterns.
 
 **Research date:** 2026-07-04
