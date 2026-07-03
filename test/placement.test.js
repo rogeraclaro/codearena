@@ -5,6 +5,7 @@
 // Covers the placement round-trip of the HTML phase:
 //   - PLACE-OK:            un place valid -> l'owner rep team:board-state (autoritatiu, GAME-03).
 //   - PLACE-TYPE-REJECT:   un tipus incompatible NO produeix board-state (type-check server-side, D-07).
+//   - PLACE-DIRECTION-REJECT: una peça esquerra al forat dret es rebutja (split direccional round 3).
 //   - ADMIN-COUNT:         un place OK projecta progress {placed, total:8} a l'admin; el token mai s'exposa.
 //   - NO-SESSION-BROADCAST: un segon equip NO rep res del place del primer (emissio dirigida, Pitfall 1).
 //   - REMOVE round-trip:   treure una peça col·locada la retira del board i baixa el comptador (D-10).
@@ -109,24 +110,36 @@ test('setup: registra equips, dos equips trien, i s\'inicia la fase html', async
 
 test('PLACE-OK: un place valid retorna team:board-state a l\'owner (GAME-03)', async () => {
   const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 800);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-esquerra', pieceType: 'antena' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-esquerra', pieceType: 'antena-esquerra' });
 
   const board = await boardPromise;
   assert.ok(board, 'l\'owner ha de rebre team:board-state en un place valid');
-  assert.equal(board.placement['antena-esquerra'], 'antena');
+  assert.equal(board.placement['antena-esquerra'], 'antena-esquerra');
 });
 
 test('PLACE-TYPE-REJECT: un tipus incompatible no produeix board-state (D-07)', async () => {
   const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'nas', pieceType: 'antena' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'nas', pieceType: 'antena-esquerra' });
 
   const board = await boardPromise;
   assert.equal(board, undefined, 'un tipus incompatible mai ha de produir board-state');
 });
 
+// Split direccional (checkpoint 02-03 round 3): antena-esquerra i antena-dreta son
+// tipus DIFERENTS; el forat dret nomes accepta la peca dreta. Mirall de
+// PLACE-TYPE-REJECT pero per la nova mecanica esquerra/dreta. Estat en entrar:
+// { antena-esquerra } col·locat, antena-dreta encara buit → el reject no muta res.
+test('PLACE-DIRECTION-REJECT: una peca esquerra al forat dret es rebutja (round 3)', async () => {
+  const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena-esquerra' });
+
+  const board = await boardPromise;
+  assert.equal(board, undefined, 'una antena-esquerra mai ha d\'encaixar al forat antena-dreta');
+});
+
 test('ADMIN-COUNT: un place OK projecta progress {placed, total:8} a l\'admin, sense token', async () => {
   const statePromise = onceOrTimeout(adminSocket, 'session:full-state', 800);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena-dreta' });
 
   const state = await statePromise;
   assert.ok(state, 'l\'admin ha de rebre session:full-state en un place OK');
@@ -147,7 +160,7 @@ test('NO-SESSION-BROADCAST: un segon equip no rep res del place del primer (Pitf
     team2GotState = true;
   });
 
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'orella-esquerra', pieceType: 'orella' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'orella-esquerra', pieceType: 'orella-esquerra' });
   await wait(150);
 
   assert.equal(team2GotBoard, false, 'team2 no ha de rebre team:board-state del place de team1');
@@ -183,20 +196,21 @@ test('REMOVE no-op: treure un slot buit no emet board-state (mutation-returns-bo
   assert.equal(board, undefined, 'treure un slot buit no ha de produir cap board-state');
 });
 
-test('INVENTORY cap: no es poden col·locar més antenes de les disponibles (Pitfall 5)', async () => {
-  // Reomple antena-esquerra (2a antena, l'altra ja és a antena-dreta) — OK.
+test('INVENTORY cap: no es poden col·locar més peces de les disponibles (Pitfall 5)', async () => {
+  // Reomple antena-esquerra amb la seva peça direccional (count 1, encara no
+  // col·locada perquè es va retirar al test REMOVE) — OK.
   const okBoard = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 800);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-esquerra', pieceType: 'antena' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-esquerra', pieceType: 'antena-esquerra' });
   const board = await okBoard;
-  assert.ok(board, 'la 2a antena s\'ha de poder col·locar');
-  assert.equal(board.placement['antena-esquerra'], 'antena');
+  assert.ok(board, 'l\'antena-esquerra s\'ha de poder recol·locar');
+  assert.equal(board.placement['antena-esquerra'], 'antena-esquerra');
 
-  // Amb totes dues antenes col·locades, un tercer intent (slot ja ocupat / inventari
-  // esgotat) es rebutja sense board-state.
+  // antena-dreta ja està ocupat (test ADMIN-COUNT) → un segon intent al mateix
+  // forat (slot ja ocupat / inventari direccional esgotat) es rebutja sense board.
   const rejected = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena-dreta' });
   const board2 = await rejected;
-  assert.equal(board2, undefined, 'no es pot col·locar una 3a antena (slot ocupat / inventari esgotat)');
+  assert.equal(board2, undefined, 'no es pot reomplir un forat ja ocupat (inventari direccional esgotat)');
 });
 
 test('V4 forge: un equip no pot mutar el board d\'un altre forjant teamId (T-02-04)', async () => {
@@ -219,7 +233,7 @@ test('F5 recovery: reconnectar amb el token recupera el placement previ (CORE-03
   assert.ok(board, 'la reconnexió per token ha de rebre team:board-state en connectar');
   assert.equal(
     board.placement['antena-dreta'],
-    'antena',
+    'antena-dreta',
     'el board recuperat ha de mantenir el placement col·locat abans de la reconnexió',
   );
   reconnect.socket.close();

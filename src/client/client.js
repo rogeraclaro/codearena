@@ -189,8 +189,10 @@ function remainingPieces(placement) {
 
 // Chip read-only (D-12, checkpoint 02-03 round 2): NOMÉS el code label, cap icona
 // ni thumbnail. L'etiqueta = el tag HTML literal real en monospace amb angle
-// brackets (p.ex. `<img src="assets/aerial.png" class="antena">`, derivat de
-// SLOTS via pieceLabel). data-type genèric (D-07). Cap camp editable (GAME-06).
+// brackets (p.ex. `<img src="assets/aerial_left.png" class="antena">`, derivat de
+// SLOTS via pieceLabel). data-type porta el tipus DIRECCIONAL complet (round 3,
+// p.ex. `antena-esquerra`) perquè el put type-check de SortableJS rebutgi una peça
+// esquerra sobre el forat dret. Cap camp editable (GAME-06).
 function createChip(type) {
   const chip = document.createElement('div');
   chip.className = 'piece-chip';

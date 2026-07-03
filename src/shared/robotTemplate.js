@@ -3,9 +3,17 @@
 // and server (validate placements, derive N/8 progress). Reusable by Phase 4
 // scoring. Same "frozen constants module" pattern as src/server/events.js.
 //
-// D-07: pieces in the drawer are GENERIC per type; identity (id/class,
-// esquerra/dreta) is dictated by the SLOT, never the piece. Each slot.html
-// therefore carries the canonical id/class for its position.
+// D-07 (partially overridden at the 02-03 checkpoint round 3, per an explicit
+// user request): pieces stay GENERIC for symmetric types (ull/nas/boca), but
+// antena/orella are now SPLIT into directional left/right variants
+// (antena-esquerra/antena-dreta, orella-esquerra/orella-dreta). A left piece
+// only fits the left slot — the student must aim the correct side; it's a REAL
+// gameplay distinction, not a cosmetic src swap. This is NOT the Pitfall-5
+// per-slot-id uniqueness bug (that one broke the 2nd slot of a SHARED-count
+// type): here each directional type maps 1:1 to exactly one slot with count 1,
+// so no slot is ever left unfillable. The slot.html still carries the SHARED
+// class (class="antena") + the per-instance id — Phase 4 scoring reads the
+// shared class (02-CONTEXT A2); only the id differs per side.
 //
 // Pitfall 3 / A5: image `src` is ROOT-relative (`/antena.svg`), not relative,
 // because a srcdoc's base URL is ambiguous. Placeholders live in
@@ -15,25 +23,25 @@
 export const SLOTS = Object.freeze([
   Object.freeze({
     id: 'antena-esquerra',
-    accepts: 'antena',
+    accepts: 'antena-esquerra',
     parent: 'section',
     html: '<img src="/antena.svg" alt="Antena esquerra" class="antena" id="antena-esquerra">',
   }),
   Object.freeze({
     id: 'antena-dreta',
-    accepts: 'antena',
+    accepts: 'antena-dreta',
     parent: 'section',
     html: '<img src="/antena.svg" alt="Antena dreta" class="antena" id="antena-dreta">',
   }),
   Object.freeze({
     id: 'orella-esquerra',
-    accepts: 'orella',
+    accepts: 'orella-esquerra',
     parent: 'section',
     html: '<img src="/orella.svg" alt="Orella esquerra" class="orella" id="orella-esquerra">',
   }),
   Object.freeze({
     id: 'orella-dreta',
-    accepts: 'orella',
+    accepts: 'orella-dreta',
     parent: 'section',
     html: '<img src="/orella.svg" alt="Orella dreta" class="orella" id="orella-dreta">',
   }),
@@ -76,34 +84,43 @@ export const CONTAINERS = Object.freeze([
 // D-12 (override at the 02-03 checkpoint, 2026-07-03): a piece/slot label is the
 // REAL literal HTML tag with angle brackets — e.g. `<img class="antena">` — not
 // the bare class/type name. Derived from SLOTS[].html (single source, D-01/D-07),
-// never hand-written. The shown attribute is the one that identifies the TYPE
-// (value === type): class for antena/orella/ull, id for nas/boca. The per-slot
-// id (`antena-esquerra`) is per-INSTANCE and deliberately not shown — a type has
-// 2 slots but one label. Read-only text only (GAME-06/V5): the brackets are plain
-// characters, never interpreted as markup.
-// Fake, DISPLAY-ONLY `src` values for the <img> piece labels (antena/orella), so
-// the chip shows the full realistic tag shape `<img src="..." class="...">`
-// (checkpoint 02-03 round 2). These paths are ILLUSTRATIVE ONLY — never fetched,
-// no such asset files exist. FUTURE WORK (the user will provide the art later):
-// real per-INSTANCE directional images `aerial_left.png`/`aerial_right.png` and
-// `ear_left.png`/`ear_right.png`; at that point the type system may need to split
-// antena/orella into left/right variants so students learn to aim the correct
-// side. That split is intentionally OUT OF SCOPE for this round — do not add it now.
-const IMG_LABEL_SRC = Object.freeze({ antena: 'assets/aerial.png', orella: 'assets/ear.png' });
+// never hand-written. For non-img pieces (ull/nas/boca) the shown attribute is
+// the one that identifies the TYPE (value === type): class for ull, id for
+// nas/boca. For the directional <img> pieces (antena/orella, split round 3) the
+// label shows the SHARED class straight from slot.html (`class="antena"`, NEVER
+// the directional type `antena-esquerra` — that value exists nowhere in the real
+// markup) plus a DIRECTION-SPECIFIC fake `src` so left/right read differently on
+// the chip. Read-only text only (GAME-06/V5): the brackets are plain characters,
+// never interpreted as markup.
+// Fake, DISPLAY-ONLY `src` values for the directional <img> piece labels, keyed by
+// the full directional type. These paths are ILLUSTRATIVE PLACEHOLDERS — never
+// fetched, no such asset files exist yet. The user will swap these filenames for
+// the real left/right art later; the directional SPLIT itself (not just the
+// filename) is intentional and live NOW — dragging a left piece onto the right
+// slot must be rejected like any other type mismatch.
+const IMG_LABEL_SRC = Object.freeze({
+  'antena-esquerra': 'assets/aerial_left.png',
+  'antena-dreta': 'assets/aerial_right.png',
+  'orella-esquerra': 'assets/ear_left.png',
+  'orella-dreta': 'assets/ear_right.png',
+});
 
 export function pieceLabel(type) {
   const slot = SLOTS.find((s) => s.accepts === type);
   if (!slot) return type; // defensive fallback
   const tag = slot.html.match(/<(\w+)/)?.[1] ?? type;
+  // <img> pieces (antena/orella): SHARED class from slot.html (can't drift from
+  // the real markup) + a direction-specific fake `src` selected by full type.
+  if (tag === 'img') {
+    const cls = slot.html.match(/\bclass="([^"]*)"/)?.[1];
+    const src = IMG_LABEL_SRC[type];
+    return cls ? `<${tag} src="${src}" class="${cls}">` : `<${tag} src="${src}">`;
+  }
+  // Non-img pieces: show whichever attribute identifies the TYPE (value === type).
   const attr = ['class', 'id'].find((a) => {
     const m = slot.html.match(new RegExp(`\\b${a}="([^"]*)"`));
     return m?.[1] === type;
   });
-  // <img> pieces (antena/orella) also show a fake `src` so the tag looks real.
-  if (tag === 'img') {
-    const src = IMG_LABEL_SRC[type];
-    return attr ? `<${tag} src="${src}" ${attr}="${type}">` : `<${tag} src="${src}">`;
-  }
   return attr ? `<${tag} ${attr}="${type}">` : `<${tag}>`;
 }
 
@@ -122,12 +139,16 @@ export function containerClosingLabel(name) {
   return c ? `</${c.tag}>` : name;
 }
 
-// Drawer inventory (good pieces, generic per type). 8 leaf pieces total across
-// 5 types — antena/orella/ull have count 2 (Pitfall 5: don't treat each type as
-// unique or the second slot can never be filled).
+// Drawer inventory (good pieces). 8 leaf pieces total across 7 types after the
+// round-3 directional split: antena/orella are now 4 distinct left/right types
+// (count 1 each), ull stays a SHARED-count type with count 2 for its 2 symmetric
+// slots (Pitfall 5: a shared-count type must have count === its slot count, else
+// the 2nd slot can never be filled). Sum: 1+1+1+1+2+1+1 = 8 (GAME-03).
 export const PIECES = Object.freeze([
-  Object.freeze({ type: 'antena', count: 2 }),
-  Object.freeze({ type: 'orella', count: 2 }),
+  Object.freeze({ type: 'antena-esquerra', count: 1 }),
+  Object.freeze({ type: 'antena-dreta', count: 1 }),
+  Object.freeze({ type: 'orella-esquerra', count: 1 }),
+  Object.freeze({ type: 'orella-dreta', count: 1 }),
   Object.freeze({ type: 'ull', count: 2 }),
   Object.freeze({ type: 'nas', count: 1 }),
   Object.freeze({ type: 'boca', count: 1 }),
