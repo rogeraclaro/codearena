@@ -31,13 +31,14 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 - [ ] **GAME-05**: Fase JS: constructor de regles "Quan passi X → A l'element Y → Fes Z" amb desplegables
 - [x] **GAME-06**: Cap fase permet escriptura lliure de codi
 - [ ] **GAME-07**: En esgotar-se el temps l'equip passa de fase tal com estigui; les fases CSS i JS operen sobre el DOM produït encara que sigui incomplet
+- [ ] **GAME-08**: A la Fase HTML, l'equip pot prémer un botó "Llest!" — habilitat NOMÉS quan la seva estructura és 100% correcta (coincideix amb la Plana Model). En prémer'l, el servidor congela NOMÉS aquell equip (el timer global segueix igual per a la resta) i registra el temps transcorregut des de l'inici de la fase. Depèn de poder validar en viu la correcció estructural (reutilitza la comparació de SCORE-01). CSS/JS: pendent de decidir si tindran el mateix botó — es deixa com a idea diferida fins veure com funciona a HTML.
 
 ### Puntuació i resultats (SCORE)
 
 - [ ] **SCORE-01**: L'HTML es puntua comparant l'estructura del DOM parsejat amb la Plana Model (mai diff de text)
 - [ ] **SCORE-02**: El CSS es puntua comparant valors `getComputedStyle` normalitzats (formats equivalents de color/mides puntuen igual)
 - [ ] **SCORE-03**: El JS es puntua verificant semànticament la tripleta esdeveniment + element + acció
-- [ ] **SCORE-04**: Cada equip rep un percentatge d'encert global i apareix en un rànquing ordenat
+- [ ] **SCORE-04**: Cada equip rep un percentatge d'encert global i apareix en un rànquing ordenat; dins d'un mateix percentatge, desempata pel temps registrat via GAME-08 (el temps mai puntua per si sol, només desempata)
 - [ ] **SCORE-05**: La pantalla de resultats mostra el detall de sub-checks superats per equip (per al debrief pedagògic)
 
 ### UX (UX)
@@ -98,10 +99,13 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 | SCORE-04 | Phase 4 |
 | SCORE-05 | Phase 4 |
 | ADMIN-07 | Phase 4 |
+| GAME-08 | Phase 1* |
 | DEPL-01 | Phase 5 |
 | DEPL-02 | Phase 5 |
 
-**Coverage:** 28/28 v1 requirements mapped ✓
+\* GAME-08 (botó "Llest!") és mecanisme de Fase 1 (congelar un equip + registrar temps) però depèn de validar en viu la correcció estructural — reutilitza la comparació de SCORE-01 (Fase 4). Decidir en planificar si es porta endavant una versió simplificada de la comparació, o s'implementa junt amb Fase 4.
+
+**Coverage:** 29/29 v1 requirements mapped ✓
 
 ---
-*Last updated: 2026-07-01 after roadmap creation*
+*Last updated: 2026-07-03 — added GAME-08 (botó "Llest!") per decisió de disseny post-Fase 2*
