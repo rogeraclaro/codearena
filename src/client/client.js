@@ -60,6 +60,101 @@ function playDropSound() {
   playTone(660, 110); // to més agut i lleugerament més llarg en col·locar-la bé
 }
 
+// So d'alerta tipus campana en equivocar-se (rebuig d'una peça). Dos parcials
+// sinusoïdals inharmònics (fonamental + sobretò) barrejats per una sola envelope
+// de gain amb decay llarg (~350ms) → es llegeix com un "ding" de campana, no com
+// el "blip" curt de 90-110ms de pickup/drop. Reutilitza el mateix AudioContext
+// mandrós (mai en crea un de nou), coherent amb playTone.
+function playAlertSound() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audioCtx) audioCtx = new Ctx();
+    const now = audioCtx.currentTime;
+    const dur = 0.35; // decay llarg → campana, no blip
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.1, now + 0.01); // attack curt, volum baix
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur); // cua llarga de campana
+    [880, 1480].forEach((freq) => {
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      osc.start(now);
+      osc.stop(now + dur);
+    });
+    gain.connect(audioCtx.destination);
+  } catch {
+    // El so és una millora, mai bloqueja el joc si Web Audio falla/està bloquejat.
+  }
+}
+
+// So continu d'arrossegament ("crrrrrrr"): textura de fricció que dura EXACTAMENT
+// el que dura el drag. Es fa amb soroll filtrat (NO un oscil·lador pur, que sonaria
+// a to net): un AudioBufferSourceNode amb ~0.5s de soroll blanc en loop, passat per
+// un BiquadFilter bandpass mig (~1800Hz) per donar-li el caràcter de "crrr" en
+// comptes d'estàtica dura, i un gain baix (< blips discrets) perquè sona tota
+// l'estona i no ha de cansar amb 4-6 equips a l'aula. El node actiu es guarda a
+// dragNoiseSource i s'atura explícitament a onEnd (universalment).
+let dragNoiseSource = null;
+function startDragNoise() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audioCtx) audioCtx = new Ctx();
+    // Defensiu: SortableJS només permet un drag alhora, però si quedés un node
+    // previ actiu l'aturem abans de crear-ne un de nou (evita fuites de nodes).
+    stopDragNoise();
+    const now = audioCtx.currentTime;
+    // Buffer curt de soroll blanc reproduït en loop → textura contínua.
+    const bufLen = Math.floor(audioCtx.sampleRate * 0.5);
+    const buffer = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufLen; i += 1) data[i] = Math.random() * 2 - 1;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 1800; // centre mig → "crrr" de fricció
+    filter.Q.value = 0.8; // Q moderat: amplada de banda que suavitza l'estàtica
+    const gain = audioCtx.createGain();
+    // Volum baix (per sota dels blips): sona tota la durada del drag.
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.05, now + 0.03);
+    src.connect(filter).connect(gain).connect(audioCtx.destination);
+    src.start(now);
+    dragNoiseSource = { src, gain, filter };
+  } catch {
+    // El so és una millora, mai bloqueja el drag si Web Audio falla/està bloquejat.
+  }
+}
+
+// Atura i desconnecta el node de soroll actiu (idempotent). Fade curt de ~30ms
+// per evitar el clic de tallar el soroll de cop.
+function stopDragNoise() {
+  if (!dragNoiseSource) return;
+  const { src, gain, filter } = dragNoiseSource;
+  dragNoiseSource = null;
+  try {
+    if (audioCtx) {
+      const now = audioCtx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.linearRampToValueAtTime(0.0001, now + 0.03);
+      src.stop(now + 0.04);
+    } else {
+      src.stop();
+    }
+    src.disconnect();
+    filter.disconnect();
+    gain.disconnect();
+  } catch {
+    // Node ja aturat/desconnectat — ignora.
+  }
+}
+
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
@@ -423,7 +518,10 @@ function initSortables(calaixEl, slotEls) {
     sort: false,
     animation: 150,
     emptyInsertThreshold: 40,
-    onStart: () => playPickupSound(), // so d'agafar quan el drag surt del calaix
+    onStart: () => {
+      playPickupSound(); // so curt d'agafar quan el drag surt del calaix
+      startDragNoise(); // textura contínua "crrrr" mentre dura l'arrossegament
+    },
     onAdd: (evt) => {
       // Una peça que torna des d'un slot cap al calaix = treure (D-10). El
       // board-state autoritatiu reconciliarà el DOM; cap diàleg de confirmació
@@ -433,8 +531,16 @@ function initSortables(calaixEl, slotEls) {
       }
     },
     onEnd: (evt) => {
-      // Distractor rebotat (cap slot l'accepta → revert natiu al calaix, from===to):
-      // shake breu sense text ni color d'error (D-11, UI-SPEC §Motion).
+      stopDragNoise(); // atura el so continu, sigui quin sigui el final del drag
+      // Rebuig: cap slot l'accepta → revert natiu (from===to). So d'alerta tipus
+      // campana per a QUALSEVOL peça rebutjada — distractor O peça bona en slot
+      // incorrecte (p.ex. antena-esquerra sobre el forat dret), NO només
+      // distractors (broadening deliberat, checkpoint 02-03 round 6).
+      if (evt.from === evt.to) {
+        playAlertSound();
+      }
+      // Shake visual: es manté NOMÉS per a distractors (scope inalterat de rounds
+      // previs) — només el so nou usa la condició més àmplia.
       if (evt.item.classList.contains('piece-chip--distractor') && evt.from === evt.to) {
         const el = evt.item;
         el.classList.remove('piece-chip--shake');
@@ -457,7 +563,10 @@ function initSortables(calaixEl, slotEls) {
       sort: false,
       animation: 150,
       emptyInsertThreshold: 40,
-      onStart: () => playPickupSound(), // so d'agafar quan el drag surt d'un slot
+      onStart: () => {
+        playPickupSound(); // so curt d'agafar quan el drag surt d'un slot
+        startDragNoise(); // textura contínua "crrrr" mentre dura l'arrossegament
+      },
       onAdd: (evt) => {
         playDropSound(); // col·locació correcta "a baix" al tauler (≠ revert al calaix)
         evt.to.classList.add('slot--filled', 'slot--accepting');
@@ -466,6 +575,15 @@ function initSortables(calaixEl, slotEls) {
           slotId: evt.to.dataset.slotId,
           pieceType: evt.item.dataset.type,
         });
+      },
+      onEnd: (evt) => {
+        stopDragNoise(); // atura el so continu quan el drag iniciat en aquest slot acaba
+        // Una peça treta d'un slot que no és acceptada enlloc torna al mateix slot
+        // (from===to): mateix rebuig que al calaix → so d'alerta, per consistència
+        // amb com es cablegen pickup/drop/noise als dos costats.
+        if (evt.from === evt.to) {
+          playAlertSound();
+        }
       },
     });
     sortables.push(s);
