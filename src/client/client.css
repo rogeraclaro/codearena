@@ -145,11 +145,6 @@
 .piece-chip:active {
   cursor: grabbing;
 }
-.piece-chip__thumb {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
 .piece-chip__label {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-label);
@@ -157,13 +152,10 @@
   color: var(--color-muted);
 }
 
-/* Distractor (D-11): mateix chip base, sense code label — glyph emoji. "No color,
-   motion only" (UI-SPEC §Color): cap accent de color propi; només el rebot amb
-   shake el distingeix quan s'hi interactua. */
-.piece-chip__glyph {
-  font-size: var(--font-size-heading);
-  line-height: 1;
-}
+/* Distractor (D-11, override checkpoint 02-03 round 2): mateix chip base, ARA amb
+   code label literal (reusa .piece-chip__label). "No color, motion only" (UI-SPEC
+   §Color): cap accent de color propi; només el rebot amb shake el distingeix quan
+   s'hi interactua. */
 
 /* Shake de rebot del distractor (UI-SPEC §Motion) — ±desplaçament curt, sense
    text ni color d'error, nomes dins prefers-reduced-motion (patró tokens.css). */
@@ -232,7 +224,8 @@
   position: relative;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: var(--space-lg) var(--space-md) var(--space-md);
+  /* espai a dalt I a baix per a les etiquetes d'obertura (::before) i tancament (::after) */
+  padding: var(--space-lg) var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
@@ -247,13 +240,25 @@
   font-weight: var(--font-weight-body);
   color: var(--color-muted);
 }
+/* Tag de tancament del contenidor (checkpoint 02-03 round 2), mateix estil que
+   ::before però ancorat a baix-esquerra. */
+.slot-frame::after {
+  content: attr(data-label-close);
+  position: absolute;
+  bottom: var(--space-xs);
+  left: var(--space-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-body);
+  color: var(--color-muted);
+}
 .slot-row {
   display: flex;
   gap: var(--space-sm);
 }
 
-/* Slot fulla — buit: vora discontinua + etiqueta fantasma (pseudo-element, per
-   NO comptar com a fill i preservar el type-check de capacitat 1). */
+/* Slot fulla — buit: vora discontinua + fons vermell (checkpoint 02-03 round 2)
+   perquè destaqui com a forat pendent. Sense cap etiqueta (contingut buit). */
 .slot {
   position: relative;
   flex: 1;
@@ -265,14 +270,10 @@
   padding: var(--space-xs);
   border: 1px dashed var(--color-border);
   border-radius: 8px;
+  background-color: var(--color-destructive);
 }
-.slot:empty::before {
-  content: attr(data-label);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-body);
-  color: var(--color-muted);
-}
+/* Un cop ple, la regla shorthand `background` sobreescriu el vermell (mateixa
+   especificitat, però ve després en l'ordre de font → guanya). */
 .slot--filled {
   border-style: solid;
   background: var(--color-surface);

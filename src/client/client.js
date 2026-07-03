@@ -6,12 +6,19 @@
 // compte (estat autoritatiu al servidor, T-04-03).
 
 import { io } from 'socket.io-client';
-import { createElement, Lock, Eye, Circle, Minus, MoveRight } from 'lucide';
+import { createElement, Lock, MoveRight } from 'lucide';
 import Sortable from 'sortablejs';
 import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
 import { EVENTS } from '../server/events.js';
-import { SLOTS, PIECES, DISTRACTORS, pieceLabel, containerLabel } from '../shared/robotTemplate.js';
+import {
+  SLOTS,
+  PIECES,
+  DISTRACTORS,
+  pieceLabel,
+  containerLabel,
+  containerClosingLabel,
+} from '../shared/robotTemplate.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -145,8 +152,6 @@ function renderInterstitialScreen(phase) {
 // optimista i es reconcilia amb team:board-state. latestPlacement guarda l'últim
 // board rebut perquè un session:full-state (update quirúrgic) no el perdi.
 
-const GLYPHS = { ull: Eye, nas: Circle, boca: Minus };
-
 let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd)
 let latestPlacement = {};
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
@@ -182,27 +187,14 @@ function remainingPieces(placement) {
   return chips;
 }
 
-// Chip read-only (D-12): thumbnail (antena/orella) o glyph Lucide (ull/nas/boca)
-// + etiqueta = el tag HTML literal real en monospace amb angle brackets (p.ex.
-// `<img class="antena">`, derivat de SLOTS via pieceLabel — override del
-// checkpoint 02-03). data-type genèric (D-07). Cap camp editable (GAME-06).
+// Chip read-only (D-12, checkpoint 02-03 round 2): NOMÉS el code label, cap icona
+// ni thumbnail. L'etiqueta = el tag HTML literal real en monospace amb angle
+// brackets (p.ex. `<img src="assets/aerial.png" class="antena">`, derivat de
+// SLOTS via pieceLabel). data-type genèric (D-07). Cap camp editable (GAME-06).
 function createChip(type) {
   const chip = document.createElement('div');
   chip.className = 'piece-chip';
   chip.dataset.type = type;
-
-  if (type === 'antena' || type === 'orella') {
-    const thumb = document.createElement('img');
-    thumb.className = 'piece-chip__thumb';
-    thumb.src = `/${type}.svg`;
-    thumb.alt = '';
-    chip.appendChild(thumb);
-  } else if (GLYPHS[type]) {
-    const glyph = createElement(GLYPHS[type]);
-    glyph.setAttribute('width', '20');
-    glyph.setAttribute('height', '20');
-    chip.appendChild(glyph);
-  }
 
   const label = document.createElement('span');
   label.className = 'piece-chip__label';
@@ -212,18 +204,25 @@ function createChip(type) {
   return chip;
 }
 
-// Distractor còmic (D-11): glyph emoji + SENSE code label — són deliberadament
-// "no HTML". dataset.type no coincideix amb cap slot.accepts, així que el revert
-// natiu de SortableJS els retorna sols al calaix (cap mecànica ni error nous).
-const DISTRACTOR_GLYPHS = { banana: '🍌', roda: '🛞', sabata: '👟' };
+// Distractor còmic (D-11, override checkpoint 02-03 round 2): ara SÍ mostra un
+// code label literal com a gag d'HTML còmic ("si no no serveixen de res"), sense
+// emoji. NOTA: per `sabata` la classe MOSTRADA és `sabatilla`, no `sabata` — és
+// una cadena display-only volguda; la clau interna `type`/dataset.type es manté
+// `sabata` (l'usa el revert-per-type-mismatch de SortableJS), NO és cap typo.
+const DISTRACTOR_LABELS = {
+  banana: '<p class="banana">',
+  roda: '<h3 class="roda">',
+  sabata: '<img src="assets/slipper.jpg" class="sabatilla">',
+};
 function createDistractorChip(type) {
   const chip = document.createElement('div');
   chip.className = 'piece-chip piece-chip--distractor';
   chip.dataset.type = type;
-  const glyph = document.createElement('span');
-  glyph.className = 'piece-chip__glyph';
-  glyph.textContent = DISTRACTOR_GLYPHS[type] || '';
-  chip.appendChild(glyph);
+  const label = document.createElement('span');
+  label.className = 'piece-chip__label';
+  // textContent, no innerHTML: els `< >` són text pla, mai markup (V5 anti-XSS).
+  label.textContent = DISTRACTOR_LABELS[type] || '';
+  chip.appendChild(label);
   return chip;
 }
 
@@ -251,7 +250,7 @@ function createSlot(slot, placement) {
   el.className = 'slot';
   el.dataset.slotId = slot.id;
   el.dataset.accepts = slot.accepts; // type-check de capacitat (SortableJS put)
-  el.dataset.label = pieceLabel(slot.accepts); // etiqueta fantasma via CSS :empty::before
+  // Slot buit SENSE etiqueta (checkpoint 02-03 round 2): només fons vermell (CSS).
   const placed = placement[slot.id];
   if (placed) {
     el.classList.add('slot--filled');
@@ -260,10 +259,14 @@ function createSlot(slot, placement) {
   return el;
 }
 
-function createFrame(label) {
+// El frame del contenidor mostra ARA les etiquetes d'obertura I tancament
+// (checkpoint 02-03 round 2): obertura a dalt-esquerra via CSS ::before,
+// tancament a baix-esquerra via CSS ::after. Ambdues derivades de CONTAINERS.
+function createFrame(name) {
   const frame = document.createElement('div');
   frame.className = 'slot-frame';
-  frame.dataset.label = label; // etiqueta del contenidor via CSS ::before
+  frame.dataset.label = containerLabel(name); // tag d'obertura via CSS ::before
+  frame.dataset.labelClose = containerClosingLabel(name); // tag de tancament via ::after
   return frame;
 }
 
@@ -277,7 +280,7 @@ function buildBoard(placement) {
   const board = document.createElement('div');
   board.className = 'tauler';
 
-  const section = createFrame(containerLabel('robot-contenidor'));
+  const section = createFrame('robot-contenidor');
 
   const antenaRow = document.createElement('div');
   antenaRow.className = 'slot-row';
@@ -291,9 +294,9 @@ function buildBoard(placement) {
   orellaRow.appendChild(createSlot(slotById('orella-dreta'), placement));
   section.appendChild(orellaRow);
 
-  const cap = createFrame(containerLabel('robot-cap'));
+  const cap = createFrame('robot-cap');
 
-  const ulls = createFrame(containerLabel('contenidor-ulls'));
+  const ulls = createFrame('contenidor-ulls');
   const ullRow = document.createElement('div');
   ullRow.className = 'slot-row';
   ullRow.appendChild(createSlot(slotById('ull-1'), placement));
@@ -432,9 +435,24 @@ function mountGame(gameContainer, placement) {
 // el saneja amb DOMPurify preservant id/class/src/alt i <output> (Pitfall 2),
 // i l'injecta al srcdoc de l'iframe amb la capa de fons fix (D-03).
 function wrapPreview(inner) {
+  // Fons fix de la meitat dreta (D-03). Cadena estàtica de confiança (mai dades
+  // d'usuari), segura per incrustar literalment. NOTA: la foto ve del CDN
+  // d'Unsplash → dependència de xarxa externa; si l'aula no té internet el dia de
+  // la sessió, la foto no carregarà i quedarà només l'overlay `background-color`
+  // (degradació elegant, sense trencar res).
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     html, body { margin: 0; height: 100%; }
-    #robot-fons { position: fixed; inset: 0; background: url('/fons.svg') center / cover no-repeat; }
+    #robot-fons {
+      position: fixed;
+      inset: 0;
+      background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1080&h=1920&q=80&blur=10');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      background-color: rgba(30, 40, 50, 0.75);
+      background-blend-mode: overlay;
+    }
     #robot-contenidor { position: relative; }
   </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
 }

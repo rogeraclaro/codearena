@@ -81,6 +81,16 @@ export const CONTAINERS = Object.freeze([
 // id (`antena-esquerra`) is per-INSTANCE and deliberately not shown — a type has
 // 2 slots but one label. Read-only text only (GAME-06/V5): the brackets are plain
 // characters, never interpreted as markup.
+// Fake, DISPLAY-ONLY `src` values for the <img> piece labels (antena/orella), so
+// the chip shows the full realistic tag shape `<img src="..." class="...">`
+// (checkpoint 02-03 round 2). These paths are ILLUSTRATIVE ONLY — never fetched,
+// no such asset files exist. FUTURE WORK (the user will provide the art later):
+// real per-INSTANCE directional images `aerial_left.png`/`aerial_right.png` and
+// `ear_left.png`/`ear_right.png`; at that point the type system may need to split
+// antena/orella into left/right variants so students learn to aim the correct
+// side. That split is intentionally OUT OF SCOPE for this round — do not add it now.
+const IMG_LABEL_SRC = Object.freeze({ antena: 'assets/aerial.png', orella: 'assets/ear.png' });
+
 export function pieceLabel(type) {
   const slot = SLOTS.find((s) => s.accepts === type);
   if (!slot) return type; // defensive fallback
@@ -89,6 +99,11 @@ export function pieceLabel(type) {
     const m = slot.html.match(new RegExp(`\\b${a}="([^"]*)"`));
     return m?.[1] === type;
   });
+  // <img> pieces (antena/orella) also show a fake `src` so the tag looks real.
+  if (tag === 'img') {
+    const src = IMG_LABEL_SRC[type];
+    return attr ? `<${tag} src="${src}" ${attr}="${type}">` : `<${tag} src="${src}">`;
+  }
   return attr ? `<${tag} ${attr}="${type}">` : `<${tag}>`;
 }
 
@@ -97,6 +112,14 @@ export function pieceLabel(type) {
 export function containerLabel(name) {
   const c = CONTAINERS.find((x) => x.name === name);
   return c ? `<${c.tag} ${c.attr}="${c.name}">` : name;
+}
+
+// Closing tag for the same pre-built container frames (checkpoint 02-03 round 2):
+// `robot-contenidor` → `</section>`. Derived from the same CONTAINERS single
+// source — never hand-writes the tag name a second time (D-01).
+export function containerClosingLabel(name) {
+  const c = CONTAINERS.find((x) => x.name === name);
+  return c ? `</${c.tag}>` : name;
 }
 
 // Drawer inventory (good pieces, generic per type). 8 leaf pieces total across
