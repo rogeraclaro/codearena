@@ -12,7 +12,8 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 
 ### Validated
 
-(None yet — ship to validate)
+- **GAME-03** (Phase 2): Fase HTML amb blocs drag & drop i snap fort — un bloc mal deixat torna al calaix o encaixa a l'slot vàlid més proper (magnet + rebound via SortableJS)
+- **GAME-06** (Phase 2): Cap escriptura lliure de codi a la Fase HTML — totes les interaccions són blocs predefinits arrossegables, etiquetes read-only
 
 ### Active
 
@@ -24,10 +25,10 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 **Mecànica de joc (Client)**
 - [ ] 3 fases seqüencials: Fase 1 HTML (esquelet), Fase 2 CSS (pell), Fase 3 JS (músculs)
 - [ ] Pantalla d'equip dividida: panell d'acció (esquerra) + preview en temps real (dreta)
-- [ ] Fase HTML: blocs drag & drop estil Scratch amb snap fort (bloc mal deixat torna al calaix o encaixa a l'espai vàlid més proper)
+- [x] Fase HTML: blocs drag & drop estil Scratch amb snap fort (bloc mal deixat torna al calaix o encaixa a l'espai vàlid més proper) — validat Phase 2 (GAME-03)
 - [ ] Fase CSS: codi "foradat" — sintaxi CSS real amb valors controlats (color pickers, sliders)
 - [ ] Fase JS: constructor de regles lògiques "Quan passi X → A l'element Y → Fes Z" amb desplegables
-- [ ] Cap escriptura lliure de codi en cap fase
+- [ ] Cap escriptura lliure de codi en cap fase (validat per la Fase HTML a Phase 2; pendent per CSS/JS)
 
 **Panell Admin**
 - [ ] Registre de noms d'equips
@@ -99,4 +100,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-01 after initialization*
+*Last updated: 2026-07-03 — Phase 2 (Joc — Fase HTML) complete, GAME-03/GAME-06 validated*
