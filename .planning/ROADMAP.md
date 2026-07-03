@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
-| 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete   | 2026-07-03 |
+| 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 0/TBD | Not started | - |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
