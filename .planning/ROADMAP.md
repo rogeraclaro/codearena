@@ -91,7 +91,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Un equip pot construir regles JS amb desplegables ("Quan passi X → a l'element Y → Fes Z") i en veure l'efecte aplicat a la preview
   3. Si l'HTML de la fase anterior ha quedat incomplet en esgotar-se el temps, les fases CSS i JS funcionen igualment sobre el DOM parcial sense trencar-se
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Llesca vertical fase CSS: CSS_HOLES + estat autoritatiu + panell de forats amb preview en viu (var()/CSSOM) + split 50/50 (Wave 1)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 03-02-PLAN.md — Llesca vertical fase JS: vocabulari frozen + intèrpret parent-driven (sense eval) + panell de regles "Quan X → Y → Fes Z" amb "Veure"/"Afegir" (Wave 2)
+
 **UI hint**: yes
 
 ### Phase 4: Puntuació i rànquing final
@@ -134,6 +143,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
-| 3. Joc — Fases CSS i JS | 0/TBD | Not started | - |
+| 3. Joc — Fases CSS i JS | 0/2 | Planned | - |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
