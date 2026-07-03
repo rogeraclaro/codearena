@@ -26,6 +26,40 @@ const STYLE_ID = 'client-styles';
 const INTERSTITIAL_MS = 1200;
 const PHASE_LABELS = { html: 'HTML', css: 'CSS', js: 'JS' };
 
+// So curt sintetitzat in-browser (Web Audio, sense assets externs a servir/baixar).
+// AudioContext únic, creat mandrosament al primer gest: l'autoplay-policy dels
+// navegadors exigeix un gest d'usuari abans de reproduir àudio, i un drag ho és.
+// Envelope de gain curt (attack ~10ms, decay ràpid) i volum baix perquè sigui un
+// "blip" net i suau — no un to cru — amb 4-6 equips sonant alhora a l'aula.
+let audioCtx = null;
+function playTone(freq, durationMs) {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audioCtx) audioCtx = new Ctx();
+    const now = audioCtx.currentTime;
+    const dur = durationMs / 1000;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.01); // attack curt, volum baix
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur); // decay suau
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + dur);
+  } catch {
+    // El so és una millora, mai bloqueja el joc si Web Audio falla/està bloquejat.
+  }
+}
+function playPickupSound() {
+  playTone(440, 90); // to mitjà curt en agafar una peça
+}
+function playDropSound() {
+  playTone(660, 110); // to més agut i lleugerament més llarg en col·locar-la bé
+}
+
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
@@ -389,6 +423,7 @@ function initSortables(calaixEl, slotEls) {
     sort: false,
     animation: 150,
     emptyInsertThreshold: 40,
+    onStart: () => playPickupSound(), // so d'agafar quan el drag surt del calaix
     onAdd: (evt) => {
       // Una peça que torna des d'un slot cap al calaix = treure (D-10). El
       // board-state autoritatiu reconciliarà el DOM; cap diàleg de confirmació
@@ -422,7 +457,9 @@ function initSortables(calaixEl, slotEls) {
       sort: false,
       animation: 150,
       emptyInsertThreshold: 40,
+      onStart: () => playPickupSound(), // so d'agafar quan el drag surt d'un slot
       onAdd: (evt) => {
+        playDropSound(); // col·locació correcta "a baix" al tauler (≠ revert al calaix)
         evt.to.classList.add('slot--filled', 'slot--accepting');
         setTimeout(() => evt.to.classList.remove('slot--accepting'), 250);
         socket.emit(EVENTS.TEAM_PLACE_PIECE, {
