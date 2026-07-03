@@ -80,6 +80,12 @@ None yet.
 - Research flag: Fase 2 (HTML drag & drop) ha de validar l'API exacta de SortableJS (group/put/pull) per al snap fort abans d'escriure UI
 - Pendent de confirmar: navegadors/hardware exactes de l'aula (assumit: escriptori evergreen, no tàctil) — verificar abans de planificar Fase 2
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260703-uwn | Aplica el redisseny visual final del Bender al codi real de la Fase 2 (HTML drag drop): antena unica per CSS (7 peces en lloc de 8), boca sense text inicial, sense mirall CSS a les orelles, CSS complet del cap/ulls/nas/boca | 2026-07-03 | 402bc16 | [260703-uwn-aplica-el-redisseny-visual-final-del-ben](./quick/260703-uwn-aplica-el-redisseny-visual-final-del-ben/) |
+
 ## Deferred Items
 
 Items acknowledged and carried forward from previous milestone close:
@@ -95,3 +101,5 @@ Items acknowledged and carried forward from previous milestone close:
 Last session: 2026-07-03T08:21:15.247Z
 Stopped at: Phase 2 UI-SPEC approved
 Resume file: .planning/phases/02-joc-fase-html-blocs-drag-drop/02-UI-SPEC.md
+
+Last activity: 2026-07-03 - Completed quick task 260703-uwn: Aplica el redisseny visual final del Bender al codi real de la Fase 2
