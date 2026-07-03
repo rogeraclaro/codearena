@@ -85,6 +85,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260703-uwn | Aplica el redisseny visual final del Bender al codi real de la Fase 2 (HTML drag drop): antena unica per CSS (7 peces en lloc de 8), boca sense text inicial, sense mirall CSS a les orelles, CSS complet del cap/ulls/nas/boca | 2026-07-03 | 402bc16 | [260703-uwn-aplica-el-redisseny-visual-final-del-ben](./quick/260703-uwn-aplica-el-redisseny-visual-final-del-ben/) |
+| 2 | Elimina forma/ompliment CSS de #robot-cap/ulls/nas/boca del preview Fase 2 (fix regressio D-13) | 2026-07-03 | b324e16 | — |
 
 ## Deferred Items
 
