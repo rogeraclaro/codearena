@@ -90,82 +90,70 @@ function playAlertSound() {
   }
 }
 
-// So continu d'arrossegament ("crrrrrrr"): textura de fricció que dura EXACTAMENT
-// el que dura el drag. Es fa amb soroll filtrat (NO un oscil·lador pur, que sonaria
-// a to net): un AudioBufferSourceNode amb ~0.5s de soroll blanc en loop, passat per
-// un BiquadFilter bandpass mig (~1800Hz) per donar-li el caràcter de "crrr" en
-// comptes d'estàtica dura, i un gain baix (< blips discrets) perquè sona tota
-// l'estona i no ha de cansar amb 4-6 equips a l'aula. El node actiu es guarda a
-// dragNoiseSource i s'atura explícitament a onEnd (universalment).
-let dragNoiseSource = null;
-function startDragNoise() {
+// So d'arrossegament tipus "cremallera obrint-se poc a poc": en comptes d'una
+// textura contínua de soroll filtrat (que sonava massa densa/gruixuda), és un TREN
+// de clics curts i discrets a ritme pausat — cada clic = una "dent" de la cremallera
+// que enganxa. Es manté exactament el que dura el drag i s'atura al mateix onEnd
+// que abans (calaix i per-slot). Ritme ~115ms amb un jitter de ±18ms perquè no soni
+// a metrònom rígid (les cremalleres reals no són perfectament regulars).
+const ZIP_TICK_BASE_MS = 115;
+const ZIP_TICK_JITTER_MS = 18;
+
+// Un sol "clic" de dent: pols de soroll blanc molt breu (~14ms) passat per un
+// highpass (talla els greus → sona a "tic" sec i brillant, no a "fsss") amb una
+// envelope de gain d'atac immediat i decay ràpid (percussiu). Volum baix (aula,
+// 4-6 equips alhora). Reutilitza el mateix AudioContext mandrós, com playTone.
+function playZipTick() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
     if (!audioCtx) audioCtx = new Ctx();
-    // Defensiu: SortableJS només permet un drag alhora, però si quedés un node
-    // previ actiu l'aturem abans de crear-ne un de nou (evita fuites de nodes).
-    stopDragNoise();
     const now = audioCtx.currentTime;
-    // Buffer llarg de soroll blanc reproduït en loop → textura contínua. Dues raons
-    // per als 2.5s (abans 0.5s, que sonava a "creck creck" repetit): (1) el punt de
-    // reinici del loop és molt menys freqüent i menys perceptible; (2) sobretot, els
-    // extrems del buffer es fonen a zero (fade-in/out d'uns ~10ms) perquè el salt de
-    // wrap-around vagi de zero→zero en lloc de saltar entre dos valors de soroll
-    // aleatoris no relacionats — és el salt brusc el que produïa el clic al costura
-    // del loop. El fade es cou directament a les dades del buffer, sense nodes extra.
-    const bufLen = Math.floor(audioCtx.sampleRate * 2.5);
+    const dur = 0.014; // ~14ms: prou curt per llegir-se com un clic, no una textura
+    const bufLen = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
     const buffer = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
-    const fadeLen = Math.floor(audioCtx.sampleRate * 0.01); // ~10ms a cada extrem
-    for (let i = 0; i < bufLen; i += 1) {
-      let sample = Math.random() * 2 - 1;
-      // Fade-in lineal sobre els primers fadeLen samples i fade-out sobre els últims:
-      // porta l'amplitud a ~0 a inici i final → la costura del loop és zero→zero.
-      if (i < fadeLen) sample *= i / fadeLen;
-      else if (i >= bufLen - fadeLen) sample *= (bufLen - 1 - i) / fadeLen;
-      data[i] = sample;
-    }
+    for (let i = 0; i < bufLen; i += 1) data[i] = Math.random() * 2 - 1;
     const src = audioCtx.createBufferSource();
     src.buffer = buffer;
-    src.loop = true;
     const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1800; // centre mig → "crrr" de fricció
-    filter.Q.value = 0.8; // Q moderat: amplada de banda que suavitza l'estàtica
+    filter.type = 'highpass';
+    filter.frequency.value = 2600; // deixa passar només l'agut → "clic" sec de dent
     const gain = audioCtx.createGain();
-    // Volum baix (per sota dels blips): sona tota la durada del drag.
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.05, now + 0.03);
+    gain.gain.setValueAtTime(0.06, now); // atac immediat, volum baix
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur); // decay ràpid (percussiu)
     src.connect(filter).connect(gain).connect(audioCtx.destination);
     src.start(now);
-    dragNoiseSource = { src, gain, filter };
+    src.stop(now + dur);
   } catch {
     // El so és una millora, mai bloqueja el drag si Web Audio falla/està bloquejat.
   }
 }
 
-// Atura i desconnecta el node de soroll actiu (idempotent). Fade curt de ~30ms
-// per evitar el clic de tallar el soroll de cop.
+// Arrenca el tren de clics i el manté fins a stopDragNoise. Primer clic immediat
+// (el so comença alhora que agafes la peça) i els següents es reprogramen amb
+// setTimeout + jitter. Timer únic (defensiu contra dobles starts: SortableJS només
+// permet un drag, però mai deixem dos trens sonant alhora).
+let dragTickTimer = null;
+function startDragNoise() {
+  stopDragNoise();
+  const scheduleNext = () => {
+    const delay = ZIP_TICK_BASE_MS + (Math.random() * 2 - 1) * ZIP_TICK_JITTER_MS;
+    dragTickTimer = setTimeout(() => {
+      playZipTick();
+      scheduleNext();
+    }, delay);
+  };
+  playZipTick(); // dent inicial immediata
+  scheduleNext();
+}
+
+// Atura el tren de clics (idempotent). No cal fade: cada tick ja s'ha extingit;
+// només deixem de programar-ne de nous.
 function stopDragNoise() {
-  if (!dragNoiseSource) return;
-  const { src, gain, filter } = dragNoiseSource;
-  dragNoiseSource = null;
-  try {
-    if (audioCtx) {
-      const now = audioCtx.currentTime;
-      gain.gain.cancelScheduledValues(now);
-      gain.gain.setValueAtTime(gain.gain.value, now);
-      gain.gain.linearRampToValueAtTime(0.0001, now + 0.03);
-      src.stop(now + 0.04);
-    } else {
-      src.stop();
-    }
-    src.disconnect();
-    filter.disconnect();
-    gain.disconnect();
-  } catch {
-    // Node ja aturat/desconnectat — ignora.
+  if (dragTickTimer) {
+    clearTimeout(dragTickTimer);
+    dragTickTimer = null;
   }
 }
 
@@ -534,7 +522,7 @@ function initSortables(calaixEl, slotEls) {
     emptyInsertThreshold: 40,
     onStart: () => {
       playPickupSound(); // so curt d'agafar quan el drag surt del calaix
-      startDragNoise(); // textura contínua "crrrr" mentre dura l'arrossegament
+      startDragNoise(); // tren de clics tipus cremallera mentre dura l'arrossegament
     },
     onAdd: (evt) => {
       // Una peça que torna des d'un slot cap al calaix = treure (D-10). El
@@ -581,7 +569,7 @@ function initSortables(calaixEl, slotEls) {
       emptyInsertThreshold: 40,
       onStart: () => {
         playPickupSound(); // so curt d'agafar quan el drag surt d'un slot
-        startDragNoise(); // textura contínua "crrrr" mentre dura l'arrossegament
+        startDragNoise(); // tren de clics tipus cremallera mentre dura l'arrossegament
       },
       onAdd: (evt) => {
         playDropSound(); // col·locació correcta "a baix" al tauler (≠ revert al calaix)
