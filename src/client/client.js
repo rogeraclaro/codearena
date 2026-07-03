@@ -663,33 +663,8 @@ function wrapPreview(inner) {
 
     /* #robot-cap: cap forma/ompliment aquí a propòsit (D-13, 02-CONTEXT.md) —
        el cap és un contenidor buit fins que la Fase 3 (CSS foradat) l'omple.
-       Nomes les peces ja col·locades (antena/orelles) es veuen a la Fase HTML. */
-
-    /* --- L'ANTENA (única, centrada, dibuixada per CSS: tija + bola) --- */
-    .antena {
-      position: absolute;
-      top: -55px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 6px;
-      height: 55px;
-      z-index: 5;
-      background: linear-gradient(90deg, #6f7889 0%, #cfd6e0 50%, #6f7889 100%);
-      border-radius: 3px;
-    }
-
-    .antena::before {
-      content: "";
-      position: absolute;
-      top: -14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #e6ffff 0%, #7dfcff 45%, #17d8e0 80%);
-      box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
-    }
+       Nomes les peces amb contingut visual propi (imatges d'orella) es veuen
+       a la Fase HTML. */
 
     /* --- LES ORELLES --- */
     .orella {
@@ -709,9 +684,22 @@ function wrapPreview(inner) {
       right: -52px;
     }
 
-    /* .contenidor-ulls / .ull / .ull::before / #nas / #boca: sense forma ni
-       ompliment a propòsit (D-13) — són peces que la Fase 3 (CSS foradat)
-       estilitzarà; fins llavors romanen estructuralment al DOM però invisibles. */
+    /* .contenidor-ulls: sense forma a propòsit (D-13) — la Fase 3 l'estilitzarà. */
+
+    /* Peces sense contingut visual propi (antena/ull/nas/boca): en comptes
+       d'invisibles del tot, un requadre buit amb vora vermella perquè
+       l'alumne vegi que "aquí hi ha alguna cosa col·locada", encara que la
+       Fase 3 (CSS foradat) sigui qui li doni la forma real. */
+    .antena,
+    .ull,
+    #nas,
+    #boca {
+      display: inline-block;
+      min-width: 24px;
+      min-height: 24px;
+      border: 2px solid red;
+      box-sizing: border-box;
+    }
   </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
 }
 
