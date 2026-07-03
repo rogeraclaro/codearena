@@ -93,7 +93,7 @@
   gap: var(--space-md);
 }
 
-/* Progrés propi N/8 (D-14) */
+/* Progrés propi N/7 (D-14) */
 .progress-pieces {
   display: flex;
   flex-direction: column;

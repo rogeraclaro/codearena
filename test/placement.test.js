@@ -5,8 +5,8 @@
 // Covers the placement round-trip of the HTML phase:
 //   - PLACE-OK:            un place valid -> l'owner rep team:board-state (autoritatiu, GAME-03).
 //   - PLACE-TYPE-REJECT:   un tipus incompatible NO produeix board-state (type-check server-side, D-07).
-//   - PLACE-DIRECTION-REJECT: una peça esquerra al forat dret es rebutja (split direccional round 3).
-//   - ADMIN-COUNT:         un place OK projecta progress {placed, total:8} a l'admin; el token mai s'exposa.
+//   - PLACE-DIRECTION-REJECT: una orella esquerra al forat dret es rebutja (split direccional).
+//   - ADMIN-COUNT:         un place OK projecta progress {placed, total:7} a l'admin; el token mai s'exposa.
 //   - NO-SESSION-BROADCAST: un segon equip NO rep res del place del primer (emissio dirigida, Pitfall 1).
 //   - REMOVE round-trip:   treure una peça col·locada la retira del board i baixa el comptador (D-10).
 //   - REMOVE no-op:        treure un slot buit NO emet board-state (mutation-returns-bool).
@@ -125,27 +125,27 @@ test('PLACE-TYPE-REJECT: un tipus incompatible no produeix board-state (D-07)', 
   assert.equal(board, undefined, 'un tipus incompatible mai ha de produir board-state');
 });
 
-// Split direccional (checkpoint 02-03 round 3): antena-esquerra i antena-dreta son
-// tipus DIFERENTS; el forat dret nomes accepta la peca dreta. Mirall de
-// PLACE-TYPE-REJECT pero per la nova mecanica esquerra/dreta. Estat en entrar:
-// { antena-esquerra } col·locat, antena-dreta encara buit → el reject no muta res.
-test('PLACE-DIRECTION-REJECT: una peca esquerra al forat dret es rebutja (round 3)', async () => {
+// Split direccional (orella-esquerra i orella-dreta son tipus DIFERENTS; el forat
+// dret nomes accepta la peca dreta). Mirall de PLACE-TYPE-REJECT pero per la
+// mecanica esquerra/dreta de les orelles. Estat en entrar: { antena-esquerra }
+// col·locat, orella-dreta encara buit → el reject no muta res.
+test('PLACE-DIRECTION-REJECT: una orella esquerra al forat dret es rebutja', async () => {
   const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena-esquerra' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'orella-dreta', pieceType: 'orella-esquerra' });
 
   const board = await boardPromise;
-  assert.equal(board, undefined, 'una antena-esquerra mai ha d\'encaixar al forat antena-dreta');
+  assert.equal(board, undefined, 'una orella-esquerra mai ha d\'encaixar al forat orella-dreta');
 });
 
-test('ADMIN-COUNT: un place OK projecta progress {placed, total:8} a l\'admin, sense token', async () => {
+test('ADMIN-COUNT: un place OK projecta progress {placed, total:7} a l\'admin, sense token', async () => {
   const statePromise = onceOrTimeout(adminSocket, 'session:full-state', 800);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena-dreta' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'orella-dreta', pieceType: 'orella-dreta' });
 
   const state = await statePromise;
   assert.ok(state, 'l\'admin ha de rebre session:full-state en un place OK');
   const team = state.teams.find((t) => t.id === team1Id);
   assert.ok(team.progress, 'progress ha d\'estar present durant la fase html');
-  assert.equal(team.progress.total, 8);
+  assert.equal(team.progress.total, 7);
   assert.ok(team.progress.placed >= 1, 'placed ha de comptar les peces col·locades');
   assert.equal(team.token, undefined, 'el token mai s\'ha d\'exposar a la projeccio');
 });
@@ -167,7 +167,7 @@ test('NO-SESSION-BROADCAST: un segon equip no rep res del place del primer (Pitf
   assert.equal(team2GotState, false, 'team2 no ha de rebre session:full-state del place de team1');
 });
 
-// Estat de team1 en entrar aquí: { antena-esquerra, antena-dreta, orella-esquerra }.
+// Estat de team1 en entrar aquí: { antena-esquerra, orella-dreta, orella-esquerra }.
 test('REMOVE round-trip: treure una peça col·locada la retira del board (D-10)', async () => {
   const boardPromise = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 800);
   const adminPromise = onceOrTimeout(adminSocket, 'session:full-state', 800);
@@ -184,7 +184,7 @@ test('REMOVE round-trip: treure una peça col·locada la retira del board (D-10)
   const state = await adminPromise;
   assert.ok(state, 'l\'admin ha de rebre session:full-state en un remove OK');
   const team = state.teams.find((t) => t.id === team1Id);
-  assert.equal(team.progress.total, 8);
+  assert.equal(team.progress.total, 7);
 });
 
 test('REMOVE no-op: treure un slot buit no emet board-state (mutation-returns-bool)', async () => {
@@ -205,10 +205,10 @@ test('INVENTORY cap: no es poden col·locar més peces de les disponibles (Pitfa
   assert.ok(board, 'l\'antena-esquerra s\'ha de poder recol·locar');
   assert.equal(board.placement['antena-esquerra'], 'antena-esquerra');
 
-  // antena-dreta ja està ocupat (test ADMIN-COUNT) → un segon intent al mateix
+  // orella-dreta ja està ocupat (test ADMIN-COUNT) → un segon intent al mateix
   // forat (slot ja ocupat / inventari direccional esgotat) es rebutja sense board.
   const rejected = onceOrTimeout(teamClient1, EVENTS.TEAM_BOARD_STATE, 300);
-  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'antena-dreta', pieceType: 'antena-dreta' });
+  teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: 'orella-dreta', pieceType: 'orella-dreta' });
   const board2 = await rejected;
   assert.equal(board2, undefined, 'no es pot reomplir un forat ja ocupat (inventari direccional esgotat)');
 });
@@ -232,8 +232,8 @@ test('F5 recovery: reconnectar amb el token recupera el placement previ (CORE-03
   const board = await reconnect.ready;
   assert.ok(board, 'la reconnexió per token ha de rebre team:board-state en connectar');
   assert.equal(
-    board.placement['antena-dreta'],
-    'antena-dreta',
+    board.placement['orella-dreta'],
+    'orella-dreta',
     'el board recuperat ha de mantenir el placement col·locat abans de la reconnexió',
   );
   reconnect.socket.close();

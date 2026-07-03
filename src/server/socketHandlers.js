@@ -222,7 +222,7 @@ export function registerSocketHandlers(io) {
     // validats com a strings abans de passar a gameState (que revalida contra
     // els enums de la plantilla). Divergència crítica respecte als handlers
     // admin: en un place OK NO s'emet mai a io.to('session') — només board
-    // dirigit a l'owner + comptador N/8 a l'admin (Pitfall 1, tempesta de re-render).
+    // dirigit a l'owner + comptador N/7 a l'admin (Pitfall 1, tempesta de re-render).
     socket.on(
       EVENTS.TEAM_PLACE_PIECE,
       safeHandler((payload) => {
@@ -242,7 +242,7 @@ export function registerSocketHandlers(io) {
     // Còpia EXACTA de la forma de team:place-piece: identitat SEMPRE de
     // socket.data.teamId (V4 — un equip no pot retirar del board d'un altre
     // forjant teamId al payload), slotId validat com a string (V5), i en una
-    // retirada real emissió dirigida board→owner + N/8→admin, MAI a io.to('session')
+    // retirada real emissió dirigida board→owner + N/7→admin, MAI a io.to('session')
     // (Pitfall 1). removePiece és no-op en slot buit → cap re-broadcast (T-02-06).
     socket.on(
       EVENTS.TEAM_REMOVE_PIECE,

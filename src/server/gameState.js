@@ -25,7 +25,7 @@ function registerTeams(names) {
   for (const name of names) {
     const id = randomUUID();
     // placement: mapa autoritatiu slot->tipus per equip (GAME-03). Es projecta
-    // dirigit via getTeamBoard(); getPublicState() només en deriva el count N/8.
+    // dirigit via getTeamBoard(); getPublicState() només en deriva el count N/7.
     state.teams.set(id, { id, name, claimed: false, connected: false, placement: {} });
   }
 }
@@ -61,7 +61,7 @@ function getPublicState() {
       id,
       name,
       connected,
-      // N/8 count derivat del board autoritatiu (D-15). Segur difondre (no revela
+      // N/7 count derivat del board autoritatiu (D-15). Segur difondre (no revela
       // QUINS slots estan ocupats). null fora de la fase html.
       progress:
         state.phase === 'html'
