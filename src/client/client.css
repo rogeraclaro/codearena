@@ -187,43 +187,38 @@
   opacity: 0.7;
 }
 
-/* Pista inicial (D-14) */
+/* Pista/separador permanent calaix→tauler (checkpoint 02-03 round 5): fusió de
+   l'antiga pista dismissible (D-14) i el separador (round 3) en un sol element
+   sempre visible. Centrat, fletxa avall + text, amb ~50px d'aire a dalt i a baix
+   via --space-2xl (48px, el token de l'escala més proper de 50px) — cap literal. */
 .drag-hint {
+  margin: var(--space-2xl) 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-xs);
   color: var(--color-muted);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
 }
 
-/* Loop suau de la fletxa calaix→tauler (±4px = var(--space-xs)) — decoratiu,
+/* Loop suau vertical de la fletxa calaix→tauler (±4px = var(--space-xs)) — la
+   fletxa apunta avall (MoveDown), així que el nudge és en l'eix Y. Decoratiu,
    nomes dins prefers-reduced-motion:no-preference (mateix patró que el pulse
    del timer). Amb reduced-motion la fletxa queda estatica. */
 @keyframes drag-hint-nudge {
   0%,
   100% {
-    transform: translateX(0);
+    transform: translateY(0);
   }
   50% {
-    transform: translateX(var(--space-xs));
+    transform: translateY(var(--space-xs));
   }
 }
 @media (prefers-reduced-motion: no-preference) {
   .drag-hint__arrow {
     animation: drag-hint-nudge 1s var(--motion-ease) infinite;
   }
-}
-
-/* Separador permanent calaix→tauler (checkpoint 02-03 round 3). Sempre visible
-   (≠ .drag-hint, dismissible D-14). ~50px d'aire a dalt i a baix via --space-2xl
-   (48px, el token de l'escala més proper de 50px) per separar clarament les dues
-   zones — cap literal de mida. */
-.zone-divider {
-  margin: var(--space-2xl) 0;
-  text-align: center;
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-label);
-  color: var(--color-muted);
 }
 
 /* Tauler de slots niats (D-06/D-08) */

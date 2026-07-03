@@ -6,7 +6,7 @@
 // compte (estat autoritatiu al servidor, T-04-03).
 
 import { io } from 'socket.io-client';
-import { createElement, Lock, MoveRight } from 'lucide';
+import { createElement, Lock, MoveDown } from 'lucide';
 import Sortable from 'sortablejs';
 import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
@@ -156,10 +156,6 @@ let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd
 let latestPlacement = {};
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
 let boardMounted = false;
-// Flag de sessió de pàgina (D-14): un cop es col·loca la primera peça la pista
-// inicial desapareix PER SEMPRE aquesta càrrega — no reapareix ni quan el
-// recompte torna a 0 (l'equip retira totes les peces). Es reinicia només amb F5.
-let hintDismissed = false;
 // Ordre del calaix barrejat UN COP per càrrega de pàgina (checkpoint 02-03 round 4):
 // l'usuari vol que les peces NO apareguin en ordre de declaració. Es calcula un
 // ordre aleatori (Fisher-Yates) la primera vegada i es reutilitza tota la sessió,
@@ -363,37 +359,25 @@ function buildProgress(placement) {
   return wrap;
 }
 
-// Pista inicial (D-14): fletxa calaix→tauler + micro-copy. Es descarta
-// permanentment quan es col·loca la primera peça.
-function buildHint(placement) {
-  // El primer placement (recompte 0→1) descarta la pista permanentment via
-  // hintDismissed; un cop marcada, mai més es reconstrueix aquesta càrrega.
-  if (Object.keys(placement).length > 0) hintDismissed = true;
-  if (hintDismissed) return null;
+// Pista/separador PERMANENT calaix→tauler (checkpoint 02-03 round 5): fusiona en
+// UN sol element l'antiga pista dismissible (D-14, buildHint) i el separador
+// (round 3, buildDivider), que mostraven dos textos alhora. Ara: sempre visible
+// (mai es descarta), fletxa MoveDown animada verticalment (el calaix queda a dalt,
+// el tauler a baix → "cap aquí abaix") + text fix. ~50px d'aire a dalt i a baix
+// ho fa el CSS (.drag-hint) via --space-2xl, cap literal.
+function buildDragHint() {
   const hint = document.createElement('div');
   hint.className = 'drag-hint';
-  const arrow = createElement(MoveRight);
-  arrow.classList.add('drag-hint__arrow'); // objectiu del loop ±4px (CSS)
+  const arrow = createElement(MoveDown);
+  arrow.classList.add('drag-hint__arrow'); // objectiu del loop vertical ±4px (CSS)
   arrow.setAttribute('width', '20');
   arrow.setAttribute('height', '20');
   hint.appendChild(arrow);
   const txt = document.createElement('span');
-  txt.textContent = 'Arrossega les peces als forats';
+  // textContent (no innerHTML): text pla, coherent amb la resta d'etiquetes (V5).
+  txt.textContent = 'Arrossega les etiquetes cap aquí abaix';
   hint.appendChild(txt);
   return hint;
-}
-
-// Separador PERMANENT calaix→tauler (checkpoint 02-03 round 3). A diferència de
-// la pista dismissible (D-14, buildHint) que desapareix al primer placement,
-// aquest sempre és visible: marca la costura entre el calaix (etiquetes d'origen)
-// i el tauler (forats). Text fix demanat per l'usuari; ~50px d'aire a dalt i a
-// baix ho fa el CSS (.zone-divider) via token, no cap literal.
-function buildDivider() {
-  const divider = document.createElement('div');
-  divider.className = 'zone-divider';
-  // textContent (no innerHTML): text pla, coherent amb la resta d'etiquetes (V5).
-  divider.textContent = 'Arrossega les etiquetes cap aquí abaix';
-  return divider;
 }
 
 // SortableJS: un Sortable per slot (capacitat 1). group.put com a funció fa el
@@ -464,13 +448,9 @@ function mountGame(gameContainer, placement) {
   fillDrawer(calaix, placement); // peces restants (Pitfall 5) + distractors (D-11)
   gameContainer.appendChild(calaix);
 
-  const hint = buildHint(placement);
-  if (hint) gameContainer.appendChild(hint);
-
-  // Separador permanent a la costura calaix→tauler (round 3). Independent de la
-  // pista dismissible: quan la pista encara és visible (abans del 1r placement)
-  // es veuran els dos textos; és el comportament demanat explícitament.
-  gameContainer.appendChild(buildDivider());
+  // Pista/separador permanent a la costura calaix→tauler (round 5): un sol
+  // element sempre visible amb fletxa avall + text.
+  gameContainer.appendChild(buildDragHint());
 
   const board = buildBoard(placement);
   gameContainer.appendChild(board);
