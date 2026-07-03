@@ -627,10 +627,9 @@ function mountGame(gameContainer, placement) {
 // i l'injecta al srcdoc de l'iframe amb la capa de fons fix (D-03).
 function wrapPreview(inner) {
   // Fons fix de la meitat dreta (D-03). Cadena estàtica de confiança (mai dades
-  // d'usuari), segura per incrustar literalment. NOTA: la foto ve del CDN
-  // d'Unsplash → dependència de xarxa externa; si l'aula no té internet el dia de
-  // la sessió, la foto no carregarà i quedarà només l'overlay `background-color`
-  // (degradació elegant, sense trencar res).
+  // d'usuari), segura per incrustar literalment. Asset local (src/client/public/
+  // robot-fons.png, imatge Futurama) — substitueix l'antiga URL d'Unsplash, ja
+  // no depèn de xarxa externa el dia de la sessió.
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     html, body { margin: 0; height: 100%; }
     /* Centra el robot a l'iframe (equivalent al body flex de la font de veritat). */
@@ -640,11 +639,11 @@ function wrapPreview(inner) {
       justify-content: center;
       align-items: center;
     }
-    /* Capa de fons fixa (D-03) — es manté EXACTA (URL Unsplash + blend). */
+    /* Capa de fons fixa (D-03) — asset local, sense dependència de xarxa. */
     #robot-fons {
       position: fixed;
       inset: 0;
-      background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1080&h=1920&q=80&blur=10');
+      background-image: url('/robot-fons.png');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
