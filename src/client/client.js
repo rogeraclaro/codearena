@@ -545,11 +545,13 @@ function initSortables(calaixEl, slotEls) {
       }
     },
     onEnd: (evt) => {
-      stopDragNoise(); // atura el so continu, sigui quin sigui el final del drag
-      // Rebuig: cap slot l'accepta → revert natiu (from===to). So d'alerta tipus
-      // campana per a QUALSEVOL peça rebutjada — distractor O peça bona en slot
-      // incorrecte (p.ex. antena-esquerra sobre el forat dret), NO només
-      // distractors (broadening deliberat, checkpoint 02-03 round 6).
+      stopDragNoise(); // atura el so d'arrossegament, sigui quin sigui el final del drag
+      // ÚNIC lloc que dispara la campana de rebuig: un intent de COL·LOCACIÓ sempre
+      // arrenca del calaix. Cap slot l'accepta → revert natiu al calaix (from===to)
+      // → so d'alerta per a QUALSEVOL peça rebutjada: distractor O peça bona en slot
+      // incorrecte (p.ex. antena-esquerra sobre el forat dret), NO només distractors
+      // (broadening deliberat, checkpoint 02-03 round 6). Els drags que arrenquen
+      // d'un slot (moure/treure) NO sonen la campana (vegeu el seu onEnd).
       if (evt.from === evt.to) {
         playAlertSound();
       }
@@ -590,14 +592,19 @@ function initSortables(calaixEl, slotEls) {
           pieceType: evt.item.dataset.type,
         });
       },
-      onEnd: (evt) => {
-        stopDragNoise(); // atura el so continu quan el drag iniciat en aquest slot acaba
-        // Una peça treta d'un slot que no és acceptada enlloc torna al mateix slot
-        // (from===to): mateix rebuig que al calaix → so d'alerta, per consistència
-        // amb com es cablegen pickup/drop/noise als dos costats.
-        if (evt.from === evt.to) {
-          playAlertSound();
-        }
+      onEnd: () => {
+        // NOMÉS atura el so d'arrossegament — cap so d'alerta aquí. Un drag que
+        // ARRENCA d'un slot (reprendre una peça ja col·locada per moure-la o
+        // treure-la) i acaba tornant al mateix slot (revert natiu, from===to) NO
+        // és un error de col·locació: és un no-op o una retirada avortada. La
+        // campana de rebuig queda ESTRICTAMENT per als intents de COL·LOCACIÓ
+        // rebutjats, que sempre arrenquen del calaix i reverteixen al calaix
+        // (drawer onEnd, únic lloc que la dispara). Abans, la campana per-slot es
+        // disparava en reprendre una peça CORRECTA i deixar-la anar fora d'un
+        // target vàlid: SortableJS la rebotava de tornada al seu slot (una
+        // animació de "retorn" cap amunt) alhora que sonava l'alerta, cosa que es
+        // llegia com un rebuig sobre una peça ja ben posada (fix checkpoint 02-03).
+        stopDragNoise();
       },
     });
     sortables.push(s);
