@@ -16,10 +16,11 @@ files_reviewed_list:
   - src/shared/effects.js
 findings:
   critical: 1
+  critical_resolved: 1
   warning: 4
   info: 3
   total: 8
-status: issues_found
+status: issues_found_critical_fixed
 ---
 
 # Phase 03: Code Review Report
@@ -66,6 +67,17 @@ already-stored ruleset still triggers a directed broadcast, unlike CSS/HTML.
 does have `SET-CSS-NOOP`), which is why this wasn't caught.
 
 ## Critical Issues
+
+**Status: RESOLVED.** Fixed post-review by extracting a `rebuildCssPreview(cssValues)`
+helper (mirroring `rebuildJsPreview`) and calling it both from `renderActiveSplitScreen`'s
+`css` branch and from the `team:board-state` handler when `latestState.phase === 'css'`.
+This closes the exact race described below regardless of whether `team:board-state` or
+`team:css-state` arrives first in the reconnection burst. `team:css-state`'s handler is
+left untouched (still `applyAllCssValues` + `syncCssPanelInputs` only) to preserve the
+flicker-free live-update behavior for in-phase CSS changes — only the placement-driven
+`team:board-state` event now triggers a preview rebuild, which fires at most once per
+phase entry/reconnect, not on every CSS value change. Build and full test suite (56/56)
+verified green after the fix.
 
 ### CR-01: CSS-phase preview loses all placed pieces on F5 reconnect / force-resync
 

@@ -1210,6 +1210,18 @@ function refreshJsPanel() {
   existing.replaceWith(renderJsPanel());
 }
 
+// Reconstrueix la preview de la Fase CSS: srcdoc nou des de latestPlacement +
+// reaplicació de tots els valors CSS a l'event `load`. La usa tant l'entrada de
+// fase/F5 (renderActiveSplitScreen) com team:board-state quan arriba després de
+// team:css-state en un F5/force-resync — sense això, un reconnect a mig de la
+// Fase CSS deixa la preview permanentment sense les peces HTML (CORE-03).
+function rebuildCssPreview(cssValues) {
+  const frame = document.querySelector('.preview-frame');
+  if (!frame) return;
+  frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
+  frame.addEventListener('load', () => applyAllCssValues(cssValues), { once: true });
+}
+
 // Rebuild-then-reattach (Pitfall 3): construeix el srcdoc UNA vegada (robot ja
 // estilitzat, arrossegant el resultat CSS via latestCssValues) i, a `load`, aplica
 // els valors CSS i re-attacha TOTES les regles → mai listeners obsolets. L'iframe
@@ -1341,8 +1353,7 @@ function renderActiveSplitScreen(team, state) {
     // srcdoc construït UNA vegada per entrada de fase / F5 (Pitfall 1); els valors
     // emmagatzemats s'apliquen a l'event `load`. L'iframe roman scriptless
     // (allow-same-origin, sense allow-scripts, T-03-04).
-    preview.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
-    preview.addEventListener('load', () => applyAllCssValues(latestCssValues), { once: true });
+    rebuildCssPreview(latestCssValues);
   } else if (state.phase === 'js') {
     boardMounted = false;
     // srcdoc construït UNA vegada (robot ja estilitzat via latestCssValues) i totes
@@ -1456,6 +1467,12 @@ function bootClient() {
     if (latestState?.phase === 'html' && boardMounted) {
       renderBoardAndDrawer(latestPlacement);
       assemblePreview(latestPlacement);
+    } else if (latestState?.phase === 'css') {
+      // F5/force-resync race (CORE-03): team:board-state pot arribar després de
+      // team:css-state, que per si sol només aplica CSSOM sobre un DOM que encara
+      // no té les peces muntades. Reconstruint aquí amb el placement ja correcte,
+      // la preview recupera el robot mig fet independentment de l'ordre d'arribada.
+      rebuildCssPreview(latestCssValues);
     }
   });
 
