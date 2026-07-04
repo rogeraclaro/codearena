@@ -742,8 +742,8 @@ function wrapPreview(inner, phase) {
       position: relative;
       z-index: 10;
       width: 100%;
-      background: var(--cap-bg, #a9c5da);
-      border: var(--cap-border-width, 6px) solid var(--cap-border-color, #000000);
+      background: var(--cap-bg, #ff6600);
+      border: var(--cap-border-width, 0px) solid var(--cap-border-color, #ff00ff);
       border-radius: 70% 70% 160px 160px / 150px 150px 70px 70px;
       height: auto;
       min-height: 400px;
@@ -766,8 +766,8 @@ function wrapPreview(inner, phase) {
       transform: translateX(-50%);
       width: 40px;
       height: 40px;
-      background: var(--antena-bg, #e3f7fe);
-      border: 5px solid var(--antena-border, #000000);
+      background: var(--antena-bg, #ff00ff);
+      border: 5px solid var(--antena-border, #00ff00);
       border-radius: 50%;
       z-index: 0;
       box-sizing: border-box;
@@ -798,11 +798,11 @@ function wrapPreview(inner, phase) {
       gap: 0;
       width: 132%;
       height: 127px;
-      background: var(--ulls-bg, #e3f7fe);
+      background: var(--ulls-bg, #00ff00);
       border: 6px solid #000000;
       border-radius: 60px;
       box-sizing: border-box;
-      top: var(--ulls-top, -40px);
+      top: var(--ulls-top, 20px);
     }
 
     body.bender .contenidor-ulls .ull:first-child {
@@ -833,7 +833,7 @@ function wrapPreview(inner, phase) {
       width: 96px;
       height: 96px;
       background-color: #fffcd3;
-      border-radius: var(--ull-radius, 50px);
+      border-radius: var(--ull-radius, 0px);
       overflow: hidden;
       box-sizing: border-box;
     }
@@ -879,12 +879,12 @@ function wrapPreview(inner, phase) {
 
     /* #nas (D-07: border-radius + mida forats; color negre FIX — quadrat pla). */
     body.bender #nas {
-      width: var(--nas-size, 14px);
-      height: var(--nas-size, 14px);
+      width: var(--nas-size, 40px);
+      height: var(--nas-size, 40px);
       padding: 0;
       background-color: #000000;
       border: none;
-      border-radius: var(--nas-radius, 0%);
+      border-radius: var(--nas-radius, 50%);
       cursor: pointer;
       box-sizing: border-box;
       margin-top: -70px;
@@ -895,9 +895,9 @@ function wrapPreview(inner, phase) {
       position: relative;
       z-index: 2;
       display: block;
-      width: var(--boca-width, 90%);
-      height: var(--boca-height, 95px);
-      background: repeating-linear-gradient(90deg, var(--boca-dents, #fffcd3) 0px, var(--boca-dents, #fffcd3) 20px, #000000 20px, #000000 24px);
+      width: var(--boca-width, 20%);
+      height: var(--boca-height, 10px);
+      background: repeating-linear-gradient(90deg, var(--boca-dents, #0000ff) 0px, var(--boca-dents, #0000ff) 20px, #000000 20px, #000000 24px);
       border: 6px solid #000000;
       border-radius: 50px;
       overflow: hidden;
