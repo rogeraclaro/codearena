@@ -9,7 +9,7 @@
 // but NEVER advances the phase automatically (D-11).
 
 import { randomUUID } from 'node:crypto';
-import { SLOTS, PIECES } from '../shared/robotTemplate.js';
+import { SLOTS, PIECES, CSS_HOLES } from '../shared/robotTemplate.js';
 
 const PHASE_ORDER = ['html', 'css', 'js'];
 
@@ -26,7 +26,9 @@ function registerTeams(names) {
     const id = randomUUID();
     // placement: mapa autoritatiu slot->tipus per equip (GAME-03). Es projecta
     // dirigit via getTeamBoard(); getPublicState() només en deriva el count N/7.
-    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {} });
+    // cssValues: mapa autoritatiu holeId->value per equip (GAME-04). Es projecta
+    // dirigit via getTeamStyle(); getPublicState() no en deriva res (D-22).
+    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {}, cssValues: {} });
   }
 }
 
@@ -116,6 +118,32 @@ function getTeamBoard(teamId) {
   return { placement: { ...team.placement } };
 }
 
+// --- Fase CSS (GAME-04) ---
+// Calcat de placePiece: mutation-returns-bool → true només si ha mutat, així el
+// caller emet el TEAM_CSS_STATE dirigit únicament quan hi ha canvi real (anti-storm,
+// T-03-03). No-op (false, sense broadcast) si l'equip no existeix, fora de la fase css,
+// timer congelat (D-11), holeId desconegut (V5 enum), value invàlid (V5 validate), o
+// value idèntic al ja emmagatzemat.
+function setCssValue(teamId, holeId, value) {
+  const team = state.teams.get(teamId);
+  if (!team) return false;
+  if (state.phase !== 'css' || state.timerStatus === 'frozen') return false; // GAME-07 / D-11
+  const hole = CSS_HOLES[holeId]; // enum de la plantilla (V5)
+  if (!hole) return false;
+  if (!hole.validate(value)) return false; // hex regex O numèric-dins-rang (V5, Pitfall 5)
+  if (team.cssValues[holeId] === value) return false; // no-op → cap re-broadcast
+  team.cssValues[holeId] = value;
+  return true;
+}
+
+// Estil privat de l'equip (mai a getPublicState, mai a 'session'). Còpia superficial —
+// no filtra mai la referència viva (mirall de getTeamBoard).
+function getTeamStyle(teamId) {
+  const team = state.teams.get(teamId);
+  if (!team) return { cssValues: {} };
+  return { cssValues: { ...team.cssValues } };
+}
+
 // --- Timer/phase functions (all return true if they mutated state, so
 // callers — socketHandlers.js, index.js's expiry poll — only broadcast
 // session:full-state when something actually changed). ---
@@ -193,6 +221,8 @@ export const gameState = {
   placePiece,
   removePiece,
   getTeamBoard,
+  setCssValue,
+  getTeamStyle,
   startPhase,
   nextPhase,
   pauseTimer,

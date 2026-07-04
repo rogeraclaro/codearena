@@ -31,13 +31,14 @@
   text-align: center;
 }
 
-/* Split actiu: panell d'accio (esquerra, ~40%, min-width protegit) +
-   preview aïllada (dreta, ~60%). */
+/* Split actiu: panell d'accio (esquerra) + preview aïllada (dreta), divisió
+   EXACTA 50/50 a totes 3 fases (D-21). Maquinari d'aula fix evergreen, per això
+   el minmax(280px,…) previ ja no cal; el panell guanya scroll vertical. */
 .active-split {
   position: relative;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(280px, 40%) 1fr;
+  grid-template-columns: 1fr 1fr;
   box-sizing: border-box;
 }
 
@@ -50,6 +51,10 @@
   align-items: flex-start;
   gap: var(--space-lg);
   box-sizing: border-box;
+  /* Panells densos (7 grups CSS / 16 controls): scroll vertical al panell; la
+     preview de la dreta no scrolla mai (UI-SPEC §Spacing, Layout Contract). */
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .preview-frame {
@@ -298,5 +303,91 @@
 @media (prefers-reduced-motion: no-preference) {
   .slot--accepting {
     animation: slot-accept-pulse var(--motion-snap) var(--motion-ease);
+  }
+}
+
+/* --- Fase CSS: panell de forats "codi foradat" (GAME-04, UI-SPEC §Component
+   Inventory). Només tokens existents — cap token nou. --- */
+.css-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Grup per selector: marc monospace `.antena {` … `}` amb tira d'identitat
+   phase-css a l'esquerra (mirall del .slot-frame de la Fase 2). */
+.css-forat-group {
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--phase-css);
+  border-radius: 6px;
+  background: var(--color-bg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Etiquetes d'obertura/tancament de bloc: CSS real, read-only monospace (GAME-06). */
+.css-forat-group__label {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  color: var(--color-text);
+}
+
+/* Fila de declaració real: etiqueta propietat monospace + control natiu + readout
+   monospace del valor viu + `;`. ≥44px d'àrea d'impacte (--hit-target-min). */
+.css-forat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--hit-target-min);
+  padding-left: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.css-forat__prop,
+.css-forat__value,
+.css-forat__punct {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  color: var(--color-text);
+}
+
+.css-forat__value {
+  color: var(--color-muted);
+  min-width: 4ch;
+}
+
+/* Swatch de color natiu: àrea d'impacte ≥44px. */
+.css-forat__swatch {
+  width: var(--hit-target-min);
+  height: var(--hit-target-min);
+  min-width: var(--hit-target-min);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+/* Slider: fill/thumb en phase-css via accent-color; regió interactiva ≥44px. */
+.css-forat__range {
+  flex: 1 1 120px;
+  min-width: 120px;
+  height: var(--hit-target-min);
+  accent-color: var(--phase-css);
+  cursor: pointer;
+}
+
+.css-forat input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .css-forat__swatch {
+    transition: background var(--motion-snap) var(--motion-ease);
   }
 }

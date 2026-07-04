@@ -15,6 +15,7 @@ import {
   SLOTS,
   PIECES,
   DISTRACTORS,
+  CSS_HOLES,
   pieceLabel,
   containerLabel,
   containerClosingLabel,
@@ -285,6 +286,7 @@ function renderInterstitialScreen(phase) {
 
 let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd)
 let latestPlacement = {};
+let latestCssValues = {}; // últim TEAM_CSS_STATE rebut (fase css); usat en render/F5
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
 let boardMounted = false;
 // Ordre del calaix barrejat UN COP per càrrega de pàgina (checkpoint 02-03 round 4):
@@ -653,56 +655,173 @@ function wrapPreview(inner) {
     }
 
     /* --- Disseny final del robot Bender: copiat literalment de la font de veritat
-       (/Users/rogermasellas/Desktop/imparticio/index.html, línies 25-179) --- */
+       (/Users/rogermasellas/Desktop/imparticio/index.html, línies 25-179). Cada un
+       dels 16 forats de la Fase CSS (CSS_HOLES) és un var(--nom, <default>): abans que
+       l'equip toqui res el fallback reprodueix el Bender; els canvis viuen via CSSOM
+       setProperty (Pitfall 1/5), MAI reassignant el srcdoc. Els fixos (D-02/D-03/D-05
+       /D-06/D-07/D-08/D-09) es queden com a valors literals. --- */
     #robot-contenidor {
       position: relative;
       width: 300px;
       margin: 160px auto;
     }
 
-    /* #robot-cap: cap forma/ompliment aquí a propòsit (D-13, 02-CONTEXT.md) —
-       el cap és un contenidor buit fins que la Fase 3 (CSS foradat) l'omple.
-       Nomes les peces amb contingut visual propi (imatges d'orella) es veuen
-       a la Fase HTML. */
+    /* #robot-cap (D-09: bg APLANA el gradient metàl·lic, border color/width forats;
+       border-radius el·líptic de 8 valors FIX). */
+    #robot-cap {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 420px;
+      background: var(--cap-bg, linear-gradient(90deg, #7d8798 0%, #a7b1c2 18%, #dbe3ee 32%, #b0b9c9 50%, #8b96a8 72%, #6f7889 100%));
+      border: var(--cap-border-width, 6px) solid var(--cap-border-color, #232c3a);
+      border-radius: 50% 50% 38% 38% / 62% 62% 18% 18%;
+      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.35), inset 0 0 70px rgba(0, 0, 0, 0.2), 0 15px 35px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 34px;
+      padding-top: 150px;
+      box-sizing: border-box;
+    }
 
-    /* --- LES ORELLES --- */
+    /* .antena (D-03: bg APLANA el radial-gradient de la bola, border s'AFEGEIX; tija
+       /mida/posició FIX, D-02). La bola és `.antena::before`. */
+    .antena {
+      position: absolute;
+      top: -55px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 55px;
+      z-index: 5;
+      background: linear-gradient(90deg, #6f7889 0%, #cfd6e0 50%, #6f7889 100%);
+      border-radius: 3px;
+    }
+
+    .antena::before {
+      content: "";
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--antena-bg, radial-gradient(circle at 35% 30%, #e6ffff 0%, #7dfcff 45%, #17d8e0 80%));
+      border: 2px solid var(--antena-border, transparent);
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+      box-sizing: border-box;
+    }
+
+    /* .orella (D-04: top, offset simètric left/right, width són forats). */
     .orella {
       position: absolute;
-      top: 130px;
-      width: 70px;
+      top: var(--orella-top, 130px);
+      width: var(--orella-width, 70px);
       z-index: 11;
       filter: grayscale(1) brightness(1.05) sepia(0.1) hue-rotate(175deg) saturate(1.2);
       opacity: 0.95;
     }
 
     #orella-esquerra {
-      left: -52px;
+      left: var(--orella-offset, -52px);
     }
 
     #orella-dreta {
-      right: -52px;
+      right: var(--orella-offset, -52px);
     }
 
-    /* .contenidor-ulls: sense forma a propòsit (D-13) — la Fase 3 l'estilitzarà. */
-
-    /* Peces sense contingut visual propi (antena/ull/nas/boca): en comptes
-       d'invisibles del tot, un requadre buit amb vora vermella perquè
-       l'alumne vegi que "aquí hi ha alguna cosa col·locada", encara que la
-       Fase 3 (CSS foradat) sigui qui li doni la forma real. */
-    .antena,
-    .ull,
-    #nas,
-    #boca {
-      display: inline-block;
-      min-width: 24px;
-      min-height: 24px;
-      border: 2px solid red;
+    /* .contenidor-ulls (D-05: bg pla + top forats; CAL position:relative per al top —
+       la font és un fill flex no posicionat. Resta FIX). */
+    .contenidor-ulls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 78%;
+      height: 92px;
+      background: var(--ulls-bg, #cfe1ee);
+      border: 6px solid #1c2530;
+      border-radius: 46px;
       box-sizing: border-box;
+      padding: 8px;
+      position: relative;
+      top: var(--ulls-top, 0px);
+      box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.6), inset 0 -4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* .ull (D-06: border-radius forat; color/mida/pupil·la FIX). */
+    .ull {
+      display: inline-block;
+      position: relative;
+      width: 58px;
+      height: 64px;
+      background: #f2e6a8;
+      border-radius: var(--ull-radius, 50%);
+      box-sizing: border-box;
+      box-shadow: inset 0 0 0 3px #1c2530;
+      margin: 0 -6px;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .ull::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      background: #1c1c1c;
+      transform: translate(-50%, -50%);
+    }
+
+    /* #nas (D-07: border-radius + mida (width/height) forats; color negre FIX). */
+    #nas {
+      width: var(--nas-size, 22px);
+      height: var(--nas-size, 22px);
+      background: radial-gradient(circle at 35% 30%, #cfd6e0 0%, #8b95a5 60%, #5c6576 100%);
+      border-radius: var(--nas-radius, 50%);
+      border: 2px solid #232c3a;
+      cursor: pointer;
+      box-sizing: border-box;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7);
+      transition: filter 0.2s ease;
+    }
+
+    #nas:hover {
+      filter: brightness(1.25);
+    }
+
+    /* #boca (D-08: height (CAL afegir, font padding-driven), width, dents-color forats;
+       border-radius FIX. Target dents #fffcd3 locked; #f2e6a8 només fallback del var()). */
+    #boca {
+      display: block;
+      width: var(--boca-width, 60%);
+      height: var(--boca-height, auto);
+      background: repeating-linear-gradient(180deg, var(--boca-dents, #f2e6a8) 0px, var(--boca-dents, #f2e6a8) 16px, #1c2530 16px, #1c2530 19px);
+      color: #1c2530;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 2px;
+      padding: 14px 18px;
+      border-radius: 0 0 40px 40px;
+      border: 4px solid #1c2530;
+      border-top: none;
+      text-align: center;
+      margin: 0 auto;
+      box-sizing: border-box;
+      box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.2);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
     }
   </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
 }
 
-function assemblePreview(placement) {
+// Assembla el markup net del robot (mai text d'usuari, GAME-06) i el saneja amb
+// DOMPurify. Fn pura i reutilitzable: la fase html l'injecta via assemblePreview();
+// la fase css el passa a wrapPreview() UNA vegada per entrada de fase (Pitfall 1).
+function assembleRobotMarkup(placement) {
   const antenesOrelles = SLOTS.filter((s) => s.parent === 'section' && placement[s.id])
     .map((s) => s.html)
     .join('');
@@ -716,13 +835,158 @@ function assemblePreview(placement) {
   // CONTAINERS de robotTemplate.js (D-01) — es manté inline i explícit per llegibilitat
   // de l'estructura niada; CONTAINERS n'és la definició canònica per a les etiquetes.
   const raw = `<section id="robot-contenidor">${antenesOrelles}<div id="robot-cap"><div class="contenidor-ulls">${ulls}</div>${nas}${boca}</div></section>`;
-  const clean = DOMPurify.sanitize(raw, {
+  return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['output'],
     ALLOWED_ATTR: ['src', 'alt', 'class', 'id'],
   });
+}
 
+function assemblePreview(placement) {
   const frame = document.querySelector('.preview-frame');
-  if (frame) frame.setAttribute('srcdoc', wrapPreview(clean));
+  if (frame) frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(placement)));
+}
+
+// --- Fase CSS: aplicació en viu via CSSOM (GAME-04, Pitfall 1/5) ---
+// Aplica un forat com a custom property sobre :root del contentDocument. NO-OP
+// silenciós si l'iframe encara no és ready o el holeId és desconegut (GAME-07/D-19):
+// setProperty sobre documentElement no fa cap lookup d'element, així que un forat
+// sobre un element absent (DOM incomplet) mai llença. setProperty (mai text CSS
+// concatenat) tanca el vector d'injecció (Pitfall 5).
+function applyCssHole(holeId, value) {
+  const doc = document.querySelector('.preview-frame')?.contentDocument;
+  if (!doc) return;
+  const cssVar = CSS_HOLES[holeId]?.var;
+  if (!cssVar) return;
+  doc.documentElement.style.setProperty(cssVar, value);
+}
+
+function applyAllCssValues(cssValues) {
+  for (const [holeId, value] of Object.entries(cssValues)) applyCssHole(holeId, value);
+}
+
+// Ordre top→bottom dels grups de selector (lectura espacial del robot, UI-SPEC
+// §Layout Contract). Els grups es deriven de CSS_HOLES[].group (single source).
+const CSS_GROUP_ORDER = ['.antena', '.orella', '.contenidor-ulls', '.ull', '#robot-cap', '#nas', '#boca'];
+
+// Construeix una fila de forat: etiqueta propietat monospace (read-only, GAME-06) +
+// control natiu (color/range) + readout monospace del valor viu + `;`. El cablejat:
+// `input` → applyCssHole local instantani (CSSOM, sense recàrrega); `change` →
+// TEAM_SET_CSS al servidor (emissió només en valor assentat, anti-storm, Pitfall 2).
+function renderForatRow(holeId, hole, storedValue, frozen) {
+  const row = document.createElement('div');
+  row.className = `css-forat css-forat--${hole.control}`;
+
+  const propLabel = document.createElement('span');
+  propLabel.className = 'css-forat__prop';
+  propLabel.textContent = `${hole.prop}:`;
+  row.appendChild(propLabel);
+
+  const input = document.createElement('input');
+  input.dataset.hole = holeId;
+  input.disabled = frozen;
+
+  const readout = document.createElement('span');
+  readout.className = 'css-forat__value';
+
+  if (hole.control === 'color') {
+    input.type = 'color';
+    input.className = 'css-forat__swatch';
+    const initial = typeof storedValue === 'string' && /^#[0-9a-fA-F]{6}$/.test(storedValue)
+      ? storedValue
+      : hole.default;
+    input.value = initial;
+    readout.textContent = initial;
+    input.addEventListener('input', (e) => {
+      applyCssHole(holeId, e.target.value);
+      readout.textContent = e.target.value;
+    });
+    input.addEventListener('change', (e) => {
+      socket.emit(EVENTS.TEAM_SET_CSS, { holeId, value: e.target.value });
+    });
+  } else {
+    input.type = 'range';
+    input.className = 'css-forat__range';
+    input.min = String(hole.min);
+    input.max = String(hole.max);
+    input.step = String(hole.step);
+    const num = storedValue != null ? parseInt(storedValue, 10) : parseInt(hole.default, 10);
+    input.value = String(num);
+    const fmt = (n) => `${n}${hole.unit}`;
+    readout.textContent = fmt(num);
+    input.addEventListener('input', (e) => {
+      const v = fmt(e.target.value);
+      applyCssHole(holeId, v);
+      readout.textContent = v;
+    });
+    input.addEventListener('change', (e) => {
+      socket.emit(EVENTS.TEAM_SET_CSS, { holeId, value: fmt(e.target.value) });
+    });
+  }
+
+  row.appendChild(input);
+  row.appendChild(readout);
+
+  const semi = document.createElement('span');
+  semi.className = 'css-forat__punct';
+  semi.textContent = ';';
+  row.appendChild(semi);
+
+  return row;
+}
+
+// Panell de forats CSS (GAME-04): un grup per element (CSS_HOLES[].group), cada
+// grup un marc monospace `.selector {` … `}` amb les seves files de forat. Tot es
+// deriva de CSS_HOLES — cap llista escrita a mà (single source, com SLOTS).
+function renderCssPanel(cssValues) {
+  const wrap = document.createElement('div');
+  wrap.className = 'css-panel';
+  const frozen = latestState?.timerStatus === 'frozen'; // D-11: congela els controls
+
+  const byGroup = new Map();
+  for (const [holeId, hole] of Object.entries(CSS_HOLES)) {
+    if (!byGroup.has(hole.group)) byGroup.set(hole.group, []);
+    byGroup.get(hole.group).push([holeId, hole]);
+  }
+
+  for (const group of CSS_GROUP_ORDER) {
+    const holes = byGroup.get(group);
+    if (!holes) continue;
+    const groupEl = document.createElement('div');
+    groupEl.className = 'css-forat-group';
+
+    const open = document.createElement('div');
+    open.className = 'css-forat-group__label';
+    open.textContent = `${group} {`;
+    groupEl.appendChild(open);
+
+    for (const [holeId, hole] of holes) {
+      groupEl.appendChild(renderForatRow(holeId, hole, cssValues[holeId], frozen));
+    }
+
+    const close = document.createElement('div');
+    close.className = 'css-forat-group__label';
+    close.textContent = '}';
+    groupEl.appendChild(close);
+
+    wrap.appendChild(groupEl);
+  }
+  return wrap;
+}
+
+// Reconciliació dels controls del panell amb l'estat autoritatiu (F5/TEAM_CSS_STATE):
+// actualitza value + readout in situ, sense reconstruir el panell (no interromp cap
+// interacció; els emits només passen en `change` assentat, mai a mig drag).
+function syncCssPanelInputs(cssValues) {
+  const panel = document.querySelector('.css-panel');
+  if (!panel) return;
+  for (const [holeId, value] of Object.entries(cssValues)) {
+    const input = panel.querySelector(`[data-hole="${holeId}"]`);
+    const hole = CSS_HOLES[holeId];
+    if (!input || !hole) continue;
+    const readout = input.parentElement.querySelector('.css-forat__value');
+    input.value = hole.control === 'color' ? value : String(parseInt(value, 10));
+    if (readout) readout.textContent = value;
+  }
 }
 
 // Board-state autoritatiu (canal privat de l'equip): reconcilia el tauler i la
@@ -802,6 +1066,8 @@ function renderActiveSplitScreen(team, state) {
     gameContainer = document.createElement('div');
     gameContainer.className = 'html-game';
     panel.appendChild(gameContainer);
+  } else if (state.phase === 'css') {
+    panel.appendChild(renderCssPanel(latestCssValues));
   }
 
   const preview = document.createElement('iframe');
@@ -817,11 +1083,18 @@ function renderActiveSplitScreen(team, state) {
   renderCountdown(timerEl, state);
   updateFrozenOverlay(state);
 
-  if (gameContainer) {
+  if (state.phase === 'html') {
     mountGame(gameContainer, latestPlacement);
     assemblePreview(latestPlacement);
     const frozen = state.timerStatus === 'frozen';
     sortables.forEach((s) => s.option('disabled', frozen));
+  } else if (state.phase === 'css') {
+    boardMounted = false;
+    // srcdoc construït UNA vegada per entrada de fase / F5 (Pitfall 1); els valors
+    // emmagatzemats s'apliquen a l'event `load`. L'iframe roman scriptless
+    // (allow-same-origin, sense allow-scripts, T-03-04).
+    preview.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
+    preview.addEventListener('load', () => applyAllCssValues(latestCssValues), { once: true });
   } else {
     boardMounted = false;
   }
@@ -930,6 +1203,17 @@ function bootClient() {
       renderBoardAndDrawer(latestPlacement);
       assemblePreview(latestPlacement);
     }
+  });
+
+  // Canal privat de l'estil CSS (dirigit a team:<id>): reconcilia tots els valors
+  // autoritatius. Aplica via CSSOM sobre l'iframe i sincronitza els controls del
+  // panell in situ (F5 recupera l'estil mig fet, CORE-03). Desacoblat de
+  // session:full-state (Pitfall 1), mirall de TEAM_BOARD_STATE.
+  socket.on(EVENTS.TEAM_CSS_STATE, ({ cssValues }) => {
+    latestCssValues = cssValues || {};
+    if (latestState?.phase !== 'css') return;
+    applyAllCssValues(latestCssValues);
+    syncCssPanelInputs(latestCssValues);
   });
 
   socket.on('team:reload', () => {

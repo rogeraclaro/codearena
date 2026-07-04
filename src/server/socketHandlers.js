@@ -91,6 +91,9 @@ export function registerSocketHandlers(io) {
         // F5/reconnexió recupera el robot mig muntat (CORE-03) — dirigit a
         // l'owner, sense protocol de resync nou (reutilitza el board autoritatiu).
         socket.emit(EVENTS.TEAM_BOARD_STATE, gameState.getTeamBoard(socket.data.teamId));
+        // F5/reconnexió recupera també l'estil CSS mig fet (CORE-03) — dirigit a
+        // l'owner, mirall exacte del board (mateix patró, sense protocol de resync nou).
+        socket.emit(EVENTS.TEAM_CSS_STATE, gameState.getTeamStyle(socket.data.teamId));
         socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       } else {
         // Unclaimed PC awaiting selection (D-01) — no token minted yet.
@@ -253,6 +256,28 @@ export function registerSocketHandlers(io) {
         if (typeof slotId !== 'string') return;
         if (gameState.removePiece(teamId, slotId)) {
           io.to(`team:${teamId}`).emit(EVENTS.TEAM_BOARD_STATE, gameState.getTeamBoard(teamId));
+          io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    // --- Fase CSS: fixar un forat (GAME-04) ---
+    // Còpia EXACTA de la forma de team:place-piece: identitat SEMPRE de
+    // socket.data.teamId (V4 — un equip no pot mutar l'estil d'un altre forjant
+    // teamId al payload), holeId/value validats com a strings (V5), i en un canvi
+    // real emissió dirigida css→owner + connexió-només→admin, MAI a io.to('session')
+    // (Pitfall 1). setCssValue és no-op en value repetit/invàlid/fora-de-fase → cap
+    // re-broadcast (T-03-03). Envoltat de safeHandler (T-03-06).
+    socket.on(
+      EVENTS.TEAM_SET_CSS,
+      safeHandler((payload) => {
+        const teamId = socket.data.teamId;
+        if (!teamId) return;
+        const holeId = payload?.holeId;
+        const value = payload?.value;
+        if (typeof holeId !== 'string' || typeof value !== 'string') return;
+        if (gameState.setCssValue(teamId, holeId, value)) {
+          io.to(`team:${teamId}`).emit(EVENTS.TEAM_CSS_STATE, gameState.getTeamStyle(teamId));
           io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
         }
       }),

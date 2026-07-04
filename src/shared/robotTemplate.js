@@ -162,3 +162,111 @@ export const PIECES = Object.freeze([
 // D-11: obvious decoys with no matching slot → SortableJS native revert always
 // bounces them back to the drawer, no special mechanic or error message.
 export const DISTRACTORS = Object.freeze(['banana', 'roda', 'sabata']);
+
+// --- Fase CSS (GAME-04): vocabulari FROZEN dels 16 forats "codi foradat" ---
+//
+// Cada forat és keyed per holeId i porta:
+//   var      — custom property que el wrapPreview() del client mapeja al CSS del Bender
+//   selector — element real de la font de veritat (només documentació/cross-check;
+//              el client aplica sempre via CSSOM setProperty sobre :root, mai per
+//              selector — Pitfall 5). Derivat/creuat contra SLOTS[].html i CONTAINERS.
+//   group    — selector de grup que el panell client agrupa i mostra (`.antena {` …`}`)
+//   prop     — nom real de la propietat CSS mostrada com a etiqueta monospace (GAME-06)
+//   control  — 'color' | 'range' (native <input type>)
+//   min/max/step/unit — (només range) rang tunable; els TARGETS són locked a UI-SPEC
+//   validate — (V5) el servidor revalida ABANS d'emmagatzemar: color `^#[0-9a-fA-F]{6}$`,
+//              range numèric-dins-de-rang amb la unitat esperada.
+//   default  — valor inicial del control (sempre vàlid per al seu tipus). El fallback
+//              del var() al srcdoc (que pot ser un gradient per antena-bg/cap-bg) viu al
+//              CSS de wrapPreview(), no aquí — així el control sempre té un valor legal.
+//
+// Els forats que APLANEN un gradient (antena-bg D-03, cap-bg D-09) i els que CALEN
+// afegir propietat inexistent a la font (antena-border D-03, ulls-top D-05) queden
+// documentats a 03-RESEARCH §Forat→var() Mapping (files ⚠) i confirmats al human-check.
+
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+function colorValidator(value) {
+  return typeof value === 'string' && HEX_RE.test(value);
+}
+
+// Range: exigeix number (opcionalment negatiu) + la unitat esperada, dins [min,max].
+// Rebutja qualsevol cosa amb `;`/`{`/`}` o no-numèrica (anti CSS-injection, Pitfall 5).
+function rangeValidator(min, max, unit) {
+  return (value) => {
+    if (typeof value !== 'string') return false;
+    const m = value.match(/^(-?\d+)(px|%)?$/);
+    if (!m) return false;
+    if (unit && m[2] !== unit) return false;
+    const n = Number(m[1]);
+    return Number.isFinite(n) && n >= min && n <= max;
+  };
+}
+
+function colorHole({ var: cssVar, selector, group, prop, def }) {
+  return Object.freeze({
+    var: cssVar,
+    selector,
+    group,
+    prop,
+    control: 'color',
+    validate: colorValidator,
+    default: def,
+  });
+}
+
+function rangeHole({ var: cssVar, selector, group, prop, min, max, step, unit, def }) {
+  return Object.freeze({
+    var: cssVar,
+    selector,
+    group,
+    prop,
+    control: 'range',
+    min,
+    max,
+    step,
+    unit,
+    validate: rangeValidator(min, max, unit),
+    default: def,
+  });
+}
+
+export const CSS_HOLES = Object.freeze({
+  // .antena — bola dibuixada per `.antena::before` (D-03). bg APLANA el radial-gradient
+  // cian; border s'AFEGEIX (la font no en té). Fixos: mida/posició/tija (D-02/D-03).
+  'antena-bg': colorHole({ var: '--antena-bg', selector: '.antena::before', group: '.antena', prop: 'background-color', def: '#7dfcff' }),
+  'antena-border': colorHole({ var: '--antena-border', selector: '.antena::before', group: '.antena', prop: 'border-color', def: '#17d8e0' }),
+
+  // .orella — <img class="orella"> (SLOTS orella-esquerra/dreta). top/width sobre `.orella`;
+  // offset simètric (una custom property → left a l'esquerra, right a la dreta). Target
+  // Plana Model D-04: top 95px, offset -31px, width 40px.
+  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: 60, max: 130, step: 1, unit: 'px', def: '130px' }),
+  'orella-offset': rangeHole({ var: '--orella-offset', selector: '#orella-esquerra / #orella-dreta', group: '.orella', prop: 'left / right', min: -60, max: 0, step: 1, unit: 'px', def: '-52px' }),
+  'orella-width': rangeHole({ var: '--orella-width', selector: '.orella', group: '.orella', prop: 'width', min: 20, max: 90, step: 1, unit: 'px', def: '70px' }),
+
+  // .contenidor-ulls (CONTAINERS) — bg pla (D-05, mapping net) + top (CAL afegir
+  // position:relative, la font és un fill flex no posicionat, D-05 ⚠).
+  'ulls-bg': colorHole({ var: '--ulls-bg', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'background-color', def: '#cfe1ee' }),
+  'ulls-top': rangeHole({ var: '--ulls-top', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'top', min: -20, max: 20, step: 1, unit: 'px', def: '0px' }),
+
+  // .ull — <span class="ull"> (SLOTS ull-1/ull-2). border-radius (D-06); color/mida fix.
+  'ull-radius': rangeHole({ var: '--ull-radius', selector: '.ull', group: '.ull', prop: 'border-radius', min: 0, max: 50, step: 1, unit: '%', def: '50%' }),
+
+  // #robot-cap (CONTAINERS) — bg APLANA el linear-gradient metàl·lic (D-09 ⚠) + border
+  // color/width (D-09, net un cop separat el shorthand). border-radius el·líptic fix.
+  'cap-bg': colorHole({ var: '--cap-bg', selector: '#robot-cap', group: '#robot-cap', prop: 'background-color', def: '#a7b1c2' }),
+  'cap-border-color': colorHole({ var: '--cap-border-color', selector: '#robot-cap', group: '#robot-cap', prop: 'border-color', def: '#232c3a' }),
+  'cap-border-width': rangeHole({ var: '--cap-border-width', selector: '#robot-cap', group: '#robot-cap', prop: 'border-width', min: 0, max: 12, step: 1, unit: 'px', def: '6px' }),
+
+  // #nas — <button id="nas"> (SLOTS nas). border-radius + mida (una custom property →
+  // width i height) (D-07); color negre fix.
+  'nas-radius': rangeHole({ var: '--nas-radius', selector: '#nas', group: '#nas', prop: 'border-radius', min: 0, max: 50, step: 1, unit: '%', def: '50%' }),
+  'nas-size': rangeHole({ var: '--nas-size', selector: '#nas', group: '#nas', prop: 'width / height', min: 10, max: 40, step: 1, unit: 'px', def: '22px' }),
+
+  // #boca — <output id="boca"> (SLOTS boca). height (CAL afegir, la font és padding-driven,
+  // D-08 ⚠) + width + dents-color (stops clars del repeating-linear-gradient). Target dents
+  // D-08 locked #fffcd3; #f2e6a8 (font) només com a fallback default del var() al srcdoc.
+  'boca-height': rangeHole({ var: '--boca-height', selector: '#boca', group: '#boca', prop: 'height', min: 10, max: 80, step: 1, unit: 'px', def: '40px' }),
+  'boca-width': rangeHole({ var: '--boca-width', selector: '#boca', group: '#boca', prop: 'width', min: 20, max: 100, step: 1, unit: '%', def: '60%' }),
+  'boca-dents': colorHole({ var: '--boca-dents', selector: '#boca', group: '#boca', prop: 'color', def: '#fffcd3' }),
+});
