@@ -638,11 +638,19 @@ function mountGame(gameContainer, placement) {
 // Assembla el robot real des de SLOTS[].html (mai text d'usuari, GAME-06),
 // el saneja amb DOMPurify preservant id/class/src/alt i <output> (Pitfall 2),
 // i l'injecta al srcdoc de l'iframe amb la capa de fons fix (D-03).
-function wrapPreview(inner) {
+function wrapPreview(inner, phase) {
   // Fons fix de la meitat dreta (D-03). Cadena estàtica de confiança (mai dades
   // d'usuari), segura per incrustar literalment. Asset local (src/client/public/
   // robot-fons.png, imatge Futurama) — substitueix l'antiga URL d'Unsplash, ja
   // no depèn de xarxa externa el dia de la sessió.
+  //
+  // `phase` distingeix l'asimetria D-13 (02-CONTEXT.md): el cap/ulls/nas/boca han
+  // de romandre SENSE forma ni ompliment a la Fase HTML (només l'antena/ull/nas/
+  // boca mostren un requadre vermell placeholder en col·locar-se; les orelles, amb
+  // imatge real, sempre es veuen). L'aspecte Bender final (els 16 forats amb
+  // fallback ja Bender) només s'activa a partir de la Fase CSS — scoped sota
+  // `body.bender` perquè aquest mateix wrapPreview és compartit per html/css/js.
+  const bodyClass = phase === 'html' ? '' : ' class="bender"';
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     html, body { margin: 0; height: 100%; }
     /* Centra el robot a l'iframe (equivalent al body flex de la font de veritat). */
@@ -665,21 +673,58 @@ function wrapPreview(inner) {
       background-blend-mode: overlay;
     }
 
-    /* --- Disseny final del robot Bender: copiat literalment de la font de veritat
-       (/Users/rogermasellas/Desktop/imparticio/index.html, línies 25-179). Cada un
-       dels 16 forats de la Fase CSS (CSS_HOLES) és un var(--nom, <default>): abans que
-       l'equip toqui res el fallback reprodueix el Bender; els canvis viuen via CSSOM
-       setProperty (Pitfall 1/5), MAI reassignant el srcdoc. Els fixos (D-02/D-03/D-05
-       /D-06/D-07/D-08/D-09) es queden com a valors literals. --- */
     #robot-contenidor {
       position: relative;
       width: 300px;
       margin: 160px auto;
     }
 
+    /* .orella (D-04: top, offset simètric left/right, width són forats). Sempre
+       visible a totes les fases (imatge real, no forat de la Fase 3). */
+    .orella {
+      position: absolute;
+      top: var(--orella-top, 130px);
+      width: var(--orella-width, 70px);
+      z-index: 11;
+      filter: grayscale(1) brightness(1.05) sepia(0.1) hue-rotate(175deg) saturate(1.2);
+      opacity: 0.95;
+    }
+
+    #orella-esquerra {
+      left: var(--orella-offset, -52px);
+    }
+
+    #orella-dreta {
+      right: var(--orella-offset, -52px);
+    }
+
+    /* Peces sense contingut visual propi (antena/ull/nas/boca) a la Fase HTML
+       (D-13): requadre buit amb vora vermella en col·locar-se, per a feedback
+       visual immediat sense avançar cap disseny de la Fase CSS. #robot-cap i
+       .contenidor-ulls resten sense forma ni ompliment (contenidors buits). */
+    body:not(.bender) .antena,
+    body:not(.bender) .ull,
+    body:not(.bender) #nas,
+    body:not(.bender) #boca {
+      display: inline-block;
+      min-width: 24px;
+      min-height: 24px;
+      border: 2px solid red;
+      box-sizing: border-box;
+    }
+
+    /* --- Disseny final del robot Bender (Fase CSS/JS, scoped a body.bender): copiat
+       literalment de la font de veritat (/Users/rogermasellas/Desktop/imparticio/
+       index.html, línies 25-179). Cada un dels 16 forats de la Fase CSS
+       (CSS_HOLES) és un var(--nom, <default>): abans que l'equip toqui res el
+       fallback reprodueix el Bender; els canvis viuen via CSSOM setProperty
+       (Pitfall 1/5), MAI reassignant el srcdoc. Els fixos (D-02/D-03/D-05/D-06
+       /D-07/D-08/D-09) es queden com a valors literals. Sense aquest scoping,
+       aquest mateix disseny "fugia" cap a la Fase HTML (regressió D-13). --- */
+
     /* #robot-cap (D-09: bg APLANA el gradient metàl·lic, border color/width forats;
        border-radius el·líptic de 8 valors FIX). */
-    #robot-cap {
+    body.bender #robot-cap {
       position: relative;
       z-index: 10;
       width: 100%;
@@ -699,7 +744,7 @@ function wrapPreview(inner) {
 
     /* .antena (D-03: bg APLANA el radial-gradient de la bola, border s'AFEGEIX; tija
        /mida/posició FIX, D-02). La bola és .antena::before. */
-    .antena {
+    body.bender .antena {
       position: absolute;
       top: -55px;
       left: 50%;
@@ -711,7 +756,7 @@ function wrapPreview(inner) {
       border-radius: 3px;
     }
 
-    .antena::before {
+    body.bender .antena::before {
       content: "";
       position: absolute;
       top: -14px;
@@ -726,27 +771,9 @@ function wrapPreview(inner) {
       box-sizing: border-box;
     }
 
-    /* .orella (D-04: top, offset simètric left/right, width són forats). */
-    .orella {
-      position: absolute;
-      top: var(--orella-top, 130px);
-      width: var(--orella-width, 70px);
-      z-index: 11;
-      filter: grayscale(1) brightness(1.05) sepia(0.1) hue-rotate(175deg) saturate(1.2);
-      opacity: 0.95;
-    }
-
-    #orella-esquerra {
-      left: var(--orella-offset, -52px);
-    }
-
-    #orella-dreta {
-      right: var(--orella-offset, -52px);
-    }
-
     /* .contenidor-ulls (D-05: bg pla + top forats; CAL position:relative per al top —
        la font és un fill flex no posicionat. Resta FIX). */
-    .contenidor-ulls {
+    body.bender .contenidor-ulls {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -763,7 +790,7 @@ function wrapPreview(inner) {
     }
 
     /* .ull (D-06: border-radius forat; color/mida/pupil·la FIX). */
-    .ull {
+    body.bender .ull {
       display: inline-block;
       position: relative;
       width: 58px;
@@ -776,7 +803,7 @@ function wrapPreview(inner) {
       transition: background 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .ull::before {
+    body.bender .ull::before {
       content: "";
       position: absolute;
       left: 50%;
@@ -788,7 +815,7 @@ function wrapPreview(inner) {
     }
 
     /* #nas (D-07: border-radius + mida (width/height) forats; color negre FIX). */
-    #nas {
+    body.bender #nas {
       width: var(--nas-size, 22px);
       height: var(--nas-size, 22px);
       background: radial-gradient(circle at 35% 30%, #cfd6e0 0%, #8b95a5 60%, #5c6576 100%);
@@ -800,13 +827,13 @@ function wrapPreview(inner) {
       transition: filter 0.2s ease;
     }
 
-    #nas:hover {
+    body.bender #nas:hover {
       filter: brightness(1.25);
     }
 
     /* #boca (D-08: height (CAL afegir, font padding-driven), width, dents-color forats;
        border-radius FIX. Target dents #fffcd3 locked; #f2e6a8 només fallback del var()). */
-    #boca {
+    body.bender #boca {
       display: block;
       width: var(--boca-width, 60%);
       height: var(--boca-height, auto);
@@ -841,7 +868,7 @@ function wrapPreview(inner) {
       .js-rotate { transform: none; animation: js-rotate-kf 1.2s linear infinite; }
       .js-scale, .js-squint, .js-boca-tanca { transition: transform 0.2s ease; }
     }
-  </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
+  </style></head><body${bodyClass}><div id="robot-fons"></div>${inner}</body></html>`;
 }
 
 // Assembla el markup net del robot (mai text d'usuari, GAME-06) i el saneja amb
@@ -869,7 +896,7 @@ function assembleRobotMarkup(placement) {
 
 function assemblePreview(placement) {
   const frame = document.querySelector('.preview-frame');
-  if (frame) frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(placement)));
+  if (frame) frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(placement), 'html'));
 }
 
 // --- Fase CSS: aplicació en viu via CSSOM (GAME-04, Pitfall 1/5) ---
@@ -1218,7 +1245,7 @@ function refreshJsPanel() {
 function rebuildCssPreview(cssValues) {
   const frame = document.querySelector('.preview-frame');
   if (!frame) return;
-  frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
+  frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement), 'css'));
   frame.addEventListener('load', () => applyAllCssValues(cssValues), { once: true });
 }
 
@@ -1229,7 +1256,7 @@ function rebuildCssPreview(cssValues) {
 function rebuildJsPreview(rules) {
   const frame = document.querySelector('.preview-frame');
   if (!frame) return;
-  frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
+  frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement), 'js'));
   frame.addEventListener('load', () => {
     applyAllCssValues(latestCssValues);
     const doc = frame.contentDocument;
