@@ -232,42 +232,44 @@ function rangeHole({ var: cssVar, selector, group, prop, min, max, step, unit, d
 }
 
 export const CSS_HOLES = Object.freeze({
-  // .antena — bola dibuixada per `.antena::before` (D-03). bg APLANA el radial-gradient
-  // cian; border s'AFEGEIX (la font no en té). Fixos: mida/posició/tija (D-02/D-03).
-  'antena-bg': colorHole({ var: '--antena-bg', selector: '.antena::before', group: '.antena', prop: 'background-color', def: '#7dfcff' }),
-  'antena-border': colorHole({ var: '--antena-border', selector: '.antena::before', group: '.antena', prop: 'border-color', def: '#17d8e0' }),
+  // .antena — bola dibuixada per `.antena` mateixa (D-03, referència final: bola=element,
+  // tija=`.antena::before`). bg/border FORATS (color pla, no gradient — la referència
+  // definitiva mai en va tenir). Fixos: mida/posició/tija (D-02/D-03).
+  'antena-bg': colorHole({ var: '--antena-bg', selector: '.antena', group: '.antena', prop: 'background-color', def: '#e3f7fe' }),
+  'antena-border': colorHole({ var: '--antena-border', selector: '.antena', group: '.antena', prop: 'border-color', def: '#000000' }),
 
   // .orella — <img class="orella"> (SLOTS orella-esquerra/dreta). top/width sobre `.orella`;
   // offset simètric (una custom property → left a l'esquerra, right a la dreta). Target
   // Plana Model D-04: top 95px, offset -31px, width 40px.
-  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: 60, max: 130, step: 1, unit: 'px', def: '130px' }),
-  'orella-offset': rangeHole({ var: '--orella-offset', selector: '#orella-esquerra / #orella-dreta', group: '.orella', prop: 'left / right', min: -60, max: 0, step: 1, unit: 'px', def: '-52px' }),
-  'orella-width': rangeHole({ var: '--orella-width', selector: '.orella', group: '.orella', prop: 'width', min: 20, max: 90, step: 1, unit: 'px', def: '70px' }),
+  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: 60, max: 130, step: 1, unit: 'px', def: '95px' }),
+  'orella-offset': rangeHole({ var: '--orella-offset', selector: '#orella-esquerra / #orella-dreta', group: '.orella', prop: 'left / right', min: -60, max: 0, step: 1, unit: 'px', def: '-31px' }),
+  'orella-width': rangeHole({ var: '--orella-width', selector: '.orella', group: '.orella', prop: 'width', min: 20, max: 90, step: 1, unit: 'px', def: '40px' }),
 
   // .contenidor-ulls (CONTAINERS) — bg pla (D-05, mapping net) + top (CAL afegir
   // position:relative, la font és un fill flex no posicionat, D-05 ⚠).
-  'ulls-bg': colorHole({ var: '--ulls-bg', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'background-color', def: '#cfe1ee' }),
-  'ulls-top': rangeHole({ var: '--ulls-top', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'top', min: -20, max: 20, step: 1, unit: 'px', def: '0px' }),
+  'ulls-bg': colorHole({ var: '--ulls-bg', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'background-color', def: '#e3f7fe' }),
+  'ulls-top': rangeHole({ var: '--ulls-top', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'top', min: -50, max: 20, step: 1, unit: 'px', def: '-40px' }),
 
-  // .ull — <span class="ull"> (SLOTS ull-1/ull-2). border-radius (D-06); color/mida fix.
-  'ull-radius': rangeHole({ var: '--ull-radius', selector: '.ull', group: '.ull', prop: 'border-radius', min: 0, max: 50, step: 1, unit: '%', def: '50%' }),
+  // .ull — <span class="ull"> (SLOTS ull-1/ull-2). border-radius (D-06, en px a la
+  // referència final — no %); color/mida fix.
+  'ull-radius': rangeHole({ var: '--ull-radius', selector: '.ull', group: '.ull', prop: 'border-radius', min: 0, max: 50, step: 1, unit: 'px', def: '50px' }),
 
-  // #robot-cap (CONTAINERS) — bg APLANA el linear-gradient metàl·lic (D-09 ⚠) + border
-  // color/width (D-09, net un cop separat el shorthand). border-radius el·líptic fix.
-  'cap-bg': colorHole({ var: '--cap-bg', selector: '#robot-cap', group: '#robot-cap', prop: 'background-color', def: '#a7b1c2' }),
-  'cap-border-color': colorHole({ var: '--cap-border-color', selector: '#robot-cap', group: '#robot-cap', prop: 'border-color', def: '#232c3a' }),
+  // #robot-cap (CONTAINERS) — bg color pla FORAT (D-09, la referència final mai va tenir
+  // gradient) + border color/width (D-09, net un cop separat el shorthand). border-radius
+  // asimètric (dipòsit Bender) fix.
+  'cap-bg': colorHole({ var: '--cap-bg', selector: '#robot-cap', group: '#robot-cap', prop: 'background-color', def: '#a9c5da' }),
+  'cap-border-color': colorHole({ var: '--cap-border-color', selector: '#robot-cap', group: '#robot-cap', prop: 'border-color', def: '#000000' }),
   'cap-border-width': rangeHole({ var: '--cap-border-width', selector: '#robot-cap', group: '#robot-cap', prop: 'border-width', min: 0, max: 12, step: 1, unit: 'px', def: '6px' }),
 
   // #nas — <button id="nas"> (SLOTS nas). border-radius + mida (una custom property →
-  // width i height) (D-07); color negre fix.
-  'nas-radius': rangeHole({ var: '--nas-radius', selector: '#nas', group: '#nas', prop: 'border-radius', min: 0, max: 50, step: 1, unit: '%', def: '50%' }),
-  'nas-size': rangeHole({ var: '--nas-size', selector: '#nas', group: '#nas', prop: 'width / height', min: 10, max: 40, step: 1, unit: 'px', def: '22px' }),
+  // width i height) (D-07); color negre fix. Referència final: quadrat pla (radius 0).
+  'nas-radius': rangeHole({ var: '--nas-radius', selector: '#nas', group: '#nas', prop: 'border-radius', min: 0, max: 50, step: 1, unit: '%', def: '0%' }),
+  'nas-size': rangeHole({ var: '--nas-size', selector: '#nas', group: '#nas', prop: 'width / height', min: 10, max: 40, step: 1, unit: 'px', def: '14px' }),
 
-  // #boca — <output id="boca"> (SLOTS boca). height (CAL afegir, la font és padding-driven,
-  // D-08 ⚠) + width + dents-color (stops clars del repeating-linear-gradient). Target dents
-  // D-08 locked #fffcd3; #f2e6a8 (font) només com a fallback default del var() al srcdoc.
-  'boca-height': rangeHole({ var: '--boca-height', selector: '#boca', group: '#boca', prop: 'height', min: 10, max: 80, step: 1, unit: 'px', def: '40px' }),
-  'boca-width': rangeHole({ var: '--boca-width', selector: '#boca', group: '#boca', prop: 'width', min: 20, max: 100, step: 1, unit: '%', def: '60%' }),
+  // #boca — <output id="boca"> (SLOTS boca). height/width + dents-color (stops clars del
+  // repeating-linear-gradient). Target dents D-08 locked #fffcd3.
+  'boca-height': rangeHole({ var: '--boca-height', selector: '#boca', group: '#boca', prop: 'height', min: 10, max: 120, step: 1, unit: 'px', def: '95px' }),
+  'boca-width': rangeHole({ var: '--boca-width', selector: '#boca', group: '#boca', prop: 'width', min: 20, max: 100, step: 1, unit: '%', def: '90%' }),
   'boca-dents': colorHole({ var: '--boca-dents', selector: '#boca', group: '#boca', prop: 'color', def: '#fffcd3' }),
 });
 

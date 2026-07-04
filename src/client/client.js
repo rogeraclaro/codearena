@@ -676,26 +676,24 @@ function wrapPreview(inner, phase) {
     #robot-contenidor {
       position: relative;
       width: 300px;
-      margin: 160px auto;
+      margin: 140px auto;
     }
 
     /* .orella (D-04: top, offset simètric left/right, width són forats). Sempre
        visible a totes les fases (imatge real, no forat de la Fase 3). */
     .orella {
       position: absolute;
-      top: var(--orella-top, 130px);
-      width: var(--orella-width, 70px);
-      z-index: 11;
-      filter: grayscale(1) brightness(1.05) sepia(0.1) hue-rotate(175deg) saturate(1.2);
-      opacity: 0.95;
+      top: var(--orella-top, 95px);
+      width: var(--orella-width, 40px);
+      z-index: 5;
     }
 
     #orella-esquerra {
-      left: var(--orella-offset, -52px);
+      left: var(--orella-offset, -31px);
     }
 
     #orella-dreta {
-      right: var(--orella-offset, -52px);
+      right: var(--orella-offset, -31px);
     }
 
     /* Peces sense contingut visual propi (antena/ull/nas/boca) a la Fase HTML
@@ -713,145 +711,219 @@ function wrapPreview(inner, phase) {
       box-sizing: border-box;
     }
 
-    /* --- Disseny final del robot Bender (Fase CSS/JS, scoped a body.bender): copiat
-       literalment de la font de veritat (/Users/rogermasellas/Desktop/imparticio/
-       index.html, línies 25-179). Cada un dels 16 forats de la Fase CSS
-       (CSS_HOLES) és un var(--nom, <default>): abans que l'equip toqui res el
-       fallback reprodueix el Bender; els canvis viuen via CSSOM setProperty
-       (Pitfall 1/5), MAI reassignant el srcdoc. Els fixos (D-02/D-03/D-05/D-06
-       /D-07/D-08/D-09) es queden com a valors literals. Sense aquest scoping,
+    /* --- Disseny final del robot Bender (Fase CSS/JS, scoped a body.bender): còpia
+       literal de la referència definitiva passada per l'usuari (pinta el Bender
+       correctament). Cada un dels 16 forats de la Fase CSS (CSS_HOLES) és un
+       var(--nom, <default>): abans que l'equip toqui res el fallback reprodueix el
+       Bender; els canvis viuen via CSSOM setProperty (Pitfall 1/5), MAI reassignant
+       el srcdoc. Els fixos es queden com a valors literals. Sense aquest scoping,
        aquest mateix disseny "fugia" cap a la Fase HTML (regressió D-13). --- */
 
-    /* #robot-cap (D-09: bg APLANA el gradient metàl·lic, border color/width forats;
-       border-radius el·líptic de 8 valors FIX). */
+    /* Coll/cassoleta de l'antena: penja de #robot-contenidor (germà de #robot-cap,
+       per darrere via z-index), no és cap forat. */
+    body.bender #robot-contenidor::before {
+      content: "";
+      position: absolute;
+      top: -23px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 105px;
+      height: 58px;
+      background-color: #e3f7fe;
+      border: 6px solid #000000;
+      border-radius: 43px 43px 16px 16px;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+
+    /* #robot-cap (D-09: bg/border color/width forats — color pla, mai gradient;
+       border-radius asimètric del dipòsit Bender FIX). */
     body.bender #robot-cap {
       position: relative;
       z-index: 10;
       width: 100%;
-      height: 420px;
-      background: var(--cap-bg, linear-gradient(90deg, #7d8798 0%, #a7b1c2 18%, #dbe3ee 32%, #b0b9c9 50%, #8b96a8 72%, #6f7889 100%));
-      border: var(--cap-border-width, 6px) solid var(--cap-border-color, #232c3a);
-      border-radius: 50% 50% 38% 38% / 62% 62% 18% 18%;
-      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.35), inset 0 0 70px rgba(0, 0, 0, 0.2), 0 15px 35px rgba(0, 0, 0, 0.45);
+      background: var(--cap-bg, #a9c5da);
+      border: var(--cap-border-width, 6px) solid var(--cap-border-color, #000000);
+      border-radius: 70% 70% 160px 160px / 150px 150px 70px 70px;
+      height: auto;
+      min-height: 400px;
+      padding-bottom: 30px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      gap: 34px;
       padding-top: 150px;
+      gap: 30px;
       box-sizing: border-box;
     }
 
-    /* .antena (D-03: bg APLANA el radial-gradient de la bola, border s'AFEGEIX; tija
-       /mida/posició FIX, D-02). La bola és .antena::before. */
+    /* .antena (D-03: bg/border color forats a la bola; tija FIX). Bola = .antena;
+       tija = .antena::before. */
     body.bender .antena {
       position: absolute;
-      top: -55px;
+      top: -150px;
       left: 50%;
       transform: translateX(-50%);
-      width: 6px;
-      height: 55px;
-      z-index: 5;
-      background: linear-gradient(90deg, #6f7889 0%, #cfd6e0 50%, #6f7889 100%);
-      border-radius: 3px;
+      width: 40px;
+      height: 40px;
+      background: var(--antena-bg, #e3f7fe);
+      border: 5px solid var(--antena-border, #000000);
+      border-radius: 50%;
+      z-index: 0;
+      box-sizing: border-box;
     }
 
     body.bender .antena::before {
       content: "";
       position: absolute;
-      top: -14px;
       left: 50%;
+      top: 100%;
       transform: translateX(-50%);
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--antena-bg, radial-gradient(circle at 35% 30%, #e6ffff 0%, #7dfcff 45%, #17d8e0 80%));
-      border: 2px solid var(--antena-border, transparent);
-      box-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+      width: 15px;
+      height: 100px;
+      background-color: #a9c5da;
+      border-left: 3px solid #000000;
+      border-right: 3px solid #000000;
       box-sizing: border-box;
+      z-index: -1;
     }
 
-    /* .contenidor-ulls (D-05: bg pla + top forats; CAL position:relative per al top —
-       la font és un fill flex no posicionat. Resta FIX). */
+    /* .contenidor-ulls (D-05: bg color pla + top forats; resta FIX). */
     body.bender .contenidor-ulls {
+      position: relative;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 78%;
-      height: 92px;
-      background: var(--ulls-bg, #cfe1ee);
-      border: 6px solid #1c2530;
-      border-radius: 46px;
+      gap: 0;
+      width: 132%;
+      height: 127px;
+      background: var(--ulls-bg, #e3f7fe);
+      border: 6px solid #000000;
+      border-radius: 60px;
       box-sizing: border-box;
-      padding: 8px;
-      position: relative;
-      top: var(--ulls-top, 0px);
-      box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.6), inset 0 -4px 10px rgba(0, 0, 0, 0.15);
+      top: var(--ulls-top, -40px);
     }
 
-    /* .ull (D-06: border-radius forat; color/mida/pupil·la FIX). */
+    body.bender .contenidor-ulls .ull:first-child {
+      margin-right: 5px;
+    }
+
+    body.bender .contenidor-ulls .ull:last-child {
+      margin-left: 5px;
+    }
+
+    /* Pantalla fosca del visor. */
+    body.bender .contenidor-ulls::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 10px;
+      bottom: 10px;
+      background-color: #1a1a1a;
+      border-radius: 40px;
+      z-index: 1;
+    }
+
+    /* .ull (D-06: border-radius forat en px; resta FIX). */
     body.bender .ull {
-      display: inline-block;
       position: relative;
-      width: 58px;
-      height: 64px;
-      background: #f2e6a8;
-      border-radius: var(--ull-radius, 50%);
+      z-index: 3;
+      width: 96px;
+      height: 96px;
+      background-color: #fffcd3;
+      border-radius: var(--ull-radius, 50px);
+      overflow: hidden;
       box-sizing: border-box;
-      box-shadow: inset 0 0 0 3px #1c2530;
-      margin: 0 -6px;
-      transition: background 0.2s ease, box-shadow 0.2s ease;
     }
 
+    /* Pupil·la (quadrat negre). */
     body.bender .ull::before {
       content: "";
       position: absolute;
-      left: 50%;
       top: 50%;
-      width: 12px;
-      height: 12px;
-      background: #1c1c1c;
-      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      background-color: #000000;
+      transform: translateY(-50%);
+      z-index: 2;
     }
 
-    /* #nas (D-07: border-radius + mida (width/height) forats; color negre FIX). */
+    body.bender .contenidor-ulls .ull:first-child::before {
+      right: 34px;
+    }
+
+    body.bender .contenidor-ulls .ull:last-child::before {
+      left: 34px;
+    }
+
+    /* Cella enfadada (triangle negre a la cantonada interior superior). */
+    body.bender .ull::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      border-top: 40px solid #000000;
+      z-index: 1;
+    }
+
+    body.bender .contenidor-ulls .ull:first-child::after {
+      right: 0;
+      border-left: 47px solid transparent;
+    }
+
+    body.bender .contenidor-ulls .ull:last-child::after {
+      left: 0;
+      border-right: 47px solid transparent;
+    }
+
+    /* #nas (D-07: border-radius + mida forats; color negre FIX — quadrat pla). */
     body.bender #nas {
-      width: var(--nas-size, 22px);
-      height: var(--nas-size, 22px);
-      background: radial-gradient(circle at 35% 30%, #cfd6e0 0%, #8b95a5 60%, #5c6576 100%);
-      border-radius: var(--nas-radius, 50%);
-      border: 2px solid #232c3a;
+      width: var(--nas-size, 14px);
+      height: var(--nas-size, 14px);
+      padding: 0;
+      background-color: #000000;
+      border: none;
+      border-radius: var(--nas-radius, 0%);
       cursor: pointer;
       box-sizing: border-box;
-      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.7);
-      transition: filter 0.2s ease;
+      margin-top: -70px;
     }
 
-    body.bender #nas:hover {
-      filter: brightness(1.25);
-    }
-
-    /* #boca (D-08: height (CAL afegir, font padding-driven), width, dents-color forats;
-       border-radius FIX. Target dents #fffcd3 locked; #f2e6a8 només fallback del var()). */
+    /* #boca (D-08: height/width/dents-color forats; resta FIX). */
     body.bender #boca {
+      position: relative;
+      z-index: 2;
       display: block;
-      width: var(--boca-width, 60%);
-      height: var(--boca-height, auto);
-      background: repeating-linear-gradient(180deg, var(--boca-dents, #f2e6a8) 0px, var(--boca-dents, #f2e6a8) 16px, #1c2530 16px, #1c2530 19px);
-      color: #1c2530;
-      font-family: 'Courier New', Courier, monospace;
-      font-weight: bold;
-      font-size: 18px;
-      letter-spacing: 2px;
-      padding: 14px 18px;
-      border-radius: 0 0 40px 40px;
-      border: 4px solid #1c2530;
-      border-top: none;
-      text-align: center;
-      margin: 0 auto;
+      width: var(--boca-width, 90%);
+      height: var(--boca-height, 95px);
+      background: repeating-linear-gradient(90deg, var(--boca-dents, #fffcd3) 0px, var(--boca-dents, #fffcd3) 20px, #000000 20px, #000000 24px);
+      border: 6px solid #000000;
+      border-radius: 50px;
+      overflow: hidden;
       box-sizing: border-box;
-      box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.2);
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+      font-size: 0;
+      margin: 0;
+    }
+
+    /* Línies horitzontals de les dents (a 1/3 i 2/3 de l'alçada). */
+    body.bender #boca::before,
+    body.bender #boca::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: #000000;
+      transform: translateY(-50%);
+    }
+
+    body.bender #boca::before {
+      top: 33.333%;
+    }
+
+    body.bender #boca::after {
+      top: 66.666%;
     }
 
     /* --- Fase JS: classes d'efecte que l'intèrpret PARENT commuta via classList
