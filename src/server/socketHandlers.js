@@ -97,6 +97,9 @@ export function registerSocketHandlers(io) {
         // F5/reconnexió recupera també les regles JS construïdes (CORE-03) — dirigit a
         // l'owner, mateix patró (sense protocol de resync nou).
         socket.emit(EVENTS.TEAM_JS_STATE, gameState.getTeamRules(socket.data.teamId));
+        // F5/reconnexió recupera també el bloqueig de "Finalitzar" per fase (CORE-03) —
+        // mateix patró, sense protocol de resync nou.
+        socket.emit(EVENTS.TEAM_DONE_STATE, gameState.getTeamDoneState(socket.data.teamId));
         socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       } else {
         // Unclaimed PC awaiting selection (D-01) — no token minted yet.
@@ -304,6 +307,25 @@ export function registerSocketHandlers(io) {
         if (gameState.setJsRules(teamId, rules)) {
           io.to(`team:${teamId}`).emit(EVENTS.TEAM_JS_STATE, gameState.getTeamRules(teamId));
           io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    // --- Botó "Finalitzar" (HTML/CSS): marca la fase ACTIVA com a feta per aquest
+    // equip (identitat SEMPRE de socket.data.teamId; la FASE es deriva de
+    // state.phase via getPublicState(), MAI d'un valor que el client pogués enviar
+    // al payload — un equip no pot marcar-se "fet" a una fase que no és l'activa).
+    // markPhaseDone és mutation-returns-bool (no-op si ja estava marcat, T-03-12
+    // style anti-storm). Només desa un timestamp — cap càlcul de puntuació aquí,
+    // és per a la Fase 4 (proximitat + rapidesa).
+    socket.on(
+      EVENTS.TEAM_MARK_DONE,
+      safeHandler(() => {
+        const teamId = socket.data.teamId;
+        if (!teamId) return;
+        const { phase } = gameState.getPublicState();
+        if (gameState.markPhaseDone(teamId, phase)) {
+          io.to(`team:${teamId}`).emit(EVENTS.TEAM_DONE_STATE, gameState.getTeamDoneState(teamId));
         }
       }),
     );

@@ -39,7 +39,11 @@ function registerTeams(names) {
     // dirigit via getTeamStyle(); getPublicState() no en deriva res (D-22).
     // jsRules: array autoritatiu de regles JS per equip (GAME-05). Es projecta
     // dirigit via getTeamRules(); getPublicState() no en deriva res (D-22).
-    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {}, cssValues: {}, jsRules: [] });
+    // doneAt: mapa autoritatiu phase->timestamp (epoch ms) de quan l'equip ha premut
+    // "Finalitzar" per aquella fase. Es projecta dirigit via getTeamDoneState(); no
+    // calcula cap puntuació — només desa el timestamp perquè la Fase 4 (scoring de
+    // rapidesa) el pugui consumir més endavant.
+    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {}, cssValues: {}, jsRules: [], doneAt: {} });
   }
 }
 
@@ -201,6 +205,24 @@ function getTeamRules(teamId) {
   return { jsRules: team.jsRules.map((r) => ({ ...r })) };
 }
 
+// Marca la fase ACTIVA (state.phase, mai un valor rebut del client — el caller li
+// passa el mateix state.phase autoritatiu) com a finalitzada per aquest equip.
+// mutation-returns-bool: true només la PRIMERA vegada per fase (idempotent — repetir
+// el clic, o un re-emit accidental, no sobreescriu el timestamp ja desat).
+function markPhaseDone(teamId, phase) {
+  const team = state.teams.get(teamId);
+  if (!team || !phase) return false;
+  if (team.doneAt[phase]) return false; // ja marcat — no-op (anti-storm)
+  team.doneAt[phase] = Date.now();
+  return true;
+}
+
+function getTeamDoneState(teamId) {
+  const team = state.teams.get(teamId);
+  if (!team) return { doneAt: {} };
+  return { doneAt: { ...team.doneAt } };
+}
+
 // --- Timer/phase functions (all return true if they mutated state, so
 // callers — socketHandlers.js, index.js's expiry poll — only broadcast
 // session:full-state when something actually changed). ---
@@ -282,6 +304,8 @@ export const gameState = {
   getTeamStyle,
   setJsRules,
   getTeamRules,
+  markPhaseDone,
+  getTeamDoneState,
   startPhase,
   nextPhase,
   pauseTimer,

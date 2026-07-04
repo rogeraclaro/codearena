@@ -306,6 +306,29 @@
   }
 }
 
+/* Botó "Finalitzar" (HTML/CSS): marca la fase com a feta per aquest equip.
+   --color-accent és reservat al CTA d'Admin — reutilitza --status-connected
+   (mateixa família semàntica "positiu/fet") en lloc d'un literal nou. */
+.finish-phase-btn {
+  width: 100%;
+  min-height: var(--hit-target-min);
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  color: var(--color-surface);
+  background: var(--status-connected);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.finish-phase-btn:disabled {
+  background: var(--color-muted);
+  cursor: default;
+}
+
 /* --- Fase CSS: panell de forats "codi foradat" (GAME-04, UI-SPEC §Component
    Inventory). Només tokens existents — cap token nou. --- */
 .css-panel {

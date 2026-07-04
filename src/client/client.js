@@ -296,6 +296,7 @@ let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd
 let latestPlacement = {};
 let latestCssValues = {}; // últim TEAM_CSS_STATE rebut (fase css); usat en render/F5
 let latestJsRules = []; // últim TEAM_JS_STATE rebut (fase js); usat en preview/F5
+let latestDoneAt = {}; // últim TEAM_DONE_STATE rebut: phase->timestamp de "Finalitzar" (F5)
 let jsPanelRows = null; // còpia de treball LOCAL del panell de regles (permet files parcials)
 let jsEnterIndex = -1; // índex de la fila a animar (slide-in), consumit a cada pinta
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
@@ -1065,7 +1066,7 @@ function renderForatRow(holeId, hole, storedValue, frozen) {
 function renderCssPanel(cssValues) {
   const wrap = document.createElement('div');
   wrap.className = 'css-panel';
-  const frozen = latestState?.timerStatus === 'frozen'; // D-11: congela els controls
+  const frozen = latestState?.timerStatus === 'frozen' || isPhaseDone('css'); // D-11 + Finalitzar
 
   const byGroup = new Map();
   for (const [holeId, hole] of Object.entries(CSS_HOLES)) {
@@ -1350,8 +1351,32 @@ function renderBoardAndDrawer(placement) {
   const gameContainer = document.querySelector('.html-game');
   if (!gameContainer) return;
   mountGame(gameContainer, placement);
-  const frozen = latestState?.timerStatus === 'frozen';
+  const frozen = latestState?.timerStatus === 'frozen' || isPhaseDone('html');
   sortables.forEach((s) => s.option('disabled', frozen));
+}
+
+function isPhaseDone(phase) {
+  return !!latestDoneAt?.[phase];
+}
+
+// Botó "Finalitzar" (HTML/CSS): marca la fase ACTIVA com a feta per aquest equip
+// (usat per la futura puntuació de rapidesa a la Fase 4 — aquí només envia l'intent
+// i bloqueja localment; l'estat autoritatiu torna via TEAM_DONE_STATE). Un cop
+// finalitzada la fase, el botó queda deshabilitat i mostra "Fet" (F5-safe: es
+// reconstrueix sempre a partir de `isPhaseDone`, mai d'un flag local aïllat).
+function renderFinishButton(phase) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'finish-phase-btn';
+  const done = isPhaseDone(phase);
+  button.disabled = done;
+  button.textContent = done ? '✓ Fet' : 'Finalitzar';
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    button.textContent = '✓ Fet';
+    socket.emit(EVENTS.TEAM_MARK_DONE, {});
+  });
+  return button;
 }
 
 // Overlay de congelat gestionat dinàmicament (D-11) perquè un update quirúrgic
@@ -1382,7 +1407,7 @@ function surgicalUpdate(state) {
   const timerEl = document.querySelector('.timer-display');
   if (timerEl) renderCountdown(timerEl, state);
   updateFrozenOverlay(state);
-  const frozen = state.timerStatus === 'frozen';
+  const frozen = state.timerStatus === 'frozen' || isPhaseDone('html');
   sortables.forEach((s) => s.option('disabled', frozen));
 }
 
@@ -1420,8 +1445,10 @@ function renderActiveSplitScreen(team, state) {
     gameContainer = document.createElement('div');
     gameContainer.className = 'html-game';
     panel.appendChild(gameContainer);
+    panel.appendChild(renderFinishButton('html'));
   } else if (state.phase === 'css') {
     panel.appendChild(renderCssPanel(latestCssValues));
+    panel.appendChild(renderFinishButton('css'));
   } else if (state.phase === 'js') {
     // Seed del panell des de les regles autoritatives (jsPanelRows null a l'entrada
     // de fase / F5; renderJsPanel el pobla). No es força null aquí: un re-render per
@@ -1445,7 +1472,7 @@ function renderActiveSplitScreen(team, state) {
   if (state.phase === 'html') {
     mountGame(gameContainer, latestPlacement);
     assemblePreview(latestPlacement);
-    const frozen = state.timerStatus === 'frozen';
+    const frozen = state.timerStatus === 'frozen' || isPhaseDone('html');
     sortables.forEach((s) => s.option('disabled', frozen));
   } else if (state.phase === 'css') {
     boardMounted = false;
@@ -1602,6 +1629,28 @@ function bootClient() {
       refreshJsPanel();
     }
     rebuildJsPreview(latestJsRules);
+  });
+
+  // Estat autoritatiu de "Finalitzat per fase" (F5 recovery del bloqueig un cop
+  // premut "Finalitzar"). Actualitza el botó in situ i bloqueja els controls de la
+  // fase activa sense reconstruir tota la pantalla (mirall de TEAM_CSS_STATE/
+  // TEAM_JS_STATE — Pitfall 1).
+  socket.on(EVENTS.TEAM_DONE_STATE, ({ doneAt }) => {
+    latestDoneAt = doneAt || {};
+    const phase = latestState?.phase;
+    if (!phase || !isPhaseDone(phase)) return;
+    const button = document.querySelector('.finish-phase-btn');
+    if (button) {
+      button.disabled = true;
+      button.textContent = '✓ Fet';
+    }
+    if (phase === 'html') {
+      sortables.forEach((s) => s.option('disabled', true));
+    } else if (phase === 'css') {
+      document.querySelectorAll('.css-panel input').forEach((input) => {
+        input.disabled = true;
+      });
+    }
   });
 
   socket.on('team:reload', () => {
