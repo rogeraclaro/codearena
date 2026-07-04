@@ -20,8 +20,8 @@ Aquesta fase entrega la **Fase CSS** i la **Fase JS** jugables de CodeArena: sob
 ## Implementation Decisions
 
 ### Abast del "CSS foradat" (element per element, sobre el CSS definitiu del Bender que l'usuari ha proporcionat)
-- **D-01:** El principi "codi foradat" (sintaxi CSS real, valors via controls tancats, mai text lliure) es manté sense reobrir-se — ja estava tancat a `PROJECT.md` Key Decisions (Opció A triada sobre panell visual, Opció B). Aquesta fase només concreta la seva implementació.
-- **D-02:** `#robot-contenidor` i la seva cassoleta d'antena (`::before`) queden **100% fixos** — són estructura pre-construïda del joc, no peces HTML de l'alumne.
+- **D-01 [informational]:** El principi "codi foradat" (sintaxi CSS real, valors via controls tancats, mai text lliure) es manté sense reobrir-se — ja estava tancat a `PROJECT.md` Key Decisions (Opció A triada sobre panell visual, Opció B). Aquesta fase només concreta la seva implementació. No és un objectiu de construcció propi d'aquesta fase (és un principi ja tancat a un altre document), per això no es cita als `must_haves` dels plans.
+- **D-02 [informational]:** `#robot-contenidor` i la seva cassoleta d'antena (`::before`) queden **100% fixos** — són estructura pre-construïda del joc, no peces HTML de l'alumne. És una decisió de frontera negativa ("això no es toca"), no un objectiu de construcció positiu; per això no es cita als `must_haves` dels plans.
 - **D-03:** `.antena` (bola): forats = **background-color** i **border-color**. Fixos: mida, posició, tija (`::before`).
 - **D-04:** `.orella`: forats = **top**, **left/right** (posició) i **width** (mida), tots via sliders. Valors objectiu de la Plana Model: `top: 95px`, `left: -31px` (esquerra) / `right: -31px` (dreta), `width: 40px`.
 - **D-05:** `.contenidor-ulls` (visor): forats = **background-color** i **top** (posició vertical). Fixos: `border-radius`, `width`/`height`, `border`, pseudo-element `::before` (pantalla fosca).
