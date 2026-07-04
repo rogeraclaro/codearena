@@ -687,7 +687,7 @@ function wrapPreview(inner) {
     }
 
     /* .antena (D-03: bg APLANA el radial-gradient de la bola, border s'AFEGEIX; tija
-       /mida/posició FIX, D-02). La bola és `.antena::before`. */
+       /mida/posició FIX, D-02). La bola és .antena::before. */
     .antena {
       position: absolute;
       top: -55px;
