@@ -391,3 +391,145 @@
     transition: background var(--motion-snap) var(--motion-ease);
   }
 }
+
+/* --- Fase JS: panell de regles "Quan → a l'element → Fes" (GAME-05, UI-SPEC
+   §Component Inventory JS). Només tokens existents — cap token nou. Els desplegables
+   i "Veure" usen estil natiu/neutre amb outline de focus --color-text: el mustard
+   --phase-js té contrast insuficient com a ÚNIC indicador (UI-SPEC Checker note), així
+   que queda com a tira d'identitat i farciment del botó "Afegir", mai com a únic
+   senyal d'estat interactiu. --- */
+.js-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  box-sizing: border-box;
+  /* Tira d'identitat de fase a l'esquerra (mirall del .css-forat-group de la Fase CSS). */
+  border-left: 3px solid var(--phase-js);
+  padding-left: var(--space-md);
+}
+
+/* Fila de regla: frase natural amb 4 desplegables natius + "Veure" + retirar.
+   Embolcalla amb gràcia dins del 50% (flex-wrap). */
+.js-rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--hit-target-min);
+  padding: var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+/* Paraules connectores (Body) — porten el significat de la frase (D-12). */
+.js-rule__word {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+
+/* Desplegables natius: àrea d'impacte ≥44px, focus neutre --color-text. */
+.js-rule__select {
+  min-height: var(--hit-target-min);
+  padding: 0 var(--space-sm);
+  font-size: var(--font-size-label);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.js-rule__select:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+.js-rule__select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* "Veure": afordança neutra (mai --phase-js com a únic indicador). */
+.js-rule__veure {
+  min-height: var(--hit-target-min);
+  padding: 0 var(--space-md);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.js-rule__veure:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+.js-rule__veure:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Retirar fila: undo sense fricció (UI-SPEC §Copywriting), neutre, sense vermell. */
+.js-rule__remove {
+  min-width: var(--hit-target-min);
+  min-height: var(--hit-target-min);
+  font-size: var(--font-size-body);
+  color: var(--color-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.js-rule__remove:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+.js-rule__remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* "Afegir JavaScript" (D-12): farcit --phase-js + vora --color-border + etiqueta
+   fosca --color-text (text fosc sobre mustard llegeix bé; blanc sobre mustard no).
+   Desactivat al límit 5-6 files (D-12), sense text d'error. ~48px d'aire a dalt. */
+.js-add {
+  min-height: var(--hit-target-min);
+  margin-top: var(--space-2xl);
+  padding: 0 var(--space-lg);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  color: var(--color-text);
+  background: var(--phase-js);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.js-add:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
+.js-add:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Motion (UI-SPEC §Motion): slide-in de fila nova, només decoratiu. Amb
+   reduced-motion la fila apareix a l'instant (funcionalitat preservada). */
+@keyframes js-rule-enter {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--space-sm)));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .js-rule--enter {
+    animation: js-rule-enter var(--motion-snap) var(--motion-ease);
+  }
+}

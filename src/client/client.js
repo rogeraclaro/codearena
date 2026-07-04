@@ -16,10 +16,18 @@ import {
   PIECES,
   DISTRACTORS,
   CSS_HOLES,
+  JS_EVENTS,
+  JS_ELEMENTS,
+  JS_ELEMENT_LABELS,
+  JS_ACTION_KEYS,
+  JS_COMPOSITE_KEYS,
+  JS_ACTION_LABELS,
+  JS_ROW_LIMIT,
   pieceLabel,
   containerLabel,
   containerClosingLabel,
 } from '../shared/robotTemplate.js';
+import { attachRule } from '../shared/effects.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -287,6 +295,9 @@ function renderInterstitialScreen(phase) {
 let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd)
 let latestPlacement = {};
 let latestCssValues = {}; // últim TEAM_CSS_STATE rebut (fase css); usat en render/F5
+let latestJsRules = []; // últim TEAM_JS_STATE rebut (fase js); usat en preview/F5
+let jsPanelRows = null; // còpia de treball LOCAL del panell de regles (permet files parcials)
+let jsEnterIndex = -1; // índex de la fila a animar (slide-in), consumit a cada pinta
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
 let boardMounted = false;
 // Ordre del calaix barrejat UN COP per càrrega de pàgina (checkpoint 02-03 round 4):
@@ -815,6 +826,21 @@ function wrapPreview(inner) {
       box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.2);
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
     }
+
+    /* --- Fase JS: classes d'efecte que l'intèrpret PARENT commuta via classList
+       (src/shared/effects.js ACTIONS/COMPOSITES). Viuen aquí al srcdoc; el pare mai
+       injecta innerHTML (T-03-11). "Girar" té un fallback estàtic visible amb
+       reduced-motion; sota no-preference gira en continu. La resta transiciona suau. */
+    @keyframes js-rotate-kf { to { transform: rotate(360deg); } }
+    .js-rotate { transform: rotate(20deg); }
+    .js-scale { transform: scale(1.4); }
+    .js-squint { transform: scaleY(0.2); }
+    .js-boca-tanca { transform: scaleY(0.15); }
+    .js-vermell { background-color: #e23b3b !important; }
+    @media (prefers-reduced-motion: no-preference) {
+      .js-rotate { transform: none; animation: js-rotate-kf 1.2s linear infinite; }
+      .js-scale, .js-squint, .js-boca-tanca { transition: transform 0.2s ease; }
+    }
   </style></head><body><div id="robot-fons"></div>${inner}</body></html>`;
 }
 
@@ -987,6 +1013,223 @@ function syncCssPanelInputs(cssValues) {
     input.value = hole.control === 'color' ? value : String(parseInt(value, 10));
     if (readout) readout.textContent = value;
   }
+}
+
+// --- Fase JS: constructor de regles + intèrpret parent-driven (GAME-05) ---
+// latestJsRules = últim TEAM_JS_STATE autoritatiu (regles completes, usat en
+// preview/F5). jsPanelRows = còpia de treball LOCAL del panell (permet files
+// parcials a mig omplir); és la font de veritat del que es pinta. S'emet
+// TEAM_SET_RULES només amb les files COMPLETES (whole-array). Seed inicial des de
+// latestJsRules a l'entrada de fase / F5.
+
+// Opcions dels desplegables derivades del vocabulari frozen (single source, com SLOTS).
+const JS_EVENT_OPTIONS = Object.keys(JS_EVENTS).map((k) => ({ value: k, label: k }));
+const JS_ELEMENT_OPTIONS = Object.keys(JS_ELEMENTS).map((k) => ({ value: k, label: JS_ELEMENT_LABELS[k] }));
+const JS_ACTION_OPTIONS = [...JS_ACTION_KEYS, ...JS_COMPOSITE_KEYS].map((k) => ({ value: k, label: JS_ACTION_LABELS[k] }));
+
+function emptyJsRow() {
+  return { event: '', origen: '', desti: '', accio: '' };
+}
+
+function isCompositeAccio(accio) {
+  return JS_COMPOSITE_KEYS.includes(accio);
+}
+
+// Una fila és completa si té event+origen+acció i (si simple) destí. Les compostes
+// no necessiten destí (D-17).
+function isJsRowComplete(row) {
+  if (!row.event || !row.origen || !row.accio) return false;
+  return isCompositeAccio(row.accio) ? true : !!row.desti;
+}
+
+function isJsRowStarted(row) {
+  return !!(row.event || row.origen || row.desti || row.accio);
+}
+
+// Parelles (event,origen) ja usades per ALTRES files (D-15 anti-repetició).
+function usedJsPairs(exceptIndex) {
+  const set = new Set();
+  jsPanelRows.forEach((r, i) => {
+    if (i !== exceptIndex && r.event && r.origen) set.add(`${r.event}|${r.origen}`);
+  });
+  return set;
+}
+
+// Normalitza una fila completa al ruleset canònic (composta ⇒ destí null, D-17).
+function normalizeJsRow(row) {
+  return {
+    event: row.event,
+    origen: row.origen,
+    desti: isCompositeAccio(row.accio) ? null : row.desti,
+    accio: row.accio,
+  };
+}
+
+// Emet el ruleset (només files COMPLETES, whole-array). El servidor revalida i fa
+// l'echo via TEAM_JS_STATE.
+function emitJsRules() {
+  const rules = jsPanelRows.filter(isJsRowComplete).map(normalizeJsRow);
+  socket.emit(EVENTS.TEAM_SET_RULES, { rules });
+}
+
+// Desplegable natiu amb placeholder `…` dimmed. Opcions read-only via textContent
+// (GAME-06/V5, mai innerHTML). onChange rep el value triat.
+function buildJsSelect(options, value, disabled, onChange) {
+  const sel = document.createElement('select');
+  sel.className = 'js-rule__select';
+  sel.disabled = disabled;
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = '…';
+  ph.disabled = true;
+  ph.selected = !value;
+  sel.appendChild(ph);
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt.value;
+    o.textContent = opt.label;
+    if (opt.disabled) o.disabled = true;
+    if (opt.value === value) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.addEventListener('change', (e) => onChange(e.target.value));
+  return sel;
+}
+
+function jsWord(text) {
+  const span = document.createElement('span');
+  span.className = 'js-rule__word';
+  span.textContent = text; // text pla, coherent amb la resta d'etiquetes (V5)
+  return span;
+}
+
+function updateJsRow(index, field, value) {
+  const row = jsPanelRows[index];
+  row[field] = value;
+  if (field === 'accio' && isCompositeAccio(value)) row.desti = null; // D-17: composta desactiva destí
+  emitJsRules();
+  refreshJsPanel(); // rebuild → actualitza els estats disabled (anti-repeat/composite)
+}
+
+function addJsRow() {
+  if (jsPanelRows.length >= JS_ROW_LIMIT) return; // D-12
+  jsPanelRows.push(emptyJsRow());
+  jsEnterIndex = jsPanelRows.length - 1; // anima NOMÉS la fila nova
+  refreshJsPanel();
+}
+
+function removeJsRow(index) {
+  jsPanelRows.splice(index, 1);
+  if (jsPanelRows.length === 0) jsPanelRows.push(emptyJsRow()); // sempre ≥1 fila visible
+  emitJsRules();
+  refreshJsPanel();
+}
+
+// Fila = frase "Quan [event] a [origen] → a l'element [destí] → Fes [acció]" amb 4
+// desplegables natius + "Veure" + retirar. Anti-repeat (D-15) i composite-disables-destí
+// (D-17) es comuniquen NOMÉS amb estat disabled (cap error/vermell).
+function buildJsRuleRow(row, index, frozen) {
+  const el = document.createElement('div');
+  el.className = 'js-rule';
+  if (index === jsEnterIndex) el.classList.add('js-rule--enter');
+
+  const used = usedJsPairs(index);
+  const composite = isCompositeAccio(row.accio);
+
+  el.appendChild(jsWord('Quan'));
+  el.appendChild(buildJsSelect(
+    JS_EVENT_OPTIONS.map((o) => ({ ...o, disabled: !!row.origen && used.has(`${o.value}|${row.origen}`) })),
+    row.event, frozen, (v) => updateJsRow(index, 'event', v),
+  ));
+
+  el.appendChild(jsWord('a'));
+  el.appendChild(buildJsSelect(
+    JS_ELEMENT_OPTIONS.map((o) => ({ ...o, disabled: !!row.event && used.has(`${row.event}|${o.value}`) })),
+    row.origen, frozen, (v) => updateJsRow(index, 'origen', v),
+  ));
+
+  el.appendChild(jsWord('→ a l\'element'));
+  el.appendChild(buildJsSelect(
+    JS_ELEMENT_OPTIONS,
+    composite ? '' : row.desti, frozen || composite, (v) => updateJsRow(index, 'desti', v),
+  ));
+
+  el.appendChild(jsWord('→ Fes'));
+  el.appendChild(buildJsSelect(JS_ACTION_OPTIONS, row.accio, frozen, (v) => updateJsRow(index, 'accio', v)));
+
+  const veure = document.createElement('button');
+  veure.type = 'button';
+  veure.className = 'js-rule__veure';
+  veure.textContent = 'Veure';
+  veure.disabled = frozen || !isJsRowComplete(row);
+  veure.addEventListener('click', () => previewSingleRule(row));
+  el.appendChild(veure);
+
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'js-rule__remove';
+  remove.setAttribute('aria-label', 'Treure regla');
+  remove.textContent = '×';
+  remove.disabled = frozen;
+  remove.addEventListener('click', () => removeJsRow(index));
+  el.appendChild(remove);
+
+  return el;
+}
+
+// Panell de regles JS (GAME-05): pila de files + "Afegir JavaScript". Seed de
+// jsPanelRows des de les regles autoritatives la PRIMERA construcció / entrada de
+// fase; les crides posteriors (refresh) reutilitzen la còpia de treball (no clobbera
+// edicions a mig fer en un re-render per un session:full-state aliè).
+function renderJsPanel(jsRules) {
+  if (jsPanelRows === null) {
+    jsPanelRows = (jsRules && jsRules.length)
+      ? jsRules.map((r) => ({ event: r.event, origen: r.origen, desti: r.desti ?? '', accio: r.accio }))
+      : [emptyJsRow()];
+  }
+  const frozen = latestState?.timerStatus === 'frozen'; // D-11: congela els controls
+  const wrap = document.createElement('div');
+  wrap.className = 'js-rules';
+  jsPanelRows.forEach((row, i) => wrap.appendChild(buildJsRuleRow(row, i, frozen)));
+  jsEnterIndex = -1; // consumit: només la primera pinta de la fila nova anima
+
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'js-add';
+  add.textContent = 'Afegir JavaScript';
+  add.disabled = frozen || jsPanelRows.length >= JS_ROW_LIMIT; // D-12: límit
+  add.addEventListener('click', addJsRow);
+  wrap.appendChild(add);
+  return wrap;
+}
+
+// Reconstrueix el panell in situ des de la còpia de treball (jsPanelRows no és null).
+function refreshJsPanel() {
+  const existing = document.querySelector('.js-rules');
+  if (!existing) return;
+  existing.replaceWith(renderJsPanel());
+}
+
+// Rebuild-then-reattach (Pitfall 3): construeix el srcdoc UNA vegada (robot ja
+// estilitzat, arrossegant el resultat CSS via latestCssValues) i, a `load`, aplica
+// els valors CSS i re-attacha TOTES les regles → mai listeners obsolets. L'iframe
+// roman scriptless (allow-same-origin, sense allow-scripts, T-03-08).
+function rebuildJsPreview(rules) {
+  const frame = document.querySelector('.preview-frame');
+  if (!frame) return;
+  frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
+  frame.addEventListener('load', () => {
+    applyAllCssValues(latestCssValues);
+    const doc = frame.contentDocument;
+    if (doc) rules.forEach((r) => attachRule(doc, r));
+  }, { once: true });
+}
+
+// "Veure" (D-12): preview client-only de NOMÉS aquesta regla (reconstrueix i attacha
+// una sola regla). No toca l'estat del servidor.
+function previewSingleRule(row) {
+  if (!isJsRowComplete(row)) return;
+  rebuildJsPreview([normalizeJsRow(row)]);
 }
 
 // Board-state autoritatiu (canal privat de l'equip): reconcilia el tauler i la
