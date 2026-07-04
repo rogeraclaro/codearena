@@ -234,9 +234,10 @@ function rangeHole({ var: cssVar, selector, group, prop, min, max, step, unit, d
 // Valors OBJECTIU (Bender correcte) de cada forat — documentats aquí perquè `default`
 // (a sota) és deliberadament allunyat d'aquests per exigir esforç real de l'equip. Únic
 // lloc on aquests valors "correctes" queden escrits explícitament fora de wrapPreview().
-// antena-bg=#e3f7fe · antena-border=#000000 · ulls-bg=#e3f7fe · ulls-top=-40px ·
-// ull-radius=50px · cap-bg=#a9c5da · cap-border-color=#000000 · cap-border-width=6px ·
-// nas-radius=0% · nas-size=14px · boca-height=95px · boca-width=90% · boca-dents=#fffcd3
+// antena-bg=#e3f7fe · antena-border=#000000 · orella-top=95px · ulls-bg=#e3f7fe ·
+// ulls-top=-40px · ulls-width=132% · ull-radius=50px · cap-bg=#a9c5da ·
+// cap-border-color=#000000 · cap-border-width=6px · nas-radius=0% · nas-size=14px ·
+// boca-height=95px · boca-width=90% · boca-dents=#fffcd3
 export const CSS_HOLES = Object.freeze({
   // .antena — bola dibuixada per `.antena` mateixa (D-03, referència final: bola=element,
   // tija=`.antena::before`). bg/border FORATS (color pla, no gradient — la referència
@@ -247,18 +248,21 @@ export const CSS_HOLES = Object.freeze({
 
   // .orella — <img class="orella"> (SLOTS orella-esquerra/dreta). top/width sobre `.orella`;
   // offset simètric (una custom property → left a l'esquerra, right a la dreta). Target
-  // Plana Model D-04: top 95px, offset -31px, width 40px. Sempre visibles (D-13, també a
-  // la Fase HTML) — `default` es manté al valor CORRECTE, no allunyat, perquè les orelles
-  // ja es veuen bé abans que comenci la Fase CSS.
-  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: 60, max: 130, step: 1, unit: 'px', def: '95px' }),
+  // Plana Model D-04: top 95px, offset -31px, width 40px. `.orella` és SEMPRE visible
+  // (D-13, també a la Fase HTML, imatge real sense gating). `orella-top` ara SÍ s'allunya
+  // del target (300px, per petició explícita) — a diferència d'offset/width, que es
+  // mantenen correctes perquè les orelles no quedin trencades/fora de quadre abans que
+  // comenci la Fase CSS.
+  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: 60, max: 300, step: 1, unit: 'px', def: '300px' }),
   'orella-offset': rangeHole({ var: '--orella-offset', selector: '#orella-esquerra / #orella-dreta', group: '.orella', prop: 'left / right', min: -60, max: 0, step: 1, unit: 'px', def: '-31px' }),
   'orella-width': rangeHole({ var: '--orella-width', selector: '.orella', group: '.orella', prop: 'width', min: 20, max: 90, step: 1, unit: 'px', def: '40px' }),
 
   // .contenidor-ulls (CONTAINERS) — bg pla (D-05, mapping net) + top (CAL afegir
-  // position:relative, la font és un fill flex no posicionat, D-05 ⚠). `default` allunyat
-  // del target #e3f7fe/-40px.
+  // position:relative, la font és un fill flex no posicionat, D-05 ⚠) + width (nou forat).
+  // `default` allunyat del target #e3f7fe/-40px/132%.
   'ulls-bg': colorHole({ var: '--ulls-bg', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'background-color', def: '#00ff00' }),
-  'ulls-top': rangeHole({ var: '--ulls-top', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'top', min: -50, max: 20, step: 1, unit: 'px', def: '20px' }),
+  'ulls-top': rangeHole({ var: '--ulls-top', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'top', min: -50, max: 40, step: 1, unit: 'px', def: '-50px' }),
+  'ulls-width': rangeHole({ var: '--ulls-width', selector: '.contenidor-ulls', group: '.contenidor-ulls', prop: 'width', min: 70, max: 150, step: 1, unit: '%', def: '90%' }),
 
   // .ull — <span class="ull"> (SLOTS ull-1/ull-2). border-radius (D-06, en px a la
   // referència final — no %); color/mida fix. `default` allunyat del target 50px (ulls

@@ -683,7 +683,7 @@ function wrapPreview(inner, phase) {
        visible a totes les fases (imatge real, no forat de la Fase 3). */
     .orella {
       position: absolute;
-      top: var(--orella-top, 95px);
+      top: var(--orella-top, 300px);
       width: var(--orella-width, 40px);
       z-index: 5;
     }
@@ -796,13 +796,13 @@ function wrapPreview(inner, phase) {
       align-items: center;
       justify-content: center;
       gap: 0;
-      width: 132%;
+      width: var(--ulls-width, 90%);
       height: 127px;
       background: var(--ulls-bg, #00ff00);
       border: 6px solid #000000;
       border-radius: 60px;
       box-sizing: border-box;
-      top: var(--ulls-top, 20px);
+      top: var(--ulls-top, -50px);
     }
 
     body.bender .contenidor-ulls .ull:first-child {
