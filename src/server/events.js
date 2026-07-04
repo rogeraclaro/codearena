@@ -17,6 +17,8 @@ export const EVENTS = Object.freeze({
   TEAM_REMOVE_PIECE: 'team:remove-piece', // declarat aquí; s'implementa al Pla 02
   // Fase CSS — intent de fixar un forat (identitat SEMPRE de socket.data.teamId, mai del payload).
   TEAM_SET_CSS: 'team:set-css',
+  // Fase JS — intent de fixar el ruleset sencer (identitat SEMPRE de socket.data.teamId, mai del payload).
+  TEAM_SET_RULES: 'team:set-rules',
 
   // --- Server -> Client (authoritative broadcasts) ---
   SESSION_FULL_STATE: 'session:full-state',
@@ -27,4 +29,6 @@ export const EVENTS = Object.freeze({
   TEAM_BOARD_STATE: 'team:board-state',
   // Fase CSS — estil privat de l'equip, emès DIRIGIT a team:<id> (mai a 'session', Pitfall 1).
   TEAM_CSS_STATE: 'team:css-state',
+  // Fase JS — regles privades de l'equip, emès DIRIGIT a team:<id> (mai a 'session', Pitfall 1).
+  TEAM_JS_STATE: 'team:js-state',
 });
