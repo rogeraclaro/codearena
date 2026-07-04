@@ -249,11 +249,12 @@ export const CSS_HOLES = Object.freeze({
   // .orella — <img class="orella"> (SLOTS orella-esquerra/dreta). top/width sobre `.orella`;
   // offset simètric (una custom property → left a l'esquerra, right a la dreta). Target
   // Plana Model D-04: top 95px, offset -31px, width 40px. `.orella` és SEMPRE visible
-  // (D-13, també a la Fase HTML, imatge real sense gating). `orella-top` ara SÍ s'allunya
-  // del target (300px, per petició explícita) — a diferència d'offset/width, que es
-  // mantenen correctes perquè les orelles no quedin trencades/fora de quadre abans que
-  // comenci la Fase CSS.
-  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: 60, max: 300, step: 1, unit: 'px', def: '300px' }),
+  // (D-13, també a la Fase HTML, imatge real sense gating). `orella-top` s'allunya del
+  // target cap AMUNT (valor negatiu, per sobre del cap) en lloc d'avall: un top massa
+  // gran (p.ex. 300px) empeny les orelles cap al mig de la cara i se superposen
+  // visualment amb ulls/boca (z-index de .orella per sobre) — donava la falsa impressió
+  // que altres elements "canviaven" en tocar aquest control. Amunt, l'espai és buit.
+  'orella-top': rangeHole({ var: '--orella-top', selector: '.orella', group: '.orella', prop: 'top', min: -80, max: 130, step: 1, unit: 'px', def: '-80px' }),
   'orella-offset': rangeHole({ var: '--orella-offset', selector: '#orella-esquerra / #orella-dreta', group: '.orella', prop: 'left / right', min: -60, max: 0, step: 1, unit: 'px', def: '-31px' }),
   'orella-width': rangeHole({ var: '--orella-width', selector: '.orella', group: '.orella', prop: 'width', min: 20, max: 90, step: 1, unit: 'px', def: '40px' }),
 

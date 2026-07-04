@@ -683,7 +683,7 @@ function wrapPreview(inner, phase) {
        visible a totes les fases (imatge real, no forat de la Fase 3). */
     .orella {
       position: absolute;
-      top: var(--orella-top, 300px);
+      top: var(--orella-top, -80px);
       width: var(--orella-width, 40px);
       z-index: 5;
     }
