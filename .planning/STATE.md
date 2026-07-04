@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 3
-current_phase_name: Joc — Fases CSS i JS
+current_phase: 03
+current_phase_name: joc-fases-css-i-js
 status: executing
 stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-07-03T22:39:36.291Z"
-last_activity: 2026-07-03
-last_activity_desc: Phase 02 complete, transitioned to Phase 3
+last_updated: "2026-07-04T04:27:54.468Z"
+last_activity: 2026-07-04
+last_activity_desc: Phase 03 execution started
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 7
+  total_plans: 9
   completed_plans: 7
   percent: 40
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-01)
 
 **Core value:** Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (HTML = estructura, CSS = aparença, JS = comportament) manipulant-los directament, sense poder cometre errors de sintaxi i sense frustració.
-**Current focus:** Phase 02 — joc-fase-html-blocs-drag-drop
+**Current focus:** Phase 03 — joc-fases-css-i-js
 
 ## Current Position
 
-Phase: 3 — Joc — Fases CSS i JS
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-07-03 — Phase 02 complete, transitioned to Phase 3
+Phase: 03 (joc-fases-css-i-js) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 03
+Last activity: 2026-07-04 — Phase 03 execution started
 
 Progress: [██████████] 100% (Fase 1 completa)
 
