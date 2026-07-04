@@ -1311,6 +1311,11 @@ function renderActiveSplitScreen(team, state) {
     panel.appendChild(gameContainer);
   } else if (state.phase === 'css') {
     panel.appendChild(renderCssPanel(latestCssValues));
+  } else if (state.phase === 'js') {
+    // Seed del panell des de les regles autoritatives (jsPanelRows null a l'entrada
+    // de fase / F5; renderJsPanel el pobla). No es força null aquí: un re-render per
+    // un session:full-state aliè no ha de clobberar edicions a mig fer.
+    panel.appendChild(renderJsPanel(latestJsRules));
   }
 
   const preview = document.createElement('iframe');
@@ -1338,6 +1343,12 @@ function renderActiveSplitScreen(team, state) {
     // (allow-same-origin, sense allow-scripts, T-03-04).
     preview.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
     preview.addEventListener('load', () => applyAllCssValues(latestCssValues), { once: true });
+  } else if (state.phase === 'js') {
+    boardMounted = false;
+    // srcdoc construït UNA vegada (robot ja estilitzat via latestCssValues) i totes
+    // les regles reattachades a `load` (rebuild-then-reattach, Pitfall 3). Iframe
+    // scriptless (allow-same-origin, sense allow-scripts, T-03-08).
+    rebuildJsPreview(latestJsRules);
   } else {
     boardMounted = false;
   }
@@ -1457,6 +1468,24 @@ function bootClient() {
     if (latestState?.phase !== 'css') return;
     applyAllCssValues(latestCssValues);
     syncCssPanelInputs(latestCssValues);
+  });
+
+  // Canal privat de les regles JS (dirigit a team:<id>): desa les regles autoritatives
+  // i, si la fase activa és js, reconstrueix la preview (reattach net, Pitfall 3).
+  // Desacoblat de session:full-state (Pitfall 1), mirall de TEAM_CSS_STATE.
+  socket.on(EVENTS.TEAM_JS_STATE, ({ jsRules }) => {
+    latestJsRules = jsRules || [];
+    if (latestState?.phase !== 'js') return;
+    // F5 recovery: si el panell mostra només la fila buida inicial, reseed des de les
+    // regles recuperades. No clobbera cap edició en curs (una fila ja començada manté
+    // la còpia de treball local).
+    const panelExists = !!document.querySelector('.js-rules');
+    const onlyEmptyStarter = jsPanelRows && jsPanelRows.length === 1 && !isJsRowStarted(jsPanelRows[0]);
+    if (panelExists && onlyEmptyStarter && latestJsRules.length) {
+      jsPanelRows = latestJsRules.map((r) => ({ event: r.event, origen: r.origen, desti: r.desti ?? '', accio: r.accio }));
+      refreshJsPanel();
+    }
+    rebuildJsPreview(latestJsRules);
   });
 
   socket.on('team:reload', () => {
