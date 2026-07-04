@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Nucli en temps real i control de sessió** - Servidor amb estat autoritatiu, identitat persistent, timer sincronitzat i panell Admin de control/recuperació
 - [x] **Phase 2: Joc — Fase HTML (blocs drag & drop)** - Equips munten l'esquelet HTML amb blocs de snap fort, sense escriptura lliure (completed 2026-07-03)
-- [ ] **Phase 3: Joc — Fases CSS i JS** - Equips vesteixen l'HTML amb CSS foradat i li donen comportament amb regles JS
+- [x] **Phase 3: Joc — Fases CSS i JS** - Equips vesteixen l'HTML amb CSS foradat i li donen comportament amb regles JS (completed 2026-07-04)
 - [ ] **Phase 4: Puntuació i rànquing final** - Motor de scoring estructural/d'estil/de comportament i pantalla de resultats
 - [ ] **Phase 5: Desplegament a producció (VPS + Nginx + PM2)** - App verificada en producció amb WebSocket real i reinici automàtic
 
@@ -91,7 +91,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Un equip pot construir regles JS amb desplegables ("Quan passi X → a l'element Y → Fes Z") i en veure l'efecte aplicat a la preview
   3. Si l'HTML de la fase anterior ha quedat incomplet en esgotar-se el temps, les fases CSS i JS funcionen igualment sobre el DOM parcial sense trencar-se
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 
 **Wave 1**
 
@@ -99,7 +99,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 03-02-PLAN.md — Llesca vertical fase JS: vocabulari frozen + intèrpret parent-driven (sense eval) + panell de regles "Quan X → Y → Fes Z" amb "Veure"/"Afegir" (Wave 2)
+- [x] 03-02-PLAN.md — Llesca vertical fase JS: vocabulari frozen + intèrpret parent-driven (sense eval) + panell de regles "Quan X → Y → Fes Z" amb "Veure"/"Afegir" (Wave 2)
 
 **UI hint**: yes
 
@@ -143,6 +143,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
-| 3. Joc — Fases CSS i JS | 1/2 | In Progress|  |
+| 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
