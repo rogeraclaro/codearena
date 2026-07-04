@@ -286,6 +286,7 @@ function renderInterstitialScreen(phase) {
 
 let socket = null; // assignat a bootClient(); usat pels handlers de drag (onAdd)
 let latestPlacement = {};
+let latestCssValues = {}; // últim TEAM_CSS_STATE rebut (fase css); usat en render/F5
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
 let boardMounted = false;
 // Ordre del calaix barrejat UN COP per càrrega de pàgina (checkpoint 02-03 round 4):
@@ -863,6 +864,131 @@ function applyAllCssValues(cssValues) {
   for (const [holeId, value] of Object.entries(cssValues)) applyCssHole(holeId, value);
 }
 
+// Ordre top→bottom dels grups de selector (lectura espacial del robot, UI-SPEC
+// §Layout Contract). Els grups es deriven de CSS_HOLES[].group (single source).
+const CSS_GROUP_ORDER = ['.antena', '.orella', '.contenidor-ulls', '.ull', '#robot-cap', '#nas', '#boca'];
+
+// Construeix una fila de forat: etiqueta propietat monospace (read-only, GAME-06) +
+// control natiu (color/range) + readout monospace del valor viu + `;`. El cablejat:
+// `input` → applyCssHole local instantani (CSSOM, sense recàrrega); `change` →
+// TEAM_SET_CSS al servidor (emissió només en valor assentat, anti-storm, Pitfall 2).
+function renderForatRow(holeId, hole, storedValue, frozen) {
+  const row = document.createElement('div');
+  row.className = `css-forat css-forat--${hole.control}`;
+
+  const propLabel = document.createElement('span');
+  propLabel.className = 'css-forat__prop';
+  propLabel.textContent = `${hole.prop}:`;
+  row.appendChild(propLabel);
+
+  const input = document.createElement('input');
+  input.dataset.hole = holeId;
+  input.disabled = frozen;
+
+  const readout = document.createElement('span');
+  readout.className = 'css-forat__value';
+
+  if (hole.control === 'color') {
+    input.type = 'color';
+    input.className = 'css-forat__swatch';
+    const initial = typeof storedValue === 'string' && /^#[0-9a-fA-F]{6}$/.test(storedValue)
+      ? storedValue
+      : hole.default;
+    input.value = initial;
+    readout.textContent = initial;
+    input.addEventListener('input', (e) => {
+      applyCssHole(holeId, e.target.value);
+      readout.textContent = e.target.value;
+    });
+    input.addEventListener('change', (e) => {
+      socket.emit(EVENTS.TEAM_SET_CSS, { holeId, value: e.target.value });
+    });
+  } else {
+    input.type = 'range';
+    input.className = 'css-forat__range';
+    input.min = String(hole.min);
+    input.max = String(hole.max);
+    input.step = String(hole.step);
+    const num = storedValue != null ? parseInt(storedValue, 10) : parseInt(hole.default, 10);
+    input.value = String(num);
+    const fmt = (n) => `${n}${hole.unit}`;
+    readout.textContent = fmt(num);
+    input.addEventListener('input', (e) => {
+      const v = fmt(e.target.value);
+      applyCssHole(holeId, v);
+      readout.textContent = v;
+    });
+    input.addEventListener('change', (e) => {
+      socket.emit(EVENTS.TEAM_SET_CSS, { holeId, value: fmt(e.target.value) });
+    });
+  }
+
+  row.appendChild(input);
+  row.appendChild(readout);
+
+  const semi = document.createElement('span');
+  semi.className = 'css-forat__punct';
+  semi.textContent = ';';
+  row.appendChild(semi);
+
+  return row;
+}
+
+// Panell de forats CSS (GAME-04): un grup per element (CSS_HOLES[].group), cada
+// grup un marc monospace `.selector {` … `}` amb les seves files de forat. Tot es
+// deriva de CSS_HOLES — cap llista escrita a mà (single source, com SLOTS).
+function renderCssPanel(cssValues) {
+  const wrap = document.createElement('div');
+  wrap.className = 'css-panel';
+  const frozen = latestState?.timerStatus === 'frozen'; // D-11: congela els controls
+
+  const byGroup = new Map();
+  for (const [holeId, hole] of Object.entries(CSS_HOLES)) {
+    if (!byGroup.has(hole.group)) byGroup.set(hole.group, []);
+    byGroup.get(hole.group).push([holeId, hole]);
+  }
+
+  for (const group of CSS_GROUP_ORDER) {
+    const holes = byGroup.get(group);
+    if (!holes) continue;
+    const groupEl = document.createElement('div');
+    groupEl.className = 'css-forat-group';
+
+    const open = document.createElement('div');
+    open.className = 'css-forat-group__label';
+    open.textContent = `${group} {`;
+    groupEl.appendChild(open);
+
+    for (const [holeId, hole] of holes) {
+      groupEl.appendChild(renderForatRow(holeId, hole, cssValues[holeId], frozen));
+    }
+
+    const close = document.createElement('div');
+    close.className = 'css-forat-group__label';
+    close.textContent = '}';
+    groupEl.appendChild(close);
+
+    wrap.appendChild(groupEl);
+  }
+  return wrap;
+}
+
+// Reconciliació dels controls del panell amb l'estat autoritatiu (F5/TEAM_CSS_STATE):
+// actualitza value + readout in situ, sense reconstruir el panell (no interromp cap
+// interacció; els emits només passen en `change` assentat, mai a mig drag).
+function syncCssPanelInputs(cssValues) {
+  const panel = document.querySelector('.css-panel');
+  if (!panel) return;
+  for (const [holeId, value] of Object.entries(cssValues)) {
+    const input = panel.querySelector(`[data-hole="${holeId}"]`);
+    const hole = CSS_HOLES[holeId];
+    if (!input || !hole) continue;
+    const readout = input.parentElement.querySelector('.css-forat__value');
+    input.value = hole.control === 'color' ? value : String(parseInt(value, 10));
+    if (readout) readout.textContent = value;
+  }
+}
+
 // Board-state autoritatiu (canal privat de l'equip): reconcilia el tauler i la
 // preview. Si el tauler encara no està muntat, latestPlacement l'usarà el
 // pròxim renderActiveSplitScreen (ordre F5: full-state → board-state).
@@ -940,6 +1066,8 @@ function renderActiveSplitScreen(team, state) {
     gameContainer = document.createElement('div');
     gameContainer.className = 'html-game';
     panel.appendChild(gameContainer);
+  } else if (state.phase === 'css') {
+    panel.appendChild(renderCssPanel(latestCssValues));
   }
 
   const preview = document.createElement('iframe');
@@ -955,11 +1083,18 @@ function renderActiveSplitScreen(team, state) {
   renderCountdown(timerEl, state);
   updateFrozenOverlay(state);
 
-  if (gameContainer) {
+  if (state.phase === 'html') {
     mountGame(gameContainer, latestPlacement);
     assemblePreview(latestPlacement);
     const frozen = state.timerStatus === 'frozen';
     sortables.forEach((s) => s.option('disabled', frozen));
+  } else if (state.phase === 'css') {
+    boardMounted = false;
+    // srcdoc construït UNA vegada per entrada de fase / F5 (Pitfall 1); els valors
+    // emmagatzemats s'apliquen a l'event `load`. L'iframe roman scriptless
+    // (allow-same-origin, sense allow-scripts, T-03-04).
+    preview.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement)));
+    preview.addEventListener('load', () => applyAllCssValues(latestCssValues), { once: true });
   } else {
     boardMounted = false;
   }
@@ -1068,6 +1203,17 @@ function bootClient() {
       renderBoardAndDrawer(latestPlacement);
       assemblePreview(latestPlacement);
     }
+  });
+
+  // Canal privat de l'estil CSS (dirigit a team:<id>): reconcilia tots els valors
+  // autoritatius. Aplica via CSSOM sobre l'iframe i sincronitza els controls del
+  // panell in situ (F5 recupera l'estil mig fet, CORE-03). Desacoblat de
+  // session:full-state (Pitfall 1), mirall de TEAM_BOARD_STATE.
+  socket.on(EVENTS.TEAM_CSS_STATE, ({ cssValues }) => {
+    latestCssValues = cssValues || {};
+    if (latestState?.phase !== 'css') return;
+    applyAllCssValues(latestCssValues);
+    syncCssPanelInputs(latestCssValues);
   });
 
   socket.on('team:reload', () => {
