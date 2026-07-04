@@ -270,3 +270,78 @@ export const CSS_HOLES = Object.freeze({
   'boca-width': rangeHole({ var: '--boca-width', selector: '#boca', group: '#boca', prop: 'width', min: 20, max: 100, step: 1, unit: '%', def: '60%' }),
   'boca-dents': colorHole({ var: '--boca-dents', selector: '#boca', group: '#boca', prop: 'color', def: '#fffcd3' }),
 });
+
+// --- Fase JS (GAME-05): vocabulari FROZEN del constructor de regles ---
+//
+// Model obert/variety-based (D-11): una regla = 4 buits
+//   Quan [event] a [origen] → a l'element [destí] → Fes [acció]
+// Tots els valors dels desplegables són CLAUS a taules frozen; una clau desconeguda
+// és un no-op (mai codi, GAME-06/D-11). Cap eval/Function (03-RESEARCH §Pattern 2).
+//
+// Els selectors de JS_ELEMENTS es CREUEN contra SLOTS[].html / CONTAINERS (single
+// source, D-01): #nas/#boca (SLOTS nas/boca), #robot-cap (CONTAINERS), .antena
+// (SLOTS antena-esquerra: <div class="antena">, sense id → classe), #orella-esquerra
+// /#orella-dreta (SLOTS, <img> amb id), i els dos .ull (SLOTS ull-1/ull-2:
+// <span class="ull"> SENSE id → :nth-of-type). Mateixa disciplina "derivat/creuat"
+// que CSS_HOLES.
+
+// D-13: 4 events. "hover" es materialitza com a l'event DOM real `mouseover`.
+export const JS_EVENTS = Object.freeze({
+  click: 'click',
+  hover: 'mouseover',
+  mouseleave: 'mouseleave',
+  dblclick: 'dblclick',
+});
+
+// D-14: 8 elements (origen i destí) → selector real dins de l'iframe.
+export const JS_ELEMENTS = Object.freeze({
+  nas: '#nas',
+  boca: '#boca',
+  cap: '#robot-cap',
+  antena: '.antena',
+  'orella-esquerra': '#orella-esquerra',
+  'orella-dreta': '#orella-dreta',
+  'ull-esquerre': '.contenidor-ulls .ull:nth-of-type(1)',
+  'ull-dret': '.contenidor-ulls .ull:nth-of-type(2)',
+});
+
+// Etiqueta mostrada al desplegable (UI-SPEC §Copywriting: tokens reals). El 'cap'
+// es mostra com a '#robot-cap'; la resta són la mateixa clau textual.
+export const JS_ELEMENT_LABELS = Object.freeze({
+  nas: 'nas',
+  boca: 'boca',
+  cap: '#robot-cap',
+  antena: 'antena',
+  'orella-esquerra': 'orella-esquerra',
+  'orella-dreta': 'orella-dreta',
+  'ull-esquerre': 'ull-esquerre',
+  'ull-dret': 'ull-dret',
+});
+
+// D-16: accions simples (necessiten un destí). Claus per a la validació servidor;
+// la implementació concreta viu a src/shared/effects.js (ACTIONS).
+export const JS_ACTION_KEYS = Object.freeze(['canviar-color', 'amagar-mostrar', 'girar', 'canviar-mida']);
+
+// D-17: accions compostes (multi-element predefinit). En triar-ne una, el destí es
+// desactiva i ha de ser null. Mínim garantit 2 (D-17); n'oferim 3. La implementació
+// concreta (llista [{sel, fn}]) viu a src/shared/effects.js (COMPOSITES).
+export const JS_COMPOSITE_KEYS = Object.freeze([
+  'acluca-tanca',
+  'ulls-vermells-orelles-grosses',
+  'cap-gira-antena-creix',
+]);
+
+// Etiquetes en català per als desplegables d'acció (D-16 simples + D-17 compostes,
+// noms d'autor). Read-only (GAME-06), mai innerHTML.
+export const JS_ACTION_LABELS = Object.freeze({
+  'canviar-color': 'Canviar de color',
+  'amagar-mostrar': 'Amagar/mostrar',
+  girar: 'Girar',
+  'canviar-mida': 'Canviar mida',
+  'acluca-tanca': 'Acluca ulls + tanca boca',
+  'ulls-vermells-orelles-grosses': 'Ulls vermells + orelles grosses',
+  'cap-gira-antena-creix': 'Gira el cap + antena creix',
+});
+
+// D-11/D-12: límit de 5-6 files. 6 = màxim autoritzat.
+export const JS_ROW_LIMIT = 6;

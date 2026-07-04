@@ -94,6 +94,9 @@ export function registerSocketHandlers(io) {
         // F5/reconnexió recupera també l'estil CSS mig fet (CORE-03) — dirigit a
         // l'owner, mirall exacte del board (mateix patró, sense protocol de resync nou).
         socket.emit(EVENTS.TEAM_CSS_STATE, gameState.getTeamStyle(socket.data.teamId));
+        // F5/reconnexió recupera també les regles JS construïdes (CORE-03) — dirigit a
+        // l'owner, mateix patró (sense protocol de resync nou).
+        socket.emit(EVENTS.TEAM_JS_STATE, gameState.getTeamRules(socket.data.teamId));
         socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       } else {
         // Unclaimed PC awaiting selection (D-01) — no token minted yet.
@@ -278,6 +281,28 @@ export function registerSocketHandlers(io) {
         if (typeof holeId !== 'string' || typeof value !== 'string') return;
         if (gameState.setCssValue(teamId, holeId, value)) {
           io.to(`team:${teamId}`).emit(EVENTS.TEAM_CSS_STATE, gameState.getTeamStyle(teamId));
+          io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
+    // --- Fase JS: fixar el ruleset sencer (GAME-05) ---
+    // Còpia EXACTA de la forma de team:set-css: identitat SEMPRE de socket.data.teamId
+    // (V4 — un equip no pot mutar les regles d'un altre forjant teamId al payload,
+    // T-03-09), rules validat com a array (V5) abans de passar a setJsRules (que
+    // revalida vocabulari frozen + anti-repeat + límit + composite⇒destí null). En un
+    // canvi real emissió dirigida js→owner + connexió-només→admin, MAI a io.to('session')
+    // (Pitfall 1/2). setJsRules és mutation-returns-bool → cap re-broadcast si no muta
+    // (T-03-12). Envoltat de safeHandler (T-03-12).
+    socket.on(
+      EVENTS.TEAM_SET_RULES,
+      safeHandler((payload) => {
+        const teamId = socket.data.teamId;
+        if (!teamId) return;
+        const rules = payload?.rules;
+        if (!Array.isArray(rules)) return; // V5: estructura mínima abans de setJsRules
+        if (gameState.setJsRules(teamId, rules)) {
+          io.to(`team:${teamId}`).emit(EVENTS.TEAM_JS_STATE, gameState.getTeamRules(teamId));
           io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
         }
       }),

@@ -9,7 +9,16 @@
 // but NEVER advances the phase automatically (D-11).
 
 import { randomUUID } from 'node:crypto';
-import { SLOTS, PIECES, CSS_HOLES } from '../shared/robotTemplate.js';
+import {
+  SLOTS,
+  PIECES,
+  CSS_HOLES,
+  JS_EVENTS,
+  JS_ELEMENTS,
+  JS_ACTION_KEYS,
+  JS_COMPOSITE_KEYS,
+  JS_ROW_LIMIT,
+} from '../shared/robotTemplate.js';
 
 const PHASE_ORDER = ['html', 'css', 'js'];
 
@@ -28,7 +37,9 @@ function registerTeams(names) {
     // dirigit via getTeamBoard(); getPublicState() només en deriva el count N/7.
     // cssValues: mapa autoritatiu holeId->value per equip (GAME-04). Es projecta
     // dirigit via getTeamStyle(); getPublicState() no en deriva res (D-22).
-    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {}, cssValues: {} });
+    // jsRules: array autoritatiu de regles JS per equip (GAME-05). Es projecta
+    // dirigit via getTeamRules(); getPublicState() no en deriva res (D-22).
+    state.teams.set(id, { id, name, claimed: false, connected: false, placement: {}, cssValues: {}, jsRules: [] });
   }
 }
 
@@ -144,6 +155,52 @@ function getTeamStyle(teamId) {
   return { cssValues: { ...team.cssValues } };
 }
 
+// --- Fase JS (GAME-05) ---
+// Consulta segura de propietat pròpia: evita que una clau com 'toString'/'__proto__'
+// resolgui a un mètode heretat d'Object.prototype (defensa T-03-10).
+function ownKey(obj, key) {
+  return typeof key === 'string' && Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+// Calcat de setCssValue: mutation-returns-bool → true només si ha mutat, així el
+// caller emet el TEAM_JS_STATE dirigit únicament quan hi ha canvi real (anti-storm,
+// T-03-12). Whole-array replace (03-RESEARCH §Pattern 4): el ruleset sencer és
+// minúscul (≤6 regles), així que substituir-lo tot evita bookkeeping d'ids.
+// No-op (false, sense broadcast) si: l'equip no existeix, fora de la fase js, timer
+// congelat (D-11), no és un array o supera el límit (D-11/D-12), o QUALSEVOL regla
+// falla la validació de vocabulari frozen (V5), anti-repetició (event,origen) (D-15)
+// o composite⇒destí-null (D-17).
+function setJsRules(teamId, rules) {
+  const team = state.teams.get(teamId);
+  if (!team) return false;
+  if (state.phase !== 'js' || state.timerStatus === 'frozen') return false; // GAME-07 / D-11
+  if (!Array.isArray(rules) || rules.length > JS_ROW_LIMIT) return false; // ≤6 (D-11/D-12)
+  const seen = new Set();
+  for (const r of rules) {
+    if (!r || typeof r !== 'object') return false;
+    if (!ownKey(JS_EVENTS, r.event) || !ownKey(JS_ELEMENTS, r.origen)) return false; // vocab (V5)
+    const isComposite = JS_COMPOSITE_KEYS.includes(r.accio);
+    const isSimple = JS_ACTION_KEYS.includes(r.accio);
+    if (!isComposite && !isSimple) return false; // acció desconeguda (V5)
+    if (isSimple && !ownKey(JS_ELEMENTS, r.desti)) return false; // simple exigeix destí (V5)
+    if (isComposite && r.desti != null) return false; // composta ⇒ destí null (D-17)
+    const key = `${r.event}|${r.origen}`;
+    if (seen.has(key)) return false; // anti-repetició de la parella (D-15)
+    seen.add(key);
+  }
+  // Normalitza: només els 4 camps canònics, mai propietats extra del payload.
+  team.jsRules = rules.map(({ event, origen, desti, accio }) => ({ event, origen, desti, accio }));
+  return true;
+}
+
+// Regles privades de l'equip (mai a getPublicState, mai a 'session'). Còpia per regla —
+// no filtra mai la referència viva (mirall de getTeamStyle/getTeamBoard).
+function getTeamRules(teamId) {
+  const team = state.teams.get(teamId);
+  if (!team) return { jsRules: [] };
+  return { jsRules: team.jsRules.map((r) => ({ ...r })) };
+}
+
 // --- Timer/phase functions (all return true if they mutated state, so
 // callers — socketHandlers.js, index.js's expiry poll — only broadcast
 // session:full-state when something actually changed). ---
@@ -223,6 +280,8 @@ export const gameState = {
   getTeamBoard,
   setCssValue,
   getTeamStyle,
+  setJsRules,
+  getTeamRules,
   startPhase,
   nextPhase,
   pauseTimer,
