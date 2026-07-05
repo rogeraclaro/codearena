@@ -1,5 +1,5 @@
 ---
-status: testing
+status: complete
 phase: 03-joc-fases-css-i-js
 source: [03-VERIFICATION.md]
 started: 2026-07-04T06:47:42Z
@@ -8,11 +8,7 @@ updated: 2026-07-05T00:00:00Z
 
 ## Current Test
 
-number: 10
-name: El card de l'Admin mostra només estat de connexió (sense comptador N/total) durant les fases css i js
-expected: |
-  Cap xifra de progrés visible al panell Admin fora de la fase html
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -58,14 +54,14 @@ result: pass
 
 ### 10. El card de l'Admin mostra només estat de connexió (sense comptador N/total) durant les fases css i js
 expected: Cap xifra de progrés visible al panell Admin fora de la fase html
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 10
-passed: 8
+passed: 9
 issues: 0
-pending: 1
+pending: 0
 skipped: 1
 blocked: 0
 
