@@ -13,7 +13,7 @@ CodeArena porta l'aula d'una pissarra en blanc a una partida en viu completa. Pr
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Nucli en temps real i control de sessió** - Servidor amb estat autoritatiu, identitat persistent, timer sincronitzat i panell Admin de control/recuperació
+- [x] **Phase 1: Nucli en temps real i control de sessió** - Servidor amb estat autoritatiu, identitat persistent, timer sincronitzat i panell Admin de control/recuperació (completed 2026-07-02)
 - [x] **Phase 2: Joc — Fase HTML (blocs drag & drop)** - Equips munten l'esquelet HTML amb blocs de snap fort, sense escriptura lliure (completed 2026-07-03)
 - [x] **Phase 3: Joc — Fases CSS i JS** - Equips vesteixen l'HTML amb CSS foradat i li donen comportament amb regles JS (completed 2026-07-04)
 - [ ] **Phase 4: Puntuació i rànquing final** - Motor de scoring estructural/d'estil/de comportament i pantalla de resultats
@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. L'admin pot forçar un resync d'un equip penjat i veure l'estat de connexió de tots els equips en tot moment
   5. Cada pantalla d'equip mostra el panell d'acció (esquerra) i la preview en temps real (dreta) amb un llenguatge visual consistent, iconografia clara i text mínim
 
-**Plans**: 4 plans
+**Plans**: 4/4 plans complete
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Walking Skeleton: scaffold + round-trip registre→tria + identitat per token (Wave 1)
@@ -141,7 +141,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Nucli en temps real i control de sessió | 0/4 | Planned | - |
+| 1. Nucli en temps real i control de sessió | 4/4 | Complete | 2026-07-02 |
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
 | 4. Puntuació i rànquing final | 0/TBD | Not started | - |

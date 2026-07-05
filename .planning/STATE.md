@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 03
-current_phase_name: joc-fases-css-i-js
-status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-07-04T04:27:54.468Z"
-last_activity: 2026-07-04
-last_activity_desc: Phase 03 execution started
+current_phase: 04
+current_phase_name: puntuacio-i-ranquing-final
+status: planning
+stopped_at: Phase 3 secured (SECURITY.md verified, threats_open 0) — Phase 4 ready to plan
+last_updated: "2026-07-05T00:00:00.000Z"
+last_activity: 2026-07-05
+last_activity_desc: Phase 03 security verification complete; corrected stale Phase 1 tracking in ROADMAP.md/STATE.md (Phase 1 was already fully complete since 2026-07-02, tracking had not been updated)
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 7
-  percent: 40
+  completed_plans: 9
+  percent: 60
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-01)
 
 **Core value:** Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (HTML = estructura, CSS = aparença, JS = comportament) manipulant-los directament, sense poder cometre errors de sintaxi i sense frustració.
-**Current focus:** Phase 03 — joc-fases-css-i-js
+**Current focus:** Phase 04 — puntuacio-i-ranquing-final
 
 ## Current Position
 
-Phase: 03 (joc-fases-css-i-js) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 03
-Last activity: 2026-07-04 — Phase 03 execution started
+Phase: 04 (puntuacio-i-ranquing-final) — READY TO PLAN
+Plan: - of TBD
+Status: Ready to plan (Fases 1-3 completes i verificades)
+Last activity: 2026-07-05 — Phase 03 security verification complete (SECURITY.md, threats_open: 0)
 
-Progress: [██████████] 100% (Fase 1 completa)
+Progress: [██████░░░░] 60% (3 de 5 fases completes)
 
 ## Performance Metrics
 
