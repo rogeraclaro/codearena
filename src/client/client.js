@@ -6,7 +6,7 @@
 // compte (estat autoritatiu al servidor, T-04-03).
 
 import { io } from 'socket.io-client';
-import { createElement, Lock, MoveDown } from 'lucide';
+import { createElement, Lock, MoveDown, Trophy, Check, Circle } from 'lucide';
 import Sortable from 'sortablejs';
 import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
@@ -297,6 +297,7 @@ let latestPlacement = {};
 let latestCssValues = {}; // últim TEAM_CSS_STATE rebut (fase css); usat en render/F5
 let latestJsRules = []; // últim TEAM_JS_STATE rebut (fase js); usat en preview/F5
 let latestDoneAt = {}; // últim TEAM_DONE_STATE rebut: phase->timestamp de "Finalitzar" (F5)
+let latestResults = null; // últim payload de resultats (Fase 4): { ranking, ownDetail }
 let jsPanelRows = null; // còpia de treball LOCAL del panell de regles (permet files parcials)
 let jsEnterIndex = -1; // índex de la fila a animar (slide-in), consumit a cada pinta
 let sortables = []; // instàncies SortableJS actives (destruïdes en re-render/teardown)
@@ -1516,9 +1517,190 @@ function clearInterstitialTimer() {
 // phase===null → waiting; canvi de phase → interstitial (~1.2s) → active
 // split; mateixa phase (reconnect o re-broadcast per pausa/congelat) → va
 // directe a active split sense repetir l'interstici (recuperacio neta).
+// --- Fase 4: pantalla de resultats (SCORE-05, D-10/D-11). Render PUR sobre el payload
+// autoritatiu (ranking + ownDetail) — el client MAI calcula cap puntuació. En aquest pla
+// els resultats apareixen DIRECTAMENT; el Pla 03 interceptarà CEREMONY_START per animar
+// la cerimònia abans d'aquest mateix render. ---
+
+function makeIcon(Icon, size, className) {
+  const icon = createElement(Icon);
+  icon.setAttribute('width', String(size));
+  icon.setAttribute('height', String(size));
+  if (className) icon.classList.add(className);
+  return icon;
+}
+
+// Etiquetes curtes en català per als slots HTML del debrief (id de slot → nom llegible).
+const HTML_SLOT_LABELS = {
+  'antena-esquerra': 'Antena',
+  'orella-esquerra': 'Orella esquerra',
+  'orella-dreta': 'Orella dreta',
+  'ull-1': 'Ull esquerre',
+  'ull-2': 'Ull dret',
+  nas: 'Nas',
+  boca: 'Boca',
+};
+
+// Un sub-check: icona pass/miss (NEUTRE — mai vermell, D-10 no-frustració) + etiqueta +
+// identificador monospace opcional. passed → Check (--status-connected); miss → Circle
+// (--color-muted).
+function buildSubcheckItem(label, passed, identifier) {
+  const item = document.createElement('div');
+  item.className = 'subcheck-item';
+  item.dataset.state = passed ? 'passed' : 'missed';
+  item.appendChild(makeIcon(passed ? Check : Circle, 16, 'subcheck-icon'));
+  const lbl = document.createElement('span');
+  lbl.className = 'subcheck-label';
+  lbl.textContent = label; // DOM text API (V5 anti-XSS)
+  item.appendChild(lbl);
+  if (identifier) {
+    const id = document.createElement('code');
+    id.className = 'subcheck-id';
+    id.textContent = identifier;
+    item.appendChild(id);
+  }
+  return item;
+}
+
+function buildSubcheckGroup(phase, items) {
+  const group = document.createElement('div');
+  group.className = 'subcheck-group';
+  const badge = document.createElement('span');
+  badge.className = 'phase-badge';
+  badge.dataset.phase = phase;
+  badge.textContent = phase.toUpperCase();
+  group.appendChild(badge);
+  const list = document.createElement('div');
+  list.className = 'subcheck-items';
+  for (const it of items) list.appendChild(it);
+  group.appendChild(list);
+  return group;
+}
+
+// Detall privat agrupat per fase (NOMÉS del propi equip, D-10). HTML: slot pass/miss.
+// CSS: forat pass/miss + propietat real com a identificador monospace. JS: comptadors de
+// varietat (passed si >0, el valor com a identificador).
+function buildOwnDetail(ownDetail) {
+  const detail = document.createElement('div');
+  detail.className = 'subcheck-detail';
+
+  const htmlItems = (ownDetail.html?.subchecks || []).map((c) =>
+    buildSubcheckItem(HTML_SLOT_LABELS[c.slot] || c.slot, c.passed));
+  detail.appendChild(buildSubcheckGroup('html', htmlItems));
+
+  const cssItems = (ownDetail.css?.subchecks || []).map((c) =>
+    buildSubcheckItem(c.hole, c.passed, CSS_HOLES[c.hole]?.prop));
+  detail.appendChild(buildSubcheckGroup('css', cssItems));
+
+  const jsItems = (ownDetail.js?.subchecks || []).map((c) =>
+    buildSubcheckItem(c.label, Number(c.value) > 0, String(c.value)));
+  detail.appendChild(buildSubcheckGroup('js', jsItems));
+
+  return detail;
+}
+
+// Una fila del rànquing global (visible per a TOTHOM): rank #, Trophy NOMÉS al #1, nom,
+// barra (amplada = globalPct) i % (tabular-nums). La fila del propi equip porta èmfasi
+// NEUTRE (data-own → tira d'identitat --color-text + pes 600 + inset), mai accent.
+function buildRankRow(row, index, myId) {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'rank-row';
+  if (row.id === myId) rowEl.dataset.own = 'true';
+
+  const num = document.createElement('span');
+  num.className = 'rank-num';
+  num.textContent = String(index + 1);
+  rowEl.appendChild(num);
+
+  if (index === 0) rowEl.appendChild(makeIcon(Trophy, 20, 'rank-trophy'));
+
+  const name = document.createElement('span');
+  name.className = 'rank-name';
+  name.textContent = row.name; // DOM text API (V5 anti-XSS)
+  rowEl.appendChild(name);
+
+  const bar = document.createElement('div');
+  bar.className = 'rank-bar';
+  const fill = document.createElement('div');
+  fill.className = 'rank-bar__fill';
+  fill.style.width = `${Math.max(0, Math.min(100, row.globalPct))}%`;
+  bar.appendChild(fill);
+  rowEl.appendChild(bar);
+
+  const pct = document.createElement('span');
+  pct.className = 'rank-pct';
+  pct.textContent = `${Math.round(row.globalPct)}%`;
+  rowEl.appendChild(pct);
+
+  return rowEl;
+}
+
+// Pinta la pantalla de resultats des del payload autoritatiu (latestResults) amb fallback
+// al ranking congelat de session:full-state (F5, abans que arribi GAME_RESULTS amb el
+// detall propi). No renderitza res fins que hi ha un ranking real; l'ownDetail es completa
+// quan arriba (re-render idempotent).
+function renderResultsScreen(stateArg) {
+  const st = stateArg || latestState;
+  const results = latestResults || {};
+  const ranking = results.ranking || st?.finalRanking || [];
+  if (!ranking.length) return; // encara no hi ha payload autoritatiu
+  const ownDetail = results.ownDetail || null;
+  const myId = localStorage.getItem(TEAM_ID_KEY);
+
+  teardownBoard();
+  const app = clearApp();
+
+  const screen = document.createElement('div');
+  screen.className = 'results-screen';
+
+  const heading = document.createElement('h1');
+  heading.className = 'results-heading';
+  heading.textContent = 'Classificació';
+  screen.appendChild(heading);
+
+  const list = document.createElement('div');
+  list.className = 'rank-list';
+  ranking.forEach((row, i) => list.appendChild(buildRankRow(row, i, myId)));
+  screen.appendChild(list);
+
+  // Bloc propi: % global (Display) + detall privat (D-11: global únic, sense desglossament
+  // per fase visible com a percentatge).
+  const myRow = ranking.find((r) => r.id === myId);
+  if (myRow) {
+    const ownHeading = document.createElement('h2');
+    ownHeading.className = 'results-heading results-heading--own';
+    ownHeading.textContent = 'El teu resultat';
+    screen.appendChild(ownHeading);
+
+    const ownPct = document.createElement('div');
+    ownPct.className = 'own-percent';
+    ownPct.textContent = `${Math.round(myRow.globalPct)}%`;
+    screen.appendChild(ownPct);
+  }
+
+  if (ownDetail) {
+    const detailHeading = document.createElement('h2');
+    detailHeading.className = 'results-heading results-heading--own';
+    detailHeading.textContent = 'El teu detall';
+    screen.appendChild(detailHeading);
+    screen.appendChild(buildOwnDetail(ownDetail));
+  }
+
+  app.appendChild(screen);
+}
+
 function renderScreenForState(team, state) {
   latestTeam = team;
   latestState = state;
+
+  // Fase 4 (ADMIN-07): estat terminal. Té prioritat sobre qualsevol branca de fase
+  // (state.phase segueix sent 'js' després de finalitzar). A F5, session:full-state porta
+  // finished + finalRanking i entra aquí directament (Pitfall 4).
+  if (state.finished === true) {
+    clearInterstitialTimer();
+    renderResultsScreen(state);
+    return;
+  }
 
   if (!state.phase) {
     clearInterstitialTimer();
@@ -1657,6 +1839,20 @@ function bootClient() {
         input.disabled = true;
       });
     }
+  });
+
+  // Fase 4 (ADMIN-07/D-14): l'admin ha finalitzat. En aquest pla els resultats es
+  // renderitzen DIRECTAMENT des del payload autoritatiu (el Pla 03 interceptarà
+  // CEREMONY_START per animar la cerimònia abans). GAME_RESULTS és la variant F5 (mateixa
+  // forma { ranking, ownDetail }, sense re-reproduir cerimònia). Cap càlcul de score al
+  // client — només render.
+  socket.on(EVENTS.CEREMONY_START, (payload) => {
+    latestResults = payload || {};
+    renderResultsScreen();
+  });
+  socket.on(EVENTS.GAME_RESULTS, (payload) => {
+    latestResults = payload || {};
+    renderResultsScreen();
   });
 
   socket.on('team:reload', () => {

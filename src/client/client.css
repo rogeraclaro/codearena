@@ -556,3 +556,150 @@
     animation: js-rule-enter var(--motion-snap) var(--motion-ease);
   }
 }
+
+/* --- Fase 4: pantalla de resultats (SCORE-05, UI-SPEC §Team final results screen).
+   NOMÉS tokens var(--*) — cap literal de color. Zero --color-accent (reservat al CTA
+   d'Admin) i zero --color-destructive: un miss és NEUTRE (--color-muted), mai vermell.
+   Els colors chillón de la cerimònia són del Pla 03 i viuen NOMÉS a .ceremony-overlay. */
+.results-screen {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: var(--space-3xl) var(--space-xl);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+}
+.results-screen > * {
+  width: 100%;
+  max-width: 640px;
+}
+.results-heading {
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-heading);
+  margin: 0;
+}
+.results-heading--own {
+  margin-top: var(--space-2xl);
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+/* Èmfasi NEUTRE de la fila pròpia (D-10/D-11): tira d'identitat + pes + inset, mai accent. */
+.rank-row[data-own='true'] {
+  border-left: 3px solid var(--color-text);
+  background: var(--color-bg);
+}
+.rank-row[data-own='true'] .rank-name {
+  font-weight: var(--font-weight-label);
+}
+.rank-num {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  min-width: var(--space-lg);
+}
+.rank-row svg.rank-trophy {
+  color: var(--color-text);
+  flex: none;
+}
+.rank-name {
+  flex: 1;
+  font-size: var(--font-size-heading);
+}
+.rank-bar {
+  flex: 1;
+  height: var(--space-sm);
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rank-bar__fill {
+  height: 100%;
+  background: var(--color-text);
+  transform-origin: left;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rank-bar__fill {
+    animation: rank-bar-grow var(--motion-snap) var(--motion-ease);
+  }
+}
+@keyframes rank-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.rank-pct {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  font-variant-numeric: tabular-nums;
+  min-width: 3ch;
+  text-align: right;
+}
+
+/* Resultat propi: % global gran (Display), global únic sense desglossament (D-11). */
+.own-percent {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-heading);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Detall privat de sub-checks (NOMÉS del propi equip, D-10), agrupat per fase. */
+.subcheck-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.subcheck-group {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.subcheck-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.subcheck-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-body);
+}
+.subcheck-item[data-state='passed'] svg.subcheck-icon {
+  color: var(--status-connected);
+}
+.subcheck-item[data-state='missed'] svg.subcheck-icon {
+  color: var(--color-muted);
+}
+.subcheck-item[data-state='missed'] .subcheck-label {
+  color: var(--color-muted);
+}
+.subcheck-label {
+  flex: 1;
+}
+.subcheck-id {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  color: var(--color-muted);
+}

@@ -5,10 +5,17 @@
 // var(--...) tokens from shared/tokens.css.
 
 import { io } from 'socket.io-client';
-import { createElement, CircleCheckBig, WifiOff, RefreshCw } from 'lucide';
+import { createElement, CircleCheckBig, WifiOff, RefreshCw, Trophy } from 'lucide';
 import { renderCountdown } from './shared/timer.js';
+import { EVENTS } from '../server/events.js';
 
 const STYLE_ID = 'admin-styles';
+
+// Rànquing final rebut via CEREMONY_START (ADMIN-07). Es guarda a nivell de mòdul perquè
+// el panell es reconstrueix sencer a cada session:full-state: el rànquing ha de derivar
+// del darrer payload/estat, mai d'estat efímer perdut en el re-render (F5-safe).
+let finalRanking = null;
+let latestState = null;
 // Durada provisional de cada fase; el contingut real de joc (Fase 2+)
 // substituira aquest valor fix per una durada configurable per fase.
 const PHASE_DURATION_MS = 5 * 60 * 1000;
@@ -185,6 +192,46 @@ function injectStyles() {
       color: var(--color-destructive);
       margin: 0;
     }
+    /* Rànquing final (ADMIN-07). Reutilitza el vocabulari de tokens de .team-card;
+       cap literal de color, cap accent (reservat al CTA). */
+    .admin-final-rank {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+    .admin-final-rank__caption {
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+      margin: 0;
+    }
+    .admin-final-rank__row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) 0;
+      border-top: 1px solid var(--color-border);
+    }
+    .admin-final-rank__num {
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+      min-width: var(--space-lg);
+    }
+    .admin-final-rank__row svg.rank-trophy {
+      color: var(--color-text);
+    }
+    .admin-final-rank__name {
+      flex: 1;
+      font-size: var(--font-size-body);
+    }
+    .admin-final-rank__pct {
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+      font-variant-numeric: tabular-nums;
+    }
   `;
   document.head.appendChild(style);
 }
@@ -242,6 +289,51 @@ function showResyncConfirm() {
   });
 }
 
+// ADMIN-07: confirmació lleugera abans de finalitzar (acció irreversible de FLUX, no de
+// dades). Còpia el patró <dialog class="confirm-dialog"> de showResyncConfirm, però el
+// botó de confirmació és accent (no destructiu) — no es perd cap dada. Copy exacta del
+// Copywriting Contract de la UI-SPEC.
+function showFinalizeConfirm() {
+  return new Promise((resolve) => {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'confirm-dialog';
+
+    const message = document.createElement('p');
+    message.className = 'confirm-message';
+    message.textContent = 'Vols finalitzar la partida? Es mostraran els resultats a totes les pantalles.';
+    dialog.appendChild(message);
+
+    const actions = document.createElement('div');
+    actions.className = 'confirm-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = 'Cancel·lar';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'btn btn-accent';
+    confirmBtn.textContent = 'Finalitzar';
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    dialog.appendChild(actions);
+    document.body.appendChild(dialog);
+
+    const settle = (result) => {
+      dialog.close();
+      dialog.remove();
+      resolve(result);
+    };
+    cancelBtn.addEventListener('click', () => settle(false));
+    confirmBtn.addEventListener('click', () => settle(true));
+    dialog.addEventListener('cancel', () => settle(false)); // Escape key
+
+    dialog.showModal();
+  });
+}
+
 function buildPhaseBadge(phase) {
   const badge = document.createElement('span');
   badge.className = 'phase-badge';
@@ -265,12 +357,23 @@ function buildControlBar(socket, state) {
     bar.appendChild(buildPhaseBadge(state.phase));
   }
 
+  // ADMIN-07 (D-14): a l'última fase de joc (js) el CTA es repurposa a "Finalitzar i
+  // Mostrar Resultats" i emet l'event de finalització (constant EVENTS, mai un literal)
+  // després d'una confirmació. Fora d'aquesta fase manté el comportament d'avanç.
+  const isLastPhase = state.phase === 'js';
   const ctaBtn = document.createElement('button');
   ctaBtn.type = 'button';
   ctaBtn.className = 'btn btn-accent';
-  ctaBtn.textContent = state.phase ? 'Següent fase' : 'Iniciar Fase';
-  ctaBtn.addEventListener('click', () => {
-    if (state.phase) {
+  ctaBtn.textContent = isLastPhase
+    ? 'Finalitzar i Mostrar Resultats'
+    : state.phase
+      ? 'Següent fase'
+      : 'Iniciar Fase';
+  ctaBtn.addEventListener('click', async () => {
+    if (isLastPhase) {
+      const confirmed = await showFinalizeConfirm();
+      if (confirmed) socket.emit(EVENTS.ADMIN_FINALIZE_GAME);
+    } else if (state.phase) {
       socket.emit('admin:next-phase', { durationMs: PHASE_DURATION_MS });
     } else {
       socket.emit('admin:start-phase', { phase: 'html', durationMs: PHASE_DURATION_MS });
@@ -402,6 +505,51 @@ function buildTeamCard(team, socket) {
   return card;
 }
 
+// Rànquing final a l'Admin (ADMIN-07): llista ordenada nom + % (Trophy al #1). NOMÉS
+// dades públiques ({id,name,globalPct}); cap detall privat d'equip (D-10). Deriva del
+// darrer ranking rebut (finalRanking) — mai recalcula al client.
+function buildFinalRanking(ranking) {
+  const block = document.createElement('section');
+  block.className = 'admin-final-rank';
+
+  const caption = document.createElement('p');
+  caption.className = 'admin-final-rank__caption';
+  caption.textContent = 'Classificació final';
+  block.appendChild(caption);
+
+  ranking.forEach((row, index) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'admin-final-rank__row';
+
+    const num = document.createElement('span');
+    num.className = 'admin-final-rank__num';
+    num.textContent = String(index + 1);
+    rowEl.appendChild(num);
+
+    if (index === 0) {
+      const trophy = createElement(Trophy);
+      trophy.setAttribute('width', '18');
+      trophy.setAttribute('height', '18');
+      trophy.classList.add('rank-trophy');
+      rowEl.appendChild(trophy);
+    }
+
+    const name = document.createElement('span');
+    name.className = 'admin-final-rank__name';
+    name.textContent = row.name; // DOM text API (V5 anti-XSS)
+    rowEl.appendChild(name);
+
+    const pct = document.createElement('span');
+    pct.className = 'admin-final-rank__pct';
+    pct.textContent = `${Math.round(row.globalPct)}%`;
+    rowEl.appendChild(pct);
+
+    block.appendChild(rowEl);
+  });
+
+  return block;
+}
+
 function renderAdmin(socket, state) {
   const app = document.getElementById('app');
 
@@ -422,6 +570,14 @@ function renderAdmin(socket, state) {
   const container = document.createElement('div');
   container.className = 'admin-container';
   container.appendChild(buildControlBar(socket, state));
+
+  // ADMIN-07: rànquing final, quan existeix. Prefereix el darrer CEREMONY_START rebut
+  // (finalRanking) i, en el seu defecte (F5), el ranking congelat de session:full-state.
+  const ranking = finalRanking || (state.finished ? state.finalRanking : null);
+  if (ranking && ranking.length) {
+    container.appendChild(buildFinalRanking(ranking));
+  }
+
   container.appendChild(buildRegistrationBlock(socket));
 
   const grid = document.createElement('section');
@@ -457,7 +613,17 @@ const ADMIN_SECRET_STORAGE_KEY = 'codearena:admin-secret';
 
 function connectWithSecret(secret) {
   const socket = io({ transports: ['websocket'], auth: { role: 'admin', adminSecret: secret } });
-  socket.on('session:full-state', (state) => renderAdmin(socket, state));
+  socket.on('session:full-state', (state) => {
+    latestState = state;
+    if (state.finished && state.finalRanking) finalRanking = state.finalRanking; // F5 recovery
+    renderAdmin(socket, state);
+  });
+  // ADMIN-07: l'admin rep CEREMONY_START amb el ranking (sense ownDetail, D-10). El panell
+  // es reconstrueix amb l'últim state conegut perquè finalitzar no emet session:full-state.
+  socket.on(EVENTS.CEREMONY_START, ({ ranking }) => {
+    finalRanking = ranking || null;
+    if (latestState) renderAdmin(socket, latestState);
+  });
   socket.on('connect_error', (err) => {
     // Only a rejected secret ('unauthorized' from the server middleware) should
     // clear the stored value and re-prompt. Transient network errors are left
