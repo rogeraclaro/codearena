@@ -273,6 +273,23 @@ function buildRanking(mask = { html: 1, css: 1, js: 1 }) {
     .sort((a, b) => b.globalPct - a.globalPct);
 }
 
+// D-13: context del rànquing parcial derivat de la fase ACTUAL (state.phase). La màscara
+// marca com a jugades (1) totes les fases ANTERIORS a l'actual i com a no jugades (0)
+// l'actual i les futures — és a dir, l'estat just DESPRÉS d'una transició nextPhase, on la
+// fase que s'acaba de tancar és `closedPhase` (la immediatament anterior a l'actual). El
+// caller (Pla 02) alimenta aquesta màscara al MATEIX buildRanking del rànquing final, no un
+// càlcul paral·lel. `closedPhase` és null si no s'ha tancat cap fase (p.ex. fase inicial).
+function getPartialContext() {
+  const idx = PHASE_ORDER.indexOf(state.phase);
+  const mask = {
+    html: PHASE_ORDER.indexOf('html') < idx ? 1 : 0,
+    css: PHASE_ORDER.indexOf('css') < idx ? 1 : 0,
+    js: PHASE_ORDER.indexOf('js') < idx ? 1 : 0,
+  };
+  const closedPhase = idx > 0 ? PHASE_ORDER[idx - 1] : null;
+  return { mask, closedPhase };
+}
+
 // ADMIN-07: mutation-returns-bool idempotent (còpia la forma de markPhaseDone). Retorna
 // false si ja `state.finished` (segon finalize = no-op → mata la DoS de finalize-spam,
 // T-04-04); si no, marca l'estat terminal, desa una còpia CONGELADA del ranking final
@@ -369,6 +386,7 @@ export const gameState = {
   getTeamDoneState,
   getTeamSubchecks,
   buildRanking,
+  getPartialContext,
   finalizeGame,
   startPhase,
   nextPhase,

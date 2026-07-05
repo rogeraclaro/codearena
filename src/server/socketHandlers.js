@@ -184,6 +184,17 @@ export function registerSocketHandlers(io) {
         if (!(Number.isFinite(durationMs) && durationMs > 0)) return;
         if (gameState.nextPhase(durationMs)) {
           io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+          // D-12/D-13: en tancar-se una fase, calcula el rànquing parcial amb el MATEIX
+          // buildRanking (fases no jugades = 0 via màscara) i emet-lo NOMÉS a l'admin
+          // (io.to('admin'), MAI a 'session' — els equips no veuen standings provisionals,
+          // T-04-06). closedPhase és la fase acabada de tancar (per al caption).
+          const { mask, closedPhase } = gameState.getPartialContext();
+          if (closedPhase) {
+            io.to('admin').emit(EVENTS.ADMIN_PARTIAL_RANKING, {
+              ranking: gameState.buildRanking(mask),
+              closedPhase,
+            });
+          }
         }
       }),
     );

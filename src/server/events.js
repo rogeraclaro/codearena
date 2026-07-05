@@ -41,6 +41,10 @@ export const EVENTS = Object.freeze({
   // Estat de "finalitzat per fase" de l'equip, emès DIRIGIT a team:<id> (mai a 'session',
   // Pitfall 1) — F5 recovery del bloqueig un cop l'equip ha premut "Finalitzar".
   TEAM_DONE_STATE: 'team:done-state',
+  // D-12/D-13: rànquing parcial en tancar-se cada fase (HTML→CSS, CSS→JS). Emès NOMÉS a
+  // io.to('admin') — els equips no el veuen mai (T-04-06). Calculat amb el MATEIX
+  // buildRanking(mask) que el rànquing final, amb les fases no jugades comptant 0 (D-13).
+  ADMIN_PARTIAL_RANKING: 'admin:partial-ranking',
   // ADMIN-07/D-14: dispara la cerimònia + revelació de resultats a totes les pantalles.
   // Difós a tots, PERÒ amb payload FILTRAT per equip: el ranking (id/name/globalPct) va a
   // tothom; el detall privat de sub-checks (ownDetail) NOMÉS via team:<id> (D-10). El Pla

@@ -16,6 +16,11 @@ const STYLE_ID = 'admin-styles';
 // del darrer payload/estat, mai d'estat efímer perdut en el re-render (F5-safe).
 let finalRanking = null;
 let latestState = null;
+// D-12/D-13: darrer rànquing parcial rebut en tancar-se una fase (NOMÉS l'admin el rep).
+// Es guarda a nivell de mòdul perquè el panell es reconstrueix sencer a cada
+// session:full-state; persisteix fins que arriba el rànquing final.
+let partialRanking = null;
+let partialClosedPhase = null;
 // Durada provisional de cada fase; el contingut real de joc (Fase 2+)
 // substituira aquest valor fix per una durada configurable per fase.
 const PHASE_DURATION_MS = 5 * 60 * 1000;
@@ -231,6 +236,56 @@ function injectStyles() {
       font-size: var(--font-size-label);
       font-weight: var(--font-weight-label);
       font-variant-numeric: tabular-nums;
+    }
+    /* Rànquing parcial de fi de fase (D-12/D-13). Admin-only. Llista compacta amb barra
+       fina per fila. NOMÉS var(--*): files --color-surface/--color-border, %/fill
+       --color-muted ("provisional"); cap --color-accent (reservat al CTA). */
+    .admin-mini-rank {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+    .admin-mini-rank__caption {
+      font-size: var(--font-size-body);
+      color: var(--color-muted);
+      margin: 0 0 var(--space-xs) 0;
+    }
+    .admin-mini-rank__row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .admin-mini-rank__num {
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+      min-width: var(--space-lg);
+    }
+    .admin-mini-rank__name {
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-label);
+      min-width: 6rem;
+    }
+    .admin-mini-rank__bar {
+      flex: 1;
+      height: 4px;
+      background: var(--color-border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .admin-mini-rank__fill {
+      height: 100%;
+      background: var(--color-muted);
+    }
+    .admin-mini-rank__pct {
+      font-size: var(--font-size-body);
+      color: var(--color-muted);
+      font-variant-numeric: tabular-nums;
+      min-width: 3rem;
+      text-align: right;
     }
   `;
   document.head.appendChild(style);
@@ -550,6 +605,53 @@ function buildFinalRanking(ranking) {
   return block;
 }
 
+// D-12/D-13: mini-rànquing parcial (Admin-only) en tancar-se una fase. Format llista
+// compacta amb barra fina per fila (nom — Label + barra + % en --color-muted "provisional"),
+// ordre descendent. Deriva del darrer payload rebut (partialRanking) — mai recalcula al
+// client. El caption identifica la fase acabada de tancar. Cap --color-accent.
+function buildMiniRank(ranking, closedPhase) {
+  const block = document.createElement('section');
+  block.className = 'admin-mini-rank';
+
+  const caption = document.createElement('p');
+  caption.className = 'admin-mini-rank__caption';
+  const phaseLabel = typeof closedPhase === 'string' ? closedPhase.toUpperCase() : '';
+  caption.textContent = `Rànquing parcial — fase ${phaseLabel} tancada`;
+  block.appendChild(caption);
+
+  ranking.forEach((row, index) => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'admin-mini-rank__row';
+
+    const num = document.createElement('span');
+    num.className = 'admin-mini-rank__num';
+    num.textContent = String(index + 1);
+    rowEl.appendChild(num);
+
+    const name = document.createElement('span');
+    name.className = 'admin-mini-rank__name';
+    name.textContent = row.name; // DOM text API (V5 anti-XSS)
+    rowEl.appendChild(name);
+
+    const bar = document.createElement('div');
+    bar.className = 'admin-mini-rank__bar';
+    const fill = document.createElement('div');
+    fill.className = 'admin-mini-rank__fill';
+    fill.style.width = `${Math.max(0, Math.min(100, row.globalPct))}%`;
+    bar.appendChild(fill);
+    rowEl.appendChild(bar);
+
+    const pct = document.createElement('span');
+    pct.className = 'admin-mini-rank__pct';
+    pct.textContent = `${Math.round(row.globalPct)}%`;
+    rowEl.appendChild(pct);
+
+    block.appendChild(rowEl);
+  });
+
+  return block;
+}
+
 function renderAdmin(socket, state) {
   const app = document.getElementById('app');
 
@@ -576,6 +678,10 @@ function renderAdmin(socket, state) {
   const ranking = finalRanking || (state.finished ? state.finalRanking : null);
   if (ranking && ranking.length) {
     container.appendChild(buildFinalRanking(ranking));
+  } else if (partialRanking && partialRanking.length) {
+    // D-12/D-13: mentre no hi ha rànquing final, mostra el parcial de l'última fase
+    // tancada (persisteix a través de re-renders fins que arriba el final).
+    container.appendChild(buildMiniRank(partialRanking, partialClosedPhase));
   }
 
   container.appendChild(buildRegistrationBlock(socket));
@@ -622,6 +728,14 @@ function connectWithSecret(secret) {
   // es reconstrueix amb l'últim state conegut perquè finalitzar no emet session:full-state.
   socket.on(EVENTS.CEREMONY_START, ({ ranking }) => {
     finalRanking = ranking || null;
+    if (latestState) renderAdmin(socket, latestState);
+  });
+  // D-12/D-13: rànquing parcial en tancar-se una fase (NOMÉS l'admin el rep). Desa el
+  // darrer parcial i re-renderitza amb l'últim state conegut (l'esdeveniment no porta un
+  // session:full-state associat). Els equips no reben mai aquest event (T-04-06).
+  socket.on(EVENTS.ADMIN_PARTIAL_RANKING, ({ ranking, closedPhase }) => {
+    partialRanking = ranking || null;
+    partialClosedPhase = closedPhase || null;
     if (latestState) renderAdmin(socket, latestState);
   });
   socket.on('connect_error', (err) => {

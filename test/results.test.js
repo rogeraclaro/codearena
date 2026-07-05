@@ -142,6 +142,44 @@ test('HARDEN-D08/D09: markPhaseDone mai escriu doneAt.css ni doneAt.js (ni amb f
   assert.deepEqual(gameState.getTeamDoneState(team2Id).doneAt, {}, 'team2 incomplet sense cap doneAt');
 });
 
+test('PARTIAL-D12/D13: en tancar HTML, NOMÉS l\'admin rep el parcial amb màscara html-only', async () => {
+  const adminPartial = onceOrTimeout(adminSocket, EVENTS.ADMIN_PARTIAL_RANKING, 800);
+  const t1Partial = onceOrTimeout(teamClient1, EVENTS.ADMIN_PARTIAL_RANKING, 400);
+  const t2Partial = onceOrTimeout(teamClient2, EVENTS.ADMIN_PARTIAL_RANKING, 400);
+  adminSocket.emit(EVENTS.ADMIN_NEXT_PHASE, { durationMs: 60000 }); // html → css
+  const [pa, pt1, pt2] = await Promise.all([adminPartial, t1Partial, t2Partial]);
+
+  assert.ok(pa, 'l\'admin rep el rànquing parcial en tancar HTML (D-12)');
+  assert.equal(pt1, undefined, 'cap equip rep el parcial (D-12/T-04-06)');
+  assert.equal(pt2, undefined, 'cap equip rep el parcial (D-12/T-04-06)');
+
+  assert.equal(pa.closedPhase, 'html', 'closedPhase identifica la fase tancada (caption)');
+  assert.ok(Array.isArray(pa.ranking) && pa.ranking.length === 2);
+  assert.equal(pa.ranking[0].id, team1Id, 'team1 (estructura 100%) encapçala el parcial');
+
+  // D-13: MATEIX pipeline que el final — buildRanking amb mask html-only (css/js = 0).
+  const expected = gameState.buildRanking({ html: 1, css: 0, js: 0 });
+  assert.deepEqual(pa.ranking, expected, 'el parcial usa buildRanking amb mask html-only (D-13)');
+  // Cada fila NOMÉS duu dades públiques (cap sub-check filtrat).
+  for (const row of pa.ranking) {
+    assert.deepEqual(Object.keys(row).sort(), ['globalPct', 'id', 'name']);
+  }
+});
+
+test('PARTIAL-CSS: en tancar CSS, l\'admin rep el parcial amb màscara html+css', async () => {
+  const adminPartial = onceOrTimeout(adminSocket, EVENTS.ADMIN_PARTIAL_RANKING, 800);
+  const t1Partial = onceOrTimeout(teamClient1, EVENTS.ADMIN_PARTIAL_RANKING, 400);
+  adminSocket.emit(EVENTS.ADMIN_NEXT_PHASE, { durationMs: 60000 }); // css → js
+  const [pa, pt1] = await Promise.all([adminPartial, t1Partial]);
+
+  assert.ok(pa, 'l\'admin rep el parcial en tancar CSS');
+  assert.equal(pt1, undefined, 'cap equip rep el parcial (D-12)');
+  assert.equal(pa.closedPhase, 'css', 'closedPhase = css');
+
+  const expected = gameState.buildRanking({ html: 1, css: 1, js: 0 });
+  assert.deepEqual(pa.ranking, expected, 'mask html+css, js encara 0 (D-13)');
+});
+
 test('NON-ADMIN-REJECT: un equip que emet admin:finalize-game no finalitza ni difon (V4)', async () => {
   const c1 = onceOrTimeout(teamClient1, EVENTS.CEREMONY_START, 300);
   const c2 = onceOrTimeout(teamClient2, EVENTS.CEREMONY_START, 300);
