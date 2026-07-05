@@ -231,13 +231,10 @@ function rangeHole({ var: cssVar, selector, group, prop, min, max, step, unit, d
   });
 }
 
-// Valors OBJECTIU (Bender correcte) de cada forat — documentats aquí perquè `default`
-// (a sota) és deliberadament allunyat d'aquests per exigir esforç real de l'equip. Únic
-// lloc on aquests valors "correctes" queden escrits explícitament fora de wrapPreview().
-// antena-bg=#e3f7fe · antena-border=#000000 · orella-top=95px · ulls-bg=#e3f7fe ·
-// ulls-top=-40px · ulls-width=132% · ull-radius=50px · cap-bg=#a9c5da ·
-// cap-border-color=#000000 · cap-border-width=6px · nas-radius=0% · nas-size=14px ·
-// boca-height=95px · boca-width=90% · boca-dents=#fffcd3
+// Valors OBJECTIU (Bender correcte) de cada forat. FONT ÚNICA machine-readable:
+// `CSS_TARGETS` (a sota de CSS_HOLES) — l'escòrer de la Fase 4 (src/shared/scoring.js)
+// hi llegeix; NO es duplica ni s'hardcodeja enlloc més (Pitfall 1). El `default` de cada
+// forat (a sota) és deliberadament allunyat del target per exigir esforç real de l'equip.
 export const CSS_HOLES = Object.freeze({
   // .antena — bola dibuixada per `.antena` mateixa (D-03, referència final: bola=element,
   // tija=`.antena::before`). bg/border FORATS (color pla, no gradient — la referència
@@ -289,6 +286,32 @@ export const CSS_HOLES = Object.freeze({
   'boca-height': rangeHole({ var: '--boca-height', selector: '#boca', group: '#boca', prop: 'height', min: 10, max: 120, step: 1, unit: 'px', def: '10px' }),
   'boca-width': rangeHole({ var: '--boca-width', selector: '#boca', group: '#boca', prop: 'width', min: 20, max: 100, step: 1, unit: '%', def: '20%' }),
   'boca-dents': colorHole({ var: '--boca-dents', selector: '#boca', group: '#boca', prop: 'color', def: '#0000ff' }),
+});
+
+// Valors OBJECTIU (Bender correcte) per forat — FONT ÚNICA machine-readable (D-02,
+// Pitfall 1). Una entrada per CADA clau de CSS_HOLES (17). Reconciliats de les tres
+// fonts històriques (comentari de targets, comentaris inline dels forats, literals de
+// wrapPreview). Els valors de rang porten la unitat com a string (mateix format que
+// `default`), perquè scoring.js els pugui comparar amb parseInt sense casos especials.
+// L'escòrer de la Fase 4 hi llegeix; MAI es copien a mà dins scoring.js.
+export const CSS_TARGETS = Object.freeze({
+  'antena-bg': '#e3f7fe',
+  'antena-border': '#000000',
+  'orella-top': '95px',
+  'orella-offset': '-31px',
+  'orella-width': '40px',
+  'ulls-bg': '#e3f7fe',
+  'ulls-top': '-40px',
+  'ulls-width': '132%',
+  'ull-radius': '50px',
+  'cap-bg': '#a9c5da',
+  'cap-border-color': '#000000',
+  'cap-border-width': '6px',
+  'nas-radius': '0%',
+  'nas-size': '14px',
+  'boca-height': '95px',
+  'boca-width': '90%',
+  'boca-dents': '#fffcd3',
 });
 
 // --- Fase JS (GAME-05): vocabulari FROZEN del constructor de regles ---
