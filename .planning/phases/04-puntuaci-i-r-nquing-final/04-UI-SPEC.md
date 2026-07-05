@@ -1,7 +1,7 @@
 ---
 phase: 4
 slug: puntuacio-i-ranquing-final
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-05
@@ -323,11 +323,11 @@ No component registries in use. UI is hand-rolled Vanilla JS + CSS tokens; the o
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved (re-verified 2026-07-05 after D-14 ceremony addition — chillón palette containment, ms timing, and reduced-motion degrade confirmed)
