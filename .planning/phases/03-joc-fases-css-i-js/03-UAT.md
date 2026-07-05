@@ -8,11 +8,10 @@ updated: 2026-07-05T00:00:00Z
 
 ## Current Test
 
-number: 3
-name: F5 a la pantalla d'equip durant la fase css
+number: 10
+name: El card de l'Admin mostra només estat de connexió (sense comptador N/total) durant les fases css i js
 expected: |
-  Els valors CSS es recuperen I el robot mostra les peces HTML prèviament
-  col·locades (verificació visual de la correcció CR-01)
+  Cap xifra de progrés visible al panell Admin fora de la fase html
 awaiting: user response
 
 ## Tests
@@ -29,11 +28,12 @@ reason: Tradeoff no aplicable amb el disseny definitiu — antena-bg/cap-bg són
 
 ### 3. F5 a la pantalla d'equip durant la fase css
 expected: Els valors CSS es recuperen I el robot mostra les peces HTML prèviament col·locades (verificació visual de la correcció CR-01)
-result: [pending]
+result: pass
+note: Fals positiu inicial (l'usuari no havia tocat prou forats abans del F5, la resta mostraven els defaults exagerats i semblava un reset). Confirmat correcte després de repro exhaustiva (servidor, navegador+tauler buit, navegador+tauler complet).
 
 ### 4. Divisió 50/50 exacta a les fases html i css (i js)
 expected: El panell d'acció i la preview ocupen visualment el mateix ample
-result: [pending]
+result: pass
 
 ### 5. Construir una regla completa i prémer "Veure"
 expected: El robot reacciona a la interacció del ratolí definida per la regla
@@ -63,9 +63,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 6
+passed: 8
 issues: 0
-pending: 3
+pending: 1
 skipped: 1
 blocked: 0
 
