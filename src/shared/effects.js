@@ -40,9 +40,12 @@ export const COMPOSITES = Object.freeze({
     Object.freeze({ sel: '.ull', fn: (el) => el.classList.toggle('js-vermell') }),
     Object.freeze({ sel: '.orella', fn: (el) => el.classList.toggle('js-scale') }),
   ]),
+  // "Girar cap" (D-17): gira el conjunt SENCER (cap+antena+orelles) com una sola
+  // peça rígida. #robot-cap SOL giraria deixant enrere l'antena/orelles (elements
+  // germans, no fills, dins de #robot-contenidor) — cal l'element pare per
+  // arrossegar-los tots junts.
   'cap-gira-antena-creix': Object.freeze([
-    Object.freeze({ sel: '#robot-cap', fn: (el) => el.classList.toggle('js-rotate') }),
-    Object.freeze({ sel: '.antena', fn: (el) => el.classList.toggle('js-scale') }),
+    Object.freeze({ sel: '#robot-contenidor', fn: (el) => el.classList.toggle('js-rotate') }),
   ]),
 });
 

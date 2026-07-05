@@ -360,7 +360,7 @@ export const JS_ACTION_LABELS = Object.freeze({
   'canviar-mida': 'Canviar mida',
   'acluca-tanca': 'Acluca ulls + tanca boca',
   'ulls-vermells-orelles-grosses': 'Ulls vermells + orelles grosses',
-  'cap-gira-antena-creix': 'Gira el cap + antena creix',
+  'cap-gira-antena-creix': 'Girar cap',
 });
 
 // D-11/D-12: límit de 5-6 files. 6 = màxim autoritzat.
