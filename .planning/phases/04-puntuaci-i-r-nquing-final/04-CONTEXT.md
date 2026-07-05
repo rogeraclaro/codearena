@@ -38,10 +38,22 @@ En finalitzar la partida, cada equip rep una puntuació calculada automàticamen
 - **D-12:** En tancar-se cada fase (HTML→CSS, CSS→JS), l'Admin veu un **mini-ranking al seu propi panell** (NOMÉS l'Admin — els equips no ho veuen). Els equips no veuen res d'aquest ranking parcial fins al resultat final.
 - **D-13:** Aquest ranking parcial es calcula amb el **mateix motor de puntuació** que el ranking final (D-01 a D-04), amb les fases encara no jugades comptant com a **0** en el seu pes corresponent. No és un càlcul o vista diferent — és el mateix pipeline aplicat a l'estat parcial.
 
+### Cerimònia de lliurament de premis
+- **D-14:** Quan l'Admin prem el botó de transició de fase (el mateix que ja existeix per avançar HTML→CSS→JS) just després d'haver tancat la Fase JS, aquest esdevé el disparador d'ADMIN-07 ("Finalitzar i Mostrar Resultats"). En lloc de mostrar el rànquing a l'instant, totes les pantalles (equips + Admin) reprodueixen una **cerimònia d'entrega de premis** animada abans de revelar els resultats:
+  1. **Compte enrere 5→0**, un número per segon (cadència d'1s), cada número centrat a la pantalla.
+  2. Animació per número: **zoom + fade** com si el número vingués cap a l'espectador i sortís de pantalla (efecte "acostant-se i desapareixent").
+  3. Cada número (5, 4, 3, 2, 1, 0) en un **color viu/"chillón" diferent**.
+  4. En arribar a **0**, es manté estàtic (sense zoom) durant **3 segons**.
+  5. Després, el 0 fa el mateix zoom + fade de sortida i apareix el **rànquing**, revelat **d'últim a primer classificat** (ordre invers, tipus "i el guanyador és...").
+  6. Al final de la revelació, **confetti a pantalla completa**.
+- Disposició i seqüència exactes de la revelació del rànquing (un per un amb pausa, tots alhora amb stagger, etc.) es deixen a discreció de disseny — veure Claude's Discretion.
+
 ### Claude's Discretion
 - Fórmula exacta de la bonificació de temps HTML (D-05): el llindar concret d'±5 punts i com escalar-lo (p.ex. lineal vs. esglaonat) es decideix en planificar.
 - Detall tècnic de la distància RGB normalitzada (D-02): quina fórmula de distància de color (Euclidiana simple vs. perceptual) — es decideix en planificar, prioritzant simplicitat.
 - Format visual exacte del mini-ranking d'Admin (D-12): llista simple vs. barra de progrés per equip — decisió d'implementació, no de producte.
+- Cadència i disposició exactes de la revelació del rànquing post-cerimònia (D-14): temps entre cada equip revelat, si hi ha stagger o pausa dramàtica creixent cap al primer lloc, tipografia/mida de cada fila revelada — es decideix en planificar/dissenyar, prioritzant impacte pedagògic (celebrar el moment) sense allargar-se en excés (sessió de 15-20 min).
+- Implementació tècnica del confetti (CSS/canvas/llibreria mínima sense dependència pesada) i dels colors "chillons" del compte enrere — es decideix en planificar.
 
 ### Folded Todos
 - **Temps de finalització en el ranking** (`.planning/todos/pending/2026-07-03-puntuacio-considerar-temps-de-finalitzacio.md`): pregunta original de si el rànquing hauria de considerar temps més enllà d'un desempat pur. Resolta via D-05/D-06 — bonificació petita, només a HTML.
@@ -99,6 +111,7 @@ En finalitzar la partida, cada equip rep una puntuació calculada automàticamen
 - "A la fase HTML el gate 100%, a la fase CSS no cal botó de finalitzar" — cita directa que defineix D-07/D-08.
 - "A la pantalla de JS el problema és que no hi ha model de referència, cada equip pot proposar les accions que vulgui... la puntuació la basarem en un fet aleatori: quantes accions es proposen i la varietat" — cita directa que defineix D-03.
 - "Apart de la pantalla de resultats a cada equip, a l'Admin també tinc que veure el ranking temporal en el moment que s'acaba cada fase i el ranking final" — cita directa que defineix D-12/D-13.
+- "A l'admin (quan ja ha acabat la fase JS) el boto 'seguent fase' engega la 'cerimonia d'entrega de premis', que consisteix en un compte enrere animat: compte enrere des de 5 fins a 0, comença el 5 centrat al mig de la pantalla i es va passant de numero en numero (amb una cadencia d'un segon entre animacions) amb l'animació del numero que hi ha al mig en zoom i fade cap a 0 (com si el numero vingués cap a l'espectador i sortint de la pantalla). Cada numero en un color chillon diferent. Al final del compte enrere, el 0 es manté 3 segons sense zoom i finalment zoom i fade i apareix el ranking, començant per l'ultim i aixi fins al primer... i al final de tot omple pantalla de particules com si fos confetti" — cita directa que defineix D-14.
 
 </specifics>
 
