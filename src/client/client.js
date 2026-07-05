@@ -27,7 +27,7 @@ import {
   containerLabel,
   containerClosingLabel,
 } from '../shared/robotTemplate.js';
-import { attachRule } from '../shared/effects.js';
+import { attachRule, applyAction } from '../shared/effects.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -1326,22 +1326,28 @@ function rebuildCssPreview(cssValues) {
 // estilitzat, arrossegant el resultat CSS via latestCssValues) i, a `load`, aplica
 // els valors CSS i re-attacha TOTES les regles → mai listeners obsolets. L'iframe
 // roman scriptless (allow-same-origin, sense allow-scripts, T-03-08).
-function rebuildJsPreview(rules) {
+// `immediate=true` (nomes des de "Veure", previewSingleRule) dispara l'acció de
+// cada regla UN COP just després d'attachar-la, per a feedback instantani sense
+// obligar l'usuari a interactuar amb el preview — el listener real es manté igual,
+// així la interacció (hover/click) sobre el preview segueix funcionant després.
+function rebuildJsPreview(rules, { immediate = false } = {}) {
   const frame = document.querySelector('.preview-frame');
   if (!frame) return;
   frame.setAttribute('srcdoc', wrapPreview(assembleRobotMarkup(latestPlacement), 'js'));
   frame.addEventListener('load', () => {
     applyAllCssValues(latestCssValues);
     const doc = frame.contentDocument;
-    if (doc) rules.forEach((r) => attachRule(doc, r));
+    if (!doc) return;
+    rules.forEach((r) => attachRule(doc, r));
+    if (immediate) rules.forEach((r) => applyAction(doc, r));
   }, { once: true });
 }
 
-// "Veure" (D-12): preview client-only de NOMÉS aquesta regla (reconstrueix i attacha
-// una sola regla). No toca l'estat del servidor.
+// "Veure" (D-12): preview client-only de NOMÉS aquesta regla (reconstrueix, attacha
+// i dispara l'acció una vegada immediatament). No toca l'estat del servidor.
 function previewSingleRule(row) {
   if (!isJsRowComplete(row)) return;
-  rebuildJsPreview([normalizeJsRow(row)]);
+  rebuildJsPreview([normalizeJsRow(row)], { immediate: true });
 }
 
 // Board-state autoritatiu (canal privat de l'equip): reconcilia el tauler i la
