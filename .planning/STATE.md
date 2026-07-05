@@ -4,11 +4,11 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 04
 current_phase_name: puntuacio-i-ranquing-final
-status: planning
-stopped_at: Phase 04 context gathered
-last_updated: "2026-07-05T08:58:14.075Z"
+status: planned
+stopped_at: Phase 04 planning complete — 3 plans ready
+last_updated: "2026-07-05T14:24:00.000Z"
 last_activity: 2026-07-05
-last_activity_desc: "Phase 03 security verification complete (SECURITY.md, threats_open: 0)"
+last_activity_desc: "Phase 04 planning complete — 3 plans (04-01, 04-02, 04-03), plan-checker passed, 14/14 decisions covered"
 progress:
   total_phases: 5
   completed_phases: 3
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-07-01)
 
 ## Current Position
 
-Phase: 04 (puntuacio-i-ranquing-final) — READY TO PLAN
-Plan: - of TBD
-Status: Ready to plan (Fases 1-3 completes i verificades)
-Last activity: 2026-07-05 — Phase 03 security verification complete (SECURITY.md, threats_open: 0)
+Phase: 04 (puntuacio-i-ranquing-final) — READY TO EXECUTE
+Plan: - of 3
+Status: Ready to execute (planning complet, plan-checker passat, 0 blockers)
+Last activity: 2026-07-05 — Phase 04 planning complete — 3 plans (04-01, 04-02, 04-03)
 
 Progress: [██████░░░░] 60% (3 de 5 fases completes)
 
@@ -99,8 +99,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-05T08:58:14.065Z
-Stopped at: Phase 04 context gathered
-Resume file: .planning/phases/04-puntuaci-i-r-nquing-final/04-CONTEXT.md
+Last session: 2026-07-05T14:24:00.000Z
+Stopped at: Phase 04 planning complete — 3 plans ready
+Resume file: .planning/phases/04-puntuaci-i-r-nquing-final/04-01-PLAN.md
 
 Last activity: 2026-07-03 - Completed quick task 260703-uwn: Aplica el redisseny visual final del Bender al codi real de la Fase 2
