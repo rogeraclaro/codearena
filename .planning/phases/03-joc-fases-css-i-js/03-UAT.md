@@ -8,13 +8,11 @@ updated: 2026-07-05T00:00:00Z
 
 ## Current Test
 
-number: 2
-name: Confirmar explícitament el tradeoff dels 4 forats ⚠ (antena-bg/cap-bg aplanen el gradient a color pla)
+number: 3
+name: F5 a la pantalla d'equip durant la fase css
 expected: |
-  El professor/equip accepta que l'objectiu pedagògic ("l'alumne posa un
-  valor CSS real i el veu") es manté tot i perdre el matís de gradient.
-  NOTA: aquest tradeoff ja no existeix — la referència definitiva mai va
-  tenir gradient a antena-bg/cap-bg.
+  Els valors CSS es recuperen I el robot mostra les peces HTML prèviament
+  col·locades (verificació visual de la correcció CR-01)
 awaiting: user response
 
 ## Tests
@@ -26,8 +24,8 @@ note: 5 regressions/fixes found and resolved during this test — D-13 asymmetry
 
 ### 2. Confirmar explícitament el tradeoff dels 4 forats ⚠ (antena-bg/cap-bg aplanen el gradient a color pla)
 expected: El professor/equip accepta que l'objectiu pedagògic ("l'alumne posa un valor CSS real i el veu") es manté tot i perdre el matís de gradient
-result: [pending]
-note: Aquest tradeoff ja no aplica — la referència CSS definitiva (facilitada per l'usuari) mai va tenir gradients a antena-bg/cap-bg, són colors plans des del principi. Pendent de confirmació explícita de l'usuari que ja no cal validar-ho.
+result: skipped
+reason: Tradeoff no aplicable amb el disseny definitiu — antena-bg/cap-bg són colors plans des del principi (mai gradient), confirmat per l'usuari.
 
 ### 3. F5 a la pantalla d'equip durant la fase css
 expected: Els valors CSS es recuperen I el robot mostra les peces HTML prèviament col·locades (verificació visual de la correcció CR-01)
@@ -67,8 +65,8 @@ result: [pending]
 total: 10
 passed: 6
 issues: 0
-pending: 4
-skipped: 0
+pending: 3
+skipped: 1
 blocked: 0
 
 ## Issues Found & Fixed (during this UAT session, not part of the original 10 checks)
