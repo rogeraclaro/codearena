@@ -20,7 +20,7 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 - [ ] **ADMIN-04**: L'admin pot sumar +1 minut al timer en marxa
 - [ ] **ADMIN-05**: L'admin veu d'un cop d'ull l'estat, progrés i connexió de tots els equips
 - [ ] **ADMIN-06**: L'admin pot forçar un resync d'un equip concret que s'hagi quedat penjat
-- [ ] **ADMIN-07**: L'admin pot finalitzar la partida i mostrar els resultats a totes les pantalles
+- [x] **ADMIN-07**: L'admin pot finalitzar la partida i mostrar els resultats a totes les pantalles
 
 ### Mecànica de joc (GAME)
 
@@ -35,11 +35,11 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 
 ### Puntuació i resultats (SCORE)
 
-- [ ] **SCORE-01**: L'HTML es puntua comparant l'estructura del DOM parsejat amb la Plana Model (mai diff de text)
-- [ ] **SCORE-02**: El CSS es puntua comparant valors `getComputedStyle` normalitzats (formats equivalents de color/mides puntuen igual)
-- [ ] **SCORE-03**: El JS es puntua verificant semànticament la tripleta esdeveniment + element + acció
-- [ ] **SCORE-04**: Cada equip rep un percentatge d'encert global i apareix en un rànquing ordenat; dins d'un mateix percentatge, desempata pel temps registrat via GAME-08 (el temps mai puntua per si sol, només desempata)
-- [ ] **SCORE-05**: La pantalla de resultats mostra el detall de sub-checks superats per equip (per al debrief pedagògic)
+- [x] **SCORE-01**: L'HTML es puntua comparant l'estructura del DOM parsejat amb la Plana Model (mai diff de text)
+- [x] **SCORE-02**: El CSS es puntua comparant valors `getComputedStyle` normalitzats (formats equivalents de color/mides puntuen igual)
+- [x] **SCORE-03**: El JS es puntua verificant semànticament la tripleta esdeveniment + element + acció
+- [x] **SCORE-04**: Cada equip rep un percentatge d'encert global i apareix en un rànquing ordenat; dins d'un mateix percentatge, desempata pel temps registrat via GAME-08 (el temps mai puntua per si sol, només desempata)
+- [x] **SCORE-05**: La pantalla de resultats mostra el detall de sub-checks superats per equip (per al debrief pedagògic)
 
 ### UX (UX)
 

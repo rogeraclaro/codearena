@@ -117,11 +117,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. La puntuació JS verifica que l'esdeveniment, l'element i l'acció triats coincideixen semànticament amb els de la Plana Model
   5. La pantalla de resultats mostra el percentatge d'encert i el rànquing de tots els equips, amb el detall de sub-checks superats per equip
 
-**Plans**: 0/3 plans complete
+**Plans**: 1/3 plans executed
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Llesca vertical: motor de puntuació (`scoring.js`) + pantalla de resultats amb rànquing global i detall privat (Wave 1)
+- [x] 04-01-PLAN.md — Llesca vertical: motor de puntuació (`scoring.js`) + pantalla de resultats amb rànquing global i detall privat (Wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -157,5 +157,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Nucli en temps real i control de sessió | 4/4 | Complete | 2026-07-02 |
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
-| 4. Puntuació i rànquing final | 0/3 | Planned | - |
+| 4. Puntuació i rànquing final | 1/3 | In Progress|  |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
