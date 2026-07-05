@@ -19,6 +19,7 @@ import {
   JS_COMPOSITE_KEYS,
   JS_ROW_LIMIT,
 } from '../shared/robotTemplate.js';
+import { scoreHtml, scoreCss, scoreJs, computeGlobal, htmlTimeBonuses } from '../shared/scoring.js';
 
 const PHASE_ORDER = ['html', 'css', 'js'];
 
@@ -27,6 +28,8 @@ const state = {
   phaseEndsAt: null,
   timerStatus: 'idle', // 'idle' | 'running' | 'paused' | 'frozen'
   remainingMsAtPause: null,
+  finished: false, // ADMIN-07: estat terminal un cop l'admin finalitza (A6: flag, no fase)
+  finalRanking: null, // còpia CONGELADA del ranking final (F5 recovery, Pitfall 4)
   teams: new Map(), // teamId -> { id, name, claimed, connected, progress }
 };
 
@@ -74,6 +77,11 @@ function getPublicState() {
     phaseEndsAt: state.phaseEndsAt,
     timerStatus: state.timerStatus,
     remainingMsAtPause: state.remainingMsAtPause,
+    // ADMIN-07: estat terminal difusible. Quan finished, inclou el ranking congelat
+    // (NOMÉS {id,name,globalPct} — MAI sub-checks d'altres equips, D-10). El client hi
+    // salta a la branca de resultats a F5 (Pitfall 4). null mentre no s'ha finalitzat.
+    finished: state.finished === true,
+    finalRanking: state.finished && state.finalRanking ? state.finalRanking.map((r) => ({ ...r })) : null,
     teams: [...state.teams.values()].map(({ id, name, connected, placement }) => ({
       id,
       name,
@@ -223,6 +231,53 @@ function getTeamDoneState(teamId) {
   return { doneAt: { ...team.doneAt } };
 }
 
+// --- Fase 4: puntuació i rànquing (SCORE-01..05, ADMIN-07) ---
+
+// Detall de sub-checks del debrief (SCORE-05) per a UN equip. Delega a l'escòrer pur
+// (src/shared/scoring.js) sobre l'estat autoritatiu de l'equip. Retorna una còpia nova
+// {html, css, js} (mai la referència viva). D-10: aquest detall NOMÉS s'emet dirigit a
+// l'owner (team:<id>), mai a 'session'.
+function getTeamSubchecks(teamId) {
+  const team = state.teams.get(teamId);
+  if (!team) return { html: { pct: 0, subchecks: [] }, css: { pct: 0, subchecks: [] }, js: { pct: 0, subchecks: [] } };
+  return {
+    html: scoreHtml(team.placement),
+    css: scoreCss(team.cssValues),
+    js: scoreJs(team.jsRules),
+  };
+}
+
+// Rànquing autoritatiu: per cada equip calcula els tres scores de fase, aplica el bonus
+// de temps HTML rank-based (D-05/D-06) i combina amb els pesos (computeGlobal). El `mask`
+// serveix el rànquing parcial del Pla 02 (fases no jugades = 0, D-13); aquí sempre
+// complet. Retorna array {id, name, globalPct} ordenat DESCENDENT per globalPct — NOMÉS
+// dades públiques (D-10: cap sub-check en el ranking difós).
+function buildRanking(mask = { html: 1, css: 1, js: 1 }) {
+  const teams = [...state.teams.values()];
+  const bonuses = htmlTimeBonuses(teams); // teamId -> 0..5 ; absents = 0
+  return teams
+    .map((team) => {
+      const html = scoreHtml(team.placement).pct;
+      const css = scoreCss(team.cssValues).pct;
+      const js = scoreJs(team.jsRules).pct;
+      const bonus = bonuses.get(team.id) ?? 0;
+      const globalPct = computeGlobal({ html, css, js }, mask, bonus);
+      return { id: team.id, name: team.name, globalPct };
+    })
+    .sort((a, b) => b.globalPct - a.globalPct);
+}
+
+// ADMIN-07: mutation-returns-bool idempotent (còpia la forma de markPhaseDone). Retorna
+// false si ja `state.finished` (segon finalize = no-op → mata la DoS de finalize-spam,
+// T-04-04); si no, marca l'estat terminal, desa una còpia CONGELADA del ranking final
+// (F5 recovery, Pitfall 4) i retorna true.
+function finalizeGame() {
+  if (state.finished) return false; // ja finalitzat — no-op (anti-storm)
+  state.finished = true;
+  state.finalRanking = buildRanking(); // snapshot congelat (complet)
+  return true;
+}
+
 // --- Timer/phase functions (all return true if they mutated state, so
 // callers — socketHandlers.js, index.js's expiry poll — only broadcast
 // session:full-state when something actually changed). ---
@@ -306,6 +361,9 @@ export const gameState = {
   getTeamRules,
   markPhaseDone,
   getTeamDoneState,
+  getTeamSubchecks,
+  buildRanking,
+  finalizeGame,
   startPhase,
   nextPhase,
   pauseTimer,

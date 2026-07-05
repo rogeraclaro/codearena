@@ -100,6 +100,16 @@ export function registerSocketHandlers(io) {
         // F5/reconnexió recupera també el bloqueig de "Finalitzar" per fase (CORE-03) —
         // mateix patró, sense protocol de resync nou.
         socket.emit(EVENTS.TEAM_DONE_STATE, gameState.getTeamDoneState(socket.data.teamId));
+        // F5 després de finalitzar (CORE-03, Pitfall 4): si la partida ja està finalitzada,
+        // emet els resultats DIRECTAMENT a l'owner (ranking final + ownDetail propi), sense
+        // dependre d'haver estat present al broadcast de cerimònia original. GAME_RESULTS
+        // (no CEREMONY_START) → el client mostra l'estat final sense re-reproduir la cerimònia.
+        if (gameState.getPublicState().finished) {
+          socket.emit(EVENTS.GAME_RESULTS, {
+            ranking: gameState.buildRanking(),
+            ownDetail: gameState.getTeamSubchecks(socket.data.teamId),
+          });
+        }
         socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       } else {
         // Unclaimed PC awaiting selection (D-01) — no token minted yet.
@@ -222,6 +232,30 @@ export function registerSocketHandlers(io) {
         if (typeof teamId !== 'string' || !teamId) return;
         if (!gameState.getPublicState().teams.some((t) => t.id === teamId)) return; // T-03-02: teamId must exist
         io.to(`team:${teamId}`).emit(EVENTS.TEAM_RELOAD);
+      }),
+    );
+
+    // --- ADMIN-07 (D-14): finalitza la partida i dispara els resultats a totes les
+    // pantalles. Admin-only re-validat server-side (V4/T-04-01 — mai confiar en un flag
+    // de rol del client). finalizeGame() és mutation-returns-bool idempotent: un segon
+    // finalize és no-op → cap re-broadcast (mata la DoS de finalize-spam, T-04-04).
+    // D-10: el ranking difós a TOTS només duu {id,name,globalPct}; el detall privat de
+    // sub-checks (ownDetail) s'emet DIRIGIT per equip (io.to('team:<id>')), mai a
+    // 'session' — la privacitat és un contracte de forma de dades, forçat a l'emissió
+    // (T-04-02). Envoltat de safeHandler (T-04-05).
+    socket.on(
+      EVENTS.ADMIN_FINALIZE_GAME,
+      safeHandler(() => {
+        if (!socket.rooms.has('admin')) return; // T-04-01
+        if (!gameState.finalizeGame()) return; // T-04-04: idempotent, no re-broadcast
+        const ranking = gameState.buildRanking(); // NOMÉS {id,name,globalPct} (D-10)
+        for (const row of ranking) {
+          io.to(`team:${row.id}`).emit(EVENTS.CEREMONY_START, {
+            ranking,
+            ownDetail: gameState.getTeamSubchecks(row.id), // sub-checks NOMÉS d'aquest equip
+          });
+        }
+        io.to('admin').emit(EVENTS.CEREMONY_START, { ranking }); // admin: ranking, sense ownDetail
       }),
     );
 

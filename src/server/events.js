@@ -23,6 +23,9 @@ export const EVENTS = Object.freeze({
   // scoring futur de rapidesa a la Fase 4). Fase SEMPRE derivada de state.phase, mai del
   // payload (identitat de socket.data.teamId, mai del payload).
   TEAM_MARK_DONE: 'team:mark-done',
+  // ADMIN-07 (D-14): l'admin finalitza la partida i dispara els resultats a totes les
+  // pantalles. Admin-only (re-validat per pertinença a la room 'admin', T-04-01).
+  ADMIN_FINALIZE_GAME: 'admin:finalize-game',
 
   // --- Server -> Client (authoritative broadcasts) ---
   SESSION_FULL_STATE: 'session:full-state',
@@ -38,4 +41,13 @@ export const EVENTS = Object.freeze({
   // Estat de "finalitzat per fase" de l'equip, emès DIRIGIT a team:<id> (mai a 'session',
   // Pitfall 1) — F5 recovery del bloqueig un cop l'equip ha premut "Finalitzar".
   TEAM_DONE_STATE: 'team:done-state',
+  // ADMIN-07/D-14: dispara la cerimònia + revelació de resultats a totes les pantalles.
+  // Difós a tots, PERÒ amb payload FILTRAT per equip: el ranking (id/name/globalPct) va a
+  // tothom; el detall privat de sub-checks (ownDetail) NOMÉS via team:<id> (D-10). El Pla
+  // 03 interceptarà aquest event per animar la cerimònia abans de revelar.
+  CEREMONY_START: 'game:ceremony-start',
+  // F5 recovery després de finalitzar (CORE-03, Pitfall 4): emès DIRIGIT a l'owner en
+  // reconnectar, amb el ranking final congelat + el seu ownDetail, sense re-reproduir la
+  // cerimònia (mostra l'estat final directament).
+  GAME_RESULTS: 'game:results',
 });
