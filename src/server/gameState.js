@@ -19,7 +19,7 @@ import {
   JS_COMPOSITE_KEYS,
   JS_ROW_LIMIT,
 } from '../shared/robotTemplate.js';
-import { scoreHtml, scoreCss, scoreJs, computeGlobal, htmlTimeBonuses } from '../shared/scoring.js';
+import { scoreHtml, scoreCss, scoreJs, computeGlobal, htmlTimeBonuses, isHtmlComplete } from '../shared/scoring.js';
 
 const PHASE_ORDER = ['html', 'css', 'js'];
 
@@ -217,9 +217,15 @@ function getTeamRules(teamId) {
 // passa el mateix state.phase autoritatiu) com a finalitzada per aquest equip.
 // mutation-returns-bool: true només la PRIMERA vegada per fase (idempotent — repetir
 // el clic, o un re-emit accidental, no sobreescriu el timestamp ja desat).
+// Enduriment Fase 4 (D-07/D-08/D-09, Pitfall 5): NOMÉS la fase 'html' pot registrar un
+// doneAt, i NOMÉS quan l'estructura és 100% correcta (isHtmlComplete). Així cap
+// doneAt.css/doneAt.js no es pot escriure MAI —ni tan sols amb un payload forjat, perquè
+// el caller deriva `phase` de state.phase (mai del payload)— i doneAt.html, l'única font
+// de la bonificació de temps (D-06), només existeix a correcció total (D-07).
 function markPhaseDone(teamId, phase) {
   const team = state.teams.get(teamId);
   if (!team || !phase) return false;
+  if (phase !== 'html' || !isHtmlComplete(team.placement)) return false; // gate D-07 + enduriment D-08/D-09
   if (team.doneAt[phase]) return false; // ja marcat — no-op (anti-storm)
   team.doneAt[phase] = Date.now();
   return true;

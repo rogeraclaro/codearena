@@ -28,6 +28,7 @@ import {
   containerClosingLabel,
 } from '../shared/robotTemplate.js';
 import { attachRule, applyAction } from '../shared/effects.js';
+import { isHtmlComplete } from '../shared/scoring.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -1366,24 +1367,43 @@ function isPhaseDone(phase) {
   return !!latestDoneAt?.[phase];
 }
 
-// Botó "Finalitzar" (HTML/CSS): marca la fase ACTIVA com a feta per aquest equip
-// (usat per la futura puntuació de rapidesa a la Fase 4 — aquí només envia l'intent
-// i bloqueja localment; l'estat autoritatiu torna via TEAM_DONE_STATE). Un cop
-// finalitzada la fase, el botó queda deshabilitat i mostra "Fet" (F5-safe: es
-// reconstrueix sempre a partir de `isPhaseDone`, mai d'un flag local aïllat).
+// Botó "Finalitzar" (NOMÉS HTML, D-07): marca la fase HTML com a feta per aquest equip
+// (font única de la bonificació de temps, D-06 — aquí només envia l'intent i bloqueja
+// localment; l'estat autoritatiu torna via TEAM_DONE_STATE). Gate D-07: el botó està
+// `disabled` fins que l'estructura és 100% correcta (isHtmlComplete) — sense text d'error,
+// els pips N/7 (.progress-pieces) ja comuniquen la proximitat (ètos sense-error). Un cop
+// finalitzada la fase, queda deshabilitat i mostra "Fet" (F5-safe: es reconstrueix sempre
+// a partir de `isPhaseDone`, mai d'un flag local aïllat). No es renderitza mai a CSS/JS
+// (D-08/D-09): el servidor també rebutja qualsevol doneAt no-HTML.
 function renderFinishButton(phase) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'finish-phase-btn';
   const done = isPhaseDone(phase);
-  button.disabled = done;
+  button.disabled = done || !isHtmlComplete(latestPlacement); // gate D-07
   button.textContent = done ? '✓ Fet' : 'Finalitzar';
   button.addEventListener('click', () => {
+    if (button.disabled) return; // gate D-07: mai enviar si no és 100%
     button.disabled = true;
     button.textContent = '✓ Fet';
     socket.emit(EVENTS.TEAM_MARK_DONE, {});
   });
   return button;
+}
+
+// D-07: re-avalua el gate del botó "Finalitzar" HTML cada cop que canvia el board
+// (team:board-state). Reutilitza el mateix motor (isHtmlComplete) que el servidor, sense
+// reconstruir tot el panell. Un cop l'equip ha premut "Finalitzar" (isPhaseDone), es manté
+// bloquejat mostrant "Fet".
+function updateFinishGate() {
+  const button = document.querySelector('.finish-phase-btn');
+  if (!button) return;
+  if (isPhaseDone('html')) {
+    button.disabled = true;
+    button.textContent = '✓ Fet';
+    return;
+  }
+  button.disabled = !isHtmlComplete(latestPlacement);
 }
 
 // Overlay de congelat gestionat dinàmicament (D-11) perquè un update quirúrgic
@@ -1454,8 +1474,9 @@ function renderActiveSplitScreen(team, state) {
     panel.appendChild(gameContainer);
     panel.appendChild(renderFinishButton('html'));
   } else if (state.phase === 'css') {
+    // D-08: cap botó "Finalitzar" a CSS — la puntuació és per proximitat contínua,
+    // "fet" no té sentit (sempre es pot millorar). Només el panell de forats.
     panel.appendChild(renderCssPanel(latestCssValues));
-    panel.appendChild(renderFinishButton('css'));
   } else if (state.phase === 'js') {
     // Seed del panell des de les regles autoritatives (jsPanelRows null a l'entrada
     // de fase / F5; renderJsPanel el pobla). No es força null aquí: un re-render per
@@ -1781,6 +1802,7 @@ function bootClient() {
     if (latestState?.phase === 'html' && boardMounted) {
       renderBoardAndDrawer(latestPlacement);
       assemblePreview(latestPlacement);
+      updateFinishGate(); // D-07: el botó s'habilita només a estructura 100%
     } else if (latestState?.phase === 'css') {
       // F5/force-resync race (CORE-03): team:board-state pot arribar després de
       // team:css-state, que per si sol només aplica CSSOM sobre un DOM que encara

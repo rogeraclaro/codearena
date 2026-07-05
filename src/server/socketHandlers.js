@@ -345,13 +345,15 @@ export function registerSocketHandlers(io) {
       }),
     );
 
-    // --- Botó "Finalitzar" (HTML/CSS): marca la fase ACTIVA com a feta per aquest
-    // equip (identitat SEMPRE de socket.data.teamId; la FASE es deriva de
+    // --- Botó "Finalitzar" (NOMÉS HTML, D-07): marca la fase ACTIVA com a feta per
+    // aquest equip (identitat SEMPRE de socket.data.teamId; la FASE es deriva de
     // state.phase via getPublicState(), MAI d'un valor que el client pogués enviar
-    // al payload — un equip no pot marcar-se "fet" a una fase que no és l'activa).
-    // markPhaseDone és mutation-returns-bool (no-op si ja estava marcat, T-03-12
-    // style anti-storm). Només desa un timestamp — cap càlcul de puntuació aquí,
-    // és per a la Fase 4 (proximitat + rapidesa).
+    // al payload — un equip no pot marcar-se "fet" a una fase que no és l'activa,
+    // T-04-03). markPhaseDone (Fase 4) gate-eja a phase==='html' + estructura 100%
+    // correcta i rebutja tota fase css/js (D-08/D-09) — un payload forjat no ho pot
+    // saltar. mutation-returns-bool: TEAM_DONE_STATE només s'emet quan retorna true
+    // (no-op si incomplet o ja marcat, anti-storm). doneAt.html és l'única font de la
+    // bonificació de temps (D-06).
     socket.on(
       EVENTS.TEAM_MARK_DONE,
       safeHandler(() => {

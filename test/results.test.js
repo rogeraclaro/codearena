@@ -21,6 +21,7 @@ import assert from 'node:assert/strict';
 import { io as ioClient } from 'socket.io-client';
 import { startServer } from '../src/server/index.js';
 import { EVENTS } from '../src/server/events.js';
+import { gameState } from '../src/server/gameState.js';
 import { SLOTS } from '../src/shared/robotTemplate.js';
 
 let httpServer;
@@ -104,6 +105,41 @@ test('setup: registra 2 equips, ambdós trien, i team1 munta l\'estructura sence
     teamClient1.emit(EVENTS.TEAM_PLACE_PIECE, { slotId: s.id, pieceType: s.accepts });
   }
   await wait(200);
+});
+
+test('GATE-D07: el botó HTML només marca fet a estructura 100% (placement incomplet rebutjat)', async () => {
+  // team2 té 0 slots (incomplet): TEAM_MARK_DONE NO escriu doneAt.html → cap TEAM_DONE_STATE.
+  const noDone = onceOrTimeout(teamClient2, EVENTS.TEAM_DONE_STATE, 300);
+  teamClient2.emit(EVENTS.TEAM_MARK_DONE, {});
+  assert.equal(await noDone, undefined, 'placement incomplet no es pot marcar fet (D-07)');
+
+  // team1 té els 7 slots plens: SÍ escriu doneAt.html → rep TEAM_DONE_STATE amb el timestamp.
+  const done = onceOrTimeout(teamClient1, EVENTS.TEAM_DONE_STATE, 600);
+  teamClient1.emit(EVENTS.TEAM_MARK_DONE, {});
+  const doneState = await done;
+  assert.ok(doneState?.doneAt?.html != null, 'placement 100% pot marcar-se fet (D-07)');
+});
+
+test('HARDEN-D08/D09: markPhaseDone mai escriu doneAt.css ni doneAt.js (ni amb fase forjada)', () => {
+  // El gate viu a markPhaseDone i deriva NOMÉS de l'argument phase (el handler li passa
+  // state.phase, mai el payload). Cridar-lo directament amb 'css'/'js' emula el pitjor cas
+  // d'un payload forjat que arribés a la funció: sempre rebutjat (D-08/D-09, Pitfall 5).
+  assert.equal(gameState.markPhaseDone(team2Id, 'css'), false, 'CSS mai es marca fet (D-08)');
+  assert.equal(gameState.markPhaseDone(team2Id, 'js'), false, 'JS mai es marca fet (D-09)');
+  assert.equal(gameState.markPhaseDone(team1Id, 'css'), false, 'payload css forjat rebutjat encara que HTML sigui 100%');
+  assert.equal(gameState.markPhaseDone(team1Id, 'js'), false, 'payload js forjat rebutjat');
+
+  // team1 ja va marcar html al test anterior → idempotent (no reescriu el timestamp).
+  assert.equal(gameState.markPhaseDone(team1Id, 'html'), false, 'idempotent: no reescriu doneAt.html');
+
+  // Comprovació d'estat: doneAt de team1 té NOMÉS html; mai css/js. La bonificació de
+  // temps (htmlTimeBonuses) s'alimenta exclusivament d'aquest doneAt.html.
+  const done1 = gameState.getTeamDoneState(team1Id).doneAt;
+  assert.ok(done1.html != null, 'doneAt.html present');
+  assert.equal(done1.css, undefined, 'doneAt.css mai existeix');
+  assert.equal(done1.js, undefined, 'doneAt.js mai existeix');
+  // team2 (incomplet) no té cap doneAt.
+  assert.deepEqual(gameState.getTeamDoneState(team2Id).doneAt, {}, 'team2 incomplet sense cap doneAt');
 });
 
 test('NON-ADMIN-REJECT: un equip que emet admin:finalize-game no finalitza ni difon (V4)', async () => {
