@@ -29,6 +29,7 @@ import {
 } from '../shared/robotTemplate.js';
 import { attachRule, applyAction } from '../shared/effects.js';
 import { isHtmlComplete } from '../shared/scoring.js';
+import { playCeremony } from './shared/ceremony.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -1863,14 +1864,20 @@ function bootClient() {
     }
   });
 
-  // Fase 4 (ADMIN-07/D-14): l'admin ha finalitzat. En aquest pla els resultats es
-  // renderitzen DIRECTAMENT des del payload autoritatiu (el Pla 03 interceptarà
-  // CEREMONY_START per animar la cerimònia abans). GAME_RESULTS és la variant F5 (mateixa
-  // forma { ranking, ownDetail }, sense re-reproduir cerimònia). Cap càlcul de score al
-  // client — només render.
+  // Fase 4 (ADMIN-07/D-14): l'admin ha finalitzat. CEREMONY_START intercepta el render i
+  // reprodueix PRIMER la cerimònia d'entrega de premis (compte enrere 5→0, revelació invers,
+  // confetti) sincronitzada amb totes les pantalles (un sol broadcast → lockstep); en acabar,
+  // onComplete renderitza la pantalla de resultats a sota i l'overlay es retira. GAME_RESULTS
+  // és la variant F5/reconnexió: renderitza els resultats DIRECTAMENT, sense re-reproduir la
+  // cerimònia (Pitfall 4). Cap càlcul de score al client — només render.
   socket.on(EVENTS.CEREMONY_START, (payload) => {
     latestResults = payload || {};
-    renderResultsScreen();
+    const myId = localStorage.getItem(TEAM_ID_KEY);
+    playCeremony({
+      ranking: latestResults.ranking || [],
+      buildRow: (row, index) => buildRankRow(row, index, myId),
+      onComplete: () => renderResultsScreen(),
+    });
   });
   socket.on(EVENTS.GAME_RESULTS, (payload) => {
     latestResults = payload || {};

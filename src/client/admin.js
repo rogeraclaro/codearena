@@ -8,6 +8,7 @@ import { io } from 'socket.io-client';
 import { createElement, CircleCheckBig, WifiOff, RefreshCw, Trophy } from 'lucide';
 import { renderCountdown } from './shared/timer.js';
 import { EVENTS } from '../server/events.js';
+import { playCeremony } from './shared/ceremony.js';
 
 const STYLE_ID = 'admin-styles';
 
@@ -563,6 +564,39 @@ function buildTeamCard(team, socket) {
 // Rànquing final a l'Admin (ADMIN-07): llista ordenada nom + % (Trophy al #1). NOMÉS
 // dades públiques ({id,name,globalPct}); cap detall privat d'equip (D-10). Deriva del
 // darrer ranking rebut (finalRanking) — mai recalcula al client.
+// Una fila del rànquing final (rank # + Trophy NOMÉS al #1 + nom + %). Extreta perquè la
+// cerimònia D-14 (ceremony.js) reveli EXACTAMENT la mateixa fila que el rànquing final —
+// una sola font, cap drift entre la revelació i la vista final.
+function buildFinalRankRow(row, index) {
+  const rowEl = document.createElement('div');
+  rowEl.className = 'admin-final-rank__row';
+
+  const num = document.createElement('span');
+  num.className = 'admin-final-rank__num';
+  num.textContent = String(index + 1);
+  rowEl.appendChild(num);
+
+  if (index === 0) {
+    const trophy = createElement(Trophy);
+    trophy.setAttribute('width', '18');
+    trophy.setAttribute('height', '18');
+    trophy.classList.add('rank-trophy');
+    rowEl.appendChild(trophy);
+  }
+
+  const name = document.createElement('span');
+  name.className = 'admin-final-rank__name';
+  name.textContent = row.name; // DOM text API (V5 anti-XSS)
+  rowEl.appendChild(name);
+
+  const pct = document.createElement('span');
+  pct.className = 'admin-final-rank__pct';
+  pct.textContent = `${Math.round(row.globalPct)}%`;
+  rowEl.appendChild(pct);
+
+  return rowEl;
+}
+
 function buildFinalRanking(ranking) {
   const block = document.createElement('section');
   block.className = 'admin-final-rank';
@@ -572,35 +606,7 @@ function buildFinalRanking(ranking) {
   caption.textContent = 'Classificació final';
   block.appendChild(caption);
 
-  ranking.forEach((row, index) => {
-    const rowEl = document.createElement('div');
-    rowEl.className = 'admin-final-rank__row';
-
-    const num = document.createElement('span');
-    num.className = 'admin-final-rank__num';
-    num.textContent = String(index + 1);
-    rowEl.appendChild(num);
-
-    if (index === 0) {
-      const trophy = createElement(Trophy);
-      trophy.setAttribute('width', '18');
-      trophy.setAttribute('height', '18');
-      trophy.classList.add('rank-trophy');
-      rowEl.appendChild(trophy);
-    }
-
-    const name = document.createElement('span');
-    name.className = 'admin-final-rank__name';
-    name.textContent = row.name; // DOM text API (V5 anti-XSS)
-    rowEl.appendChild(name);
-
-    const pct = document.createElement('span');
-    pct.className = 'admin-final-rank__pct';
-    pct.textContent = `${Math.round(row.globalPct)}%`;
-    rowEl.appendChild(pct);
-
-    block.appendChild(rowEl);
-  });
+  ranking.forEach((row, index) => block.appendChild(buildFinalRankRow(row, index)));
 
   return block;
 }
@@ -724,11 +730,19 @@ function connectWithSecret(secret) {
     if (state.finished && state.finalRanking) finalRanking = state.finalRanking; // F5 recovery
     renderAdmin(socket, state);
   });
-  // ADMIN-07: l'admin rep CEREMONY_START amb el ranking (sense ownDetail, D-10). El panell
-  // es reconstrueix amb l'últim state conegut perquè finalitzar no emet session:full-state.
+  // ADMIN-07/D-14: l'admin rep CEREMONY_START amb el ranking (sense ownDetail, D-10) i
+  // reprodueix la MATEIXA cerimònia que els equips, disparada pel mateix broadcast → lockstep.
+  // En acabar, onComplete reconstrueix el panell amb el rànquing final (finalitzar no emet
+  // session:full-state, per això re-renderitzem amb l'últim state conegut).
   socket.on(EVENTS.CEREMONY_START, ({ ranking }) => {
     finalRanking = ranking || null;
-    if (latestState) renderAdmin(socket, latestState);
+    playCeremony({
+      ranking: finalRanking || [],
+      buildRow: (row, index) => buildFinalRankRow(row, index),
+      onComplete: () => {
+        if (latestState) renderAdmin(socket, latestState);
+      },
+    });
   });
   // D-12/D-13: rànquing parcial en tancar-se una fase (NOMÉS l'admin el rep). Desa el
   // darrer parcial i re-renderitza amb l'últim state conegut (l'esdeveniment no porta un
