@@ -15,7 +15,7 @@ Fer que l'app funcioni de manera fiable al VPS de producció (`classe.masellas.i
 
 ### Domini i accés
 - **D-01:** Subdomini de producció: `classe.masellas.info`.
-- **D-02** `[informational]`: El VPS ja existeix, amb CloudPanel instal·lat (Nginx i certbot ja gestionats per CloudPanel — no cal provisionar-los en aquesta fase). Constata un fet ja donat, no requereix cap tasca de pla pròpia.
+- **D-02 [informational]:** El VPS ja existeix, amb CloudPanel instal·lat (Nginx i certbot ja gestionats per CloudPanel — no cal provisionar-los en aquesta fase). Constata un fet ja donat, no requereix cap tasca de pla pròpia.
 - **D-03:** El codi es desplega sota un usuari no-root dedicat, a una ruta tipus `/home/<usuari>/codearena`.
 
 ### Tipus de site a CloudPanel
