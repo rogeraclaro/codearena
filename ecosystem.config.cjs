@@ -15,12 +15,15 @@ module.exports = {
     {
       name: 'codearena',
       script: 'server.cjs',
+      // cwd fixat a l'arrel del repo perquè dotenv resolgui .env des de
+      // process.cwd() sigui quin sigui el directori des d'on s'arrenca PM2 (Pitfall 4).
+      cwd: __dirname,
       autorestart: true,
       min_uptime: '5s',
       max_restarts: 30,
-      env: {
-        PORT: 3000,
-      },
+      // Sense clau PORT aquí: si PM2 pre-establís process.env.PORT, el
+      // override:false per defecte de dotenv faria perdre el 8011 de .env
+      // davant el valor hardcoded (Pitfall 1). .env és l'única font de PORT en prod.
     },
   ],
 };
