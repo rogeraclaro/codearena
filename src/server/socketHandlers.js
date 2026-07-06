@@ -197,6 +197,25 @@ export function registerSocketHandlers(io) {
       }),
     );
 
+    // D-01/D-02/D-03: mirall d'ADMIN_NEXT_PHASE PERÒ sense el bloc de partial-ranking
+    // (retrocedir mai tanca cap fase — D-12/D-13 és exclusiu de nextPhase). Admin-only
+    // re-validat server-side (V4/T-04.1-01 — mai confiar en un flag de rol del client).
+    // previousPhase reutilitza startPhase, així que el timer nou (D-02) i la preservació
+    // de team.doneAt (D-03) ja queden garantits al model — aquest handler NOMÉS valida i
+    // difon. mutation-returns-bool: SESSION_FULL_STATE només s'emet quan retorna true
+    // (no-op a la fase HTML, Pitfall 5).
+    socket.on(
+      EVENTS.ADMIN_PREV_PHASE,
+      safeHandler((payload) => {
+        if (!socket.rooms.has('admin')) return; // V4/T-04.1-01
+        const durationMs = payload?.durationMs;
+        if (!(Number.isFinite(durationMs) && durationMs > 0)) return; // T-04.1-02
+        if (gameState.previousPhase(durationMs)) {
+          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        }
+      }),
+    );
+
     socket.on(
       EVENTS.ADMIN_TIMER_PAUSE,
       safeHandler(() => {
