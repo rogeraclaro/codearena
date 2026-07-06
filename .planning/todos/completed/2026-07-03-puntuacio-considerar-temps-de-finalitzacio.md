@@ -11,6 +11,12 @@ files:
 
 Actualment el rànquing final (SCORE-04) es basa **només** en el percentatge d'encert global de cada equip, comparant l'estructura del DOM/CSS/JS amb la Plana Model. No hi ha cap component de temps de finalització. L'usuari, durant la verificació del checkpoint de la Fase 2 (joc-fase-html-blocs-drag-drop), va preguntar si el rànquing hauria de tenir en compte també quin equip acaba en menys temps.
 
+## Resolt
+
+Implementat a la Fase 4 (`src/shared/scoring.js`, `htmlTimeBonuses`, D-05/D-06):
+bonificació rank-based entre finishers segons l'ordre relatiu de
+`team.doneAt.html` (mai temps absolut), aplicada només a HTML.
+
 ## Solution
 
 TBD — a decidir quan es planifiqui la Fase 4. Possibles enfocaments a valorar:

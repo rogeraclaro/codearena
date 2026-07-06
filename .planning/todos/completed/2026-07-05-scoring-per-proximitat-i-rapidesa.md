@@ -19,6 +19,17 @@ Ja existeix la infraestructura mínima per capturar el timestamp de rapidesa
 NO hi ha cap lògica de puntuació — això és feina de la Fase 4
 ("Puntuació i rànquing final") segons el ROADMAP, encara no planificada.
 
+## Resolt
+
+Implementat a la Fase 4 (`src/shared/scoring.js`):
+- **Proximitat CSS**: `scoreCss`/`holeScore` — distància RGB per colors,
+  distància numèrica normalitzada pel span del forat per a rangs.
+- **Proximitat HTML**: `scoreHtml` — fracció de slots correctes.
+- **JS** (D-03, sense referència exacta): `scoreJs` — quantitat + varietat.
+- **Rapidesa**: `htmlTimeBonuses` (D-05/D-06) — bonus rank-based per ordre de
+  `doneAt.html`, mai temps absolut.
+- Pesos globals: `WEIGHTS = { html: 0.30, css: 0.60, js: 0.10 }`.
+
 ## Solution
 
 TBD — a decidir durant `/gsd-plan-phase 4` o una discussió prèvia
