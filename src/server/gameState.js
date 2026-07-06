@@ -151,6 +151,7 @@ function setCssValue(teamId, holeId, value) {
   const team = state.teams.get(teamId);
   if (!team) return false;
   if (state.phase !== 'css' || state.timerStatus === 'frozen') return false; // GAME-07 / D-11
+  if (team.doneAt.css) return false; // D-15: equip congelat després de "Finalitzar" CSS — cap mutació
   const hole = CSS_HOLES[holeId]; // enum de la plantilla (V5)
   if (!hole) return false;
   if (!hole.validate(value)) return false; // hex regex O numèric-dins-rang (V5, Pitfall 5)
@@ -186,6 +187,7 @@ function setJsRules(teamId, rules) {
   const team = state.teams.get(teamId);
   if (!team) return false;
   if (state.phase !== 'js' || state.timerStatus === 'frozen') return false; // GAME-07 / D-11
+  if (team.doneAt.js) return false; // D-15: equip congelat després de "Finalitzar" JS — cap mutació
   if (!Array.isArray(rules) || rules.length > JS_ROW_LIMIT) return false; // ≤6 (D-11/D-12)
   const seen = new Set();
   for (const r of rules) {
@@ -217,16 +219,19 @@ function getTeamRules(teamId) {
 // passa el mateix state.phase autoritatiu) com a finalitzada per aquest equip.
 // mutation-returns-bool: true només la PRIMERA vegada per fase (idempotent — repetir
 // el clic, o un re-emit accidental, no sobreescriu el timestamp ja desat).
-// Enduriment Fase 4 (D-07/D-08/D-09, Pitfall 5): NOMÉS la fase 'html' pot registrar un
-// doneAt, i NOMÉS quan l'estructura és 100% correcta (isHtmlComplete). Així cap
-// doneAt.css/doneAt.js no es pot escriure MAI —ni tan sols amb un payload forjat, perquè
-// el caller deriva `phase` de state.phase (mai del payload)— i doneAt.html, l'única font
-// de la bonificació de temps (D-06), només existeix a correcció total (D-07).
+// D-15 (SUPERSEDEIX D-08/D-09): CSS i JS tenen un "Finalitzar" VOLUNTARI, sense gate de
+// correcció — accepten qualsevol fase de PHASE_ORDER i escriuen doneAt.css/doneAt.js només
+// per CONGELAR l'equip (els mutadors setCssValue/setJsRules els respecten). Aquests
+// timestamps MAI entren a la fórmula de score: htmlTimeBonuses llegeix NOMÉS doneAt.html, així
+// que el bonus de temps segueix sent exclusiu de HTML (D-05/D-06 intactes). NOMÉS la fase
+// 'html' conserva el gate de correcció 100% (isHtmlComplete, D-07); tota fase fora de
+// PHASE_ORDER queda rebutjada (un payload forjat no pot registrar una fase inexistent).
 function markPhaseDone(teamId, phase) {
   const team = state.teams.get(teamId);
   if (!team || !phase) return false;
-  if (phase !== 'html' || !isHtmlComplete(team.placement)) return false; // gate D-07 + enduriment D-08/D-09
-  if (team.doneAt[phase]) return false; // ja marcat — no-op (anti-storm)
+  if (!PHASE_ORDER.includes(phase)) return false; // fase desconeguda rebutjada (payload forjat)
+  if (phase === 'html' && !isHtmlComplete(team.placement)) return false; // gate D-07 (NOMÉS html)
+  if (team.doneAt[phase]) return false; // ja marcat — no-op (idempotent, anti-storm)
   team.doneAt[phase] = Date.now();
   return true;
 }
@@ -238,20 +243,6 @@ function getTeamDoneState(teamId) {
 }
 
 // --- Fase 4: puntuació i rànquing (SCORE-01..05, ADMIN-07) ---
-
-// Detall de sub-checks del debrief (SCORE-05) per a UN equip. Delega a l'escòrer pur
-// (src/shared/scoring.js) sobre l'estat autoritatiu de l'equip. Retorna una còpia nova
-// {html, css, js} (mai la referència viva). D-10: aquest detall NOMÉS s'emet dirigit a
-// l'owner (team:<id>), mai a 'session'.
-function getTeamSubchecks(teamId) {
-  const team = state.teams.get(teamId);
-  if (!team) return { html: { pct: 0, subchecks: [] }, css: { pct: 0, subchecks: [] }, js: { pct: 0, subchecks: [] } };
-  return {
-    html: scoreHtml(team.placement),
-    css: scoreCss(team.cssValues),
-    js: scoreJs(team.jsRules),
-  };
-}
 
 // Rànquing autoritatiu: per cada equip calcula els tres scores de fase, aplica el bonus
 // de temps HTML rank-based (D-05/D-06) i combina amb els pesos (computeGlobal). El `mask`
@@ -384,7 +375,6 @@ export const gameState = {
   getTeamRules,
   markPhaseDone,
   getTeamDoneState,
-  getTeamSubchecks,
   buildRanking,
   getPartialContext,
   finalizeGame,
