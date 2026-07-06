@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 04.1
-current_phase_name: Millores operatives d'Admin + preview CSS live code overlay
-status: verifying
-stopped_at: Phase 04.1 context gathered
-last_updated: "2026-07-06T08:48:59.267Z"
+current_phase_name: millores-operatives-d-admin-tornar-fase-anterior-reset-servi
+status: executing
+stopped_at: Completed 04.1-01-PLAN.md
+last_updated: "2026-07-06T10:58:00.869Z"
 last_activity: 2026-07-06
-last_activity_desc: Phase 04.1 inserted after Phase 4 (URGENT)
+last_activity_desc: Phase 04.1 execution started
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 17
+  completed_plans: 14
   percent: 67
 ---
 
@@ -24,15 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-01)
 
 **Core value:** Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (HTML = estructura, CSS = aparença, JS = comportament) manipulant-los directament, sense poder cometre errors de sintaxi i sense frustració.
-**Current focus:** Phase 04.1 — Millores operatives d'Admin + preview CSS live code overlay
+**Current focus:** Phase 04.1 — millores-operatives-d-admin-tornar-fase-anterior-reset-servi
 
 ## Current Position
 
-Phase: 04.1 (Millores operatives d'Admin + preview CSS live code overlay) — Not planned yet (inserted, urgent)
-Plan: —
-Status: Pending plan
+Phase: 04.1 (millores-operatives-d-admin-tornar-fase-anterior-reset-servi) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Next recommended run: /gsd-plan-phase 04.1
-Last activity: 2026-07-06 — Phase 04.1 inserted after Phase 4 (URGENT)
+Last activity: 2026-07-06 — Phase 04.1 execution started
 
 Progress: [████████░░] 80% (4 de 5 fases completes)
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 80% (4 de 5 fases completes)
 | Phase 04 P01 | 40 | 3 tasks | 10 files |
 | Phase 04 P04-03 | 35 | 3 tasks | 6 files |
 | Phase 04 P04 | 21 | 3 tasks | 4 files |
+| Phase 04.1 P01 | 21min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Fase 4: scoring pur (scoring.js) llegeix estat autoritatiu; el render del client mai calcula score
 - [Phase ?]: Fase 4 D-15: CSS/JS tenen botó 'Finalitzar' voluntari sense gate que congela l'equip server-side pero mai puntua (supersedeix D-08/D-09)
 - [Phase ?]: Fase 4 D-16: resultats mostren NOMES ranquing + percentatge global a tothom; ownDetail retirat de tots els payloads (supersedeix D-10/D-11)
+- [Phase ?]: Fase 04.1 Pla 01: previousPhase() reutilitza startPhase() (D-02/D-03 de franc); showConfirm() generalitzat reemplaça tres blocs de dialog duplicats
 
 ### Pending Todos
 
@@ -109,8 +111,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T08:48:59.257Z
-Stopped at: Phase 04.1 context gathered
-Resume file: .planning/phases/04.1-millores-operatives-d-admin-tornar-fase-anterior-reset-servi/04.1-CONTEXT.md
+Last session: 2026-07-06T10:58:00.864Z
+Stopped at: Completed 04.1-01-PLAN.md
+Resume file: None
 
 Last activity: 2026-07-06 - Completed quick task 260706-hi0: Omple per defecte el textarea de noms d'equips a l'Admin amb els 4 noms reals de l'equip
