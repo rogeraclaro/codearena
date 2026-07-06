@@ -6,14 +6,14 @@ current_phase: 04.1
 current_phase_name: millores-operatives-d-admin-tornar-fase-anterior-reset-servi
 status: executing
 stopped_at: Completed 04.1-01-PLAN.md
-last_updated: "2026-07-06T10:58:00.869Z"
+last_updated: "2026-07-06T13:16:38.123Z"
 last_activity: 2026-07-06
 last_activity_desc: Phase 04.1 execution started
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 17
-  completed_plans: 14
+  completed_plans: 15
   percent: 67
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-01)
 ## Current Position
 
 Phase: 04.1 (millores-operatives-d-admin-tornar-fase-anterior-reset-servi) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Next recommended run: /gsd-plan-phase 04.1
 Last activity: 2026-07-06 — Phase 04.1 execution started
@@ -62,6 +62,7 @@ Progress: [████████░░] 80% (4 de 5 fases completes)
 | Phase 04 P04-03 | 35 | 3 tasks | 6 files |
 | Phase 04 P04 | 21 | 3 tasks | 4 files |
 | Phase 04.1 P01 | 21min | 3 tasks | 5 files |
+| Phase 04.1 P02 | 15min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Fase 4 D-15: CSS/JS tenen botó 'Finalitzar' voluntari sense gate que congela l'equip server-side pero mai puntua (supersedeix D-08/D-09)
 - [Phase ?]: Fase 4 D-16: resultats mostren NOMES ranquing + percentatge global a tothom; ownDetail retirat de tots els payloads (supersedeix D-10/D-11)
 - [Phase ?]: Fase 04.1 Pla 01: previousPhase() reutilitza startPhase() (D-02/D-03 de franc); showConfirm() generalitzat reemplaça tres blocs de dialog duplicats
+- [Phase ?]: PM2 fork mode silently breaks the ESM isMainModule auto-start guard (argv[1] rewritten to PM2's wrapper) — fixed via server.cjs CJS launcher that calls startServer() explicitly
 
 ### Pending Todos
 
@@ -111,7 +113,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T10:58:00.864Z
+Last session: 2026-07-06T13:15:31.291Z
 Stopped at: Completed 04.1-01-PLAN.md
 Resume file: None
 
