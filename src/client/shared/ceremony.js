@@ -66,8 +66,11 @@ function ensureCeremonyStyles() {
       align-items: center;
       justify-content: center;
     }
+    /* D-17: números el doble de grans (i encara més en projector d'aula). Base ≥2× el
+       Display heretat, amb terra viewport-relatiu perquè es llegeixin des del fons de la
+       classe. La mida és dada de cerimònia (com els colors chillón), no un token nou. */
     .ceremony-count {
-      font-size: var(--font-size-display);
+      font-size: max(calc(var(--font-size-display) * 2), 18vmin);
       font-weight: var(--font-weight-heading);
       line-height: 1;
       font-variant-numeric: tabular-nums;
@@ -94,10 +97,13 @@ function ensureCeremonyStyles() {
       border-radius: 2px;
       opacity: 0;
     }
+    /* D-17: zoom MOLT més exagerat — el número entra, es queda un instant i surt
+       completament del viewport cap a l'espectador (scale terminal ~10, no un zoom subtil). */
     @keyframes ceremony-zoom {
-      0% { transform: scale(0.6); opacity: 0; }
-      20% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(2.4); opacity: 0; }
+      0% { transform: scale(0.3); opacity: 0; }
+      12% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.6); opacity: 1; }
+      100% { transform: scale(10); opacity: 0; }
     }
     @keyframes ceremony-row-enter {
       from { opacity: 0; transform: translateY(var(--space-md)); }
@@ -128,10 +134,12 @@ function ensureCeremonyStyles() {
   document.head.appendChild(style);
 }
 
-// Confetti dependency-free (RESEARCH §Code Examples): dotzenes de divs posicionats
+// Confetti dependency-free (RESEARCH §Code Examples): centenars de divs posicionats
 // absolutament amb left/background/animationDelay aleatoris del set chillón. Es netegen
 // soles en retirar-se `.ceremony-overlay` (són fills seus). Guard reduced-motion.
-function fireConfetti(container, count = 60) {
+// D-18: molt més confetti que la primera implementació (60 → 240 peces); els delays segueixen
+// dins de CONFETTI_TAIL_MS perquè cap peça es talli en retirar l'overlay.
+function fireConfetti(container, count = 240) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   for (let i = 0; i < count; i++) {
     const piece = document.createElement('div');
