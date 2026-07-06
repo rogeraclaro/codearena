@@ -117,7 +117,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. La puntuació JS verifica que l'esdeveniment, l'element i l'acció triats coincideixen semànticament amb els de la Plana Model
   5. La pantalla de resultats mostra el percentatge d'encert i el rànquing de tots els equips, amb el detall de sub-checks superats per equip
 
-**Plans**: 3/3 plans complete
+**Plans**: 3/3 complete + 1 addendum pendent (04-04)
 
 **Wave 1**
 
@@ -130,6 +130,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 04-03-PLAN.md — Cerimònia d'entrega de premis (compte enrere + revelació inversa + confetti) abans del rànquing (Wave 3)
+
+**Wave 4** *(addendum post-implementació — feedback en viu 2026-07-06, supersedeix D-08/D-09 i D-10/D-11)*
+
+- [ ] 04-04-PLAN.md — D-15 botó "Finalitzar" voluntari CSS/JS (congela l'equip, sense gate) + D-16 pantalla de resultats sense detall de sub-checks (Wave 4)
 
 **UI hint**: yes
 
