@@ -82,9 +82,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Research flag: Fase 3 (CSS/JS) necessitarà una passada de recerca dedicada sobre normalització d'estils (`getComputedStyle`, shorthand vs longhand) abans d'implementar el scoring corresponent a Fase 4
-- Research flag: Fase 2 (HTML drag & drop) ha de validar l'API exacta de SortableJS (group/put/pull) per al snap fort abans d'escriure UI
-- Pendent de confirmar: navegadors/hardware exactes de l'aula (assumit: escriptori evergreen, no tàctil) — verificar abans de planificar Fase 2
+Cap blocker actiu. Els flags de recerca de Fases 2/3 es van resoldre en planificar-les; el dubte de navegadors/hardware de l'aula es va confirmar 2026-07-06 (Windows + Chrome, no tàctil — vegeu PROJECT.md § Context).
 
 ### Quick Tasks Completed
 

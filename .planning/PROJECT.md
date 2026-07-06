@@ -58,7 +58,7 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 
 ## Context
 
-- **Entorn d'aula**: ordinadors Windows idèntics, un per equip. El professor projecta la Plana Model a la pantalla de classe.
+- **Entorn d'aula**: ordinadors Windows idèntics, un per equip, amb navegador Chrome, no tàctils (confirmat pel propietari 2026-07-06). El professor projecta la Plana Model a la pantalla de classe.
 - **Dinàmica curta**: 15-20 minuts en total. Cada segon compta — la UI ha de ser immediata i sense fricció.
 - **Els equips no avancen sols**: les transicions de fase depenen exclusivament de l'admin. Si el temps s'esgota, passen de fase tal com estiguin.
 - **Desplegament**: VPS propi, possiblement sota domini tipus masellas.info, rere proxy invers Nginx. Codi preparat per a producció.
