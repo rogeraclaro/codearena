@@ -66,6 +66,14 @@ test('setup: registra equips i un equip tria', async () => {
   const claimed1 = once(teamClient1, EVENTS.TEAM_CLAIMED);
   teamClient1.emit(EVENTS.TEAM_SELECT, { teamId: team1Id });
   await claimed1;
+
+  // Drain the SESSION_FULL_STATE that TEAM_SELECT's handler broadcasts to 'session'
+  // right after claiming (no listener attached for it above) — without this wait, the
+  // remaining tests below make several *synchronous* gameState calls with no `await` in
+  // between, which never yields the event loop back to process that already-in-flight
+  // packet; it would otherwise surface later as a stray/misleading event once the first
+  // real `await` (a socket-based test) finally lets the event loop catch up.
+  await wait(50);
 });
 
 test('PREV-NOOP-HTML: previousPhase a HTML retorna false i no muta res (Pitfall 5)', () => {

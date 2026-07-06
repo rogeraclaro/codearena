@@ -313,6 +313,18 @@ function nextPhase(durationMs) {
   return startPhase(PHASE_ORDER[nextIndex], durationMs);
 }
 
+// Mirall de nextPhase (D-01/D-02/D-03): decrementa l'índex en lloc d'incrementar-lo.
+// Reutilitzar startPhase satisfà D-02 (remainingMsAtPause=null, timer nou) i D-03 (mai
+// toca team.doneAt) de franc — NO afegir cap lògica de recuperació de timer ni cap reset
+// de doneAt en aquest camí. No-op (false) si ja és la primera fase o no hi ha cap fase
+// activa (Pitfall 5).
+function previousPhase(durationMs) {
+  const currentIndex = state.phase ? PHASE_ORDER.indexOf(state.phase) : -1;
+  const prevIndex = currentIndex - 1;
+  if (prevIndex < 0) return false;
+  return startPhase(PHASE_ORDER[prevIndex], durationMs);
+}
+
 function pauseTimer() {
   if (state.timerStatus !== 'running') return false;
   state.remainingMsAtPause = state.phaseEndsAt - Date.now();
@@ -380,6 +392,7 @@ export const gameState = {
   finalizeGame,
   startPhase,
   nextPhase,
+  previousPhase,
   pauseTimer,
   resumeTimer,
   extendTimer,

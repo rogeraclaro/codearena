@@ -8,6 +8,8 @@ export const EVENTS = Object.freeze({
   ADMIN_REGISTER_TEAMS: 'admin:register-teams',
   ADMIN_START_PHASE: 'admin:start-phase',
   ADMIN_NEXT_PHASE: 'admin:next-phase',
+  // client→server, admin-only (re-validat per room 'admin')
+  ADMIN_PREV_PHASE: 'admin:prev-phase',
   ADMIN_TIMER_PAUSE: 'admin:timer-pause',
   ADMIN_TIMER_RESUME: 'admin:timer-resume',
   ADMIN_TIMER_EXTEND: 'admin:timer-extend',
