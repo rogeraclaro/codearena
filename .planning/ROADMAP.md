@@ -137,6 +137,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **UI hint**: yes
 
+### Phase 04.1: Millores operatives d'Admin (tornar fase anterior, reset servidor) + preview CSS live code overlay (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 4
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 04.1 to break down)
+
 ### Phase 5: Desplegament a producció (VPS + Nginx + PM2)
 
 **Goal**: L'aplicació funciona de manera fiable al VPS de producció, rere Nginx, preparada per a la sessió real a l'aula

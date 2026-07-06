@@ -6,15 +6,15 @@ current_phase: 04
 current_phase_name: Puntuació i rànquing final
 status: verifying
 stopped_at: Completed 04-04-PLAN.md — Phase 04 complete (4/4 plans)
-last_updated: "2026-07-06T01:51:28.929Z"
+last_updated: "2026-07-06T08:05:12.509Z"
 last_activity: 2026-07-06
-last_activity_desc: Phase 04 plan 04 complete — Phase 04 done (4/4 plans)
+last_activity_desc: Phase 04 plan 04 complete (D-15 congelació voluntària + D-16 resultats sense detall)
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 4
   total_plans: 13
   completed_plans: 13
-  percent: 80
+  percent: 67
 ---
 
 # Project State
@@ -24,14 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-01)
 
 **Core value:** Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (HTML = estructura, CSS = aparença, JS = comportament) manipulant-los directament, sense poder cometre errors de sintaxi i sense frustració.
-**Current focus:** Phase 04 — Puntuació i rànquing final
+**Current focus:** Phase 04.1 — Millores operatives d'Admin + preview CSS live code overlay
 
 ## Current Position
 
-Phase: 04 (Puntuació i rànquing final) — COMPLETE (4/4 plans)
-Plan: 4 of 4
-Status: Phase complete — ready for verification
-Last activity: 2026-07-06 — Phase 04 plan 04 complete (D-15 congelació voluntària + D-16 resultats sense detall)
+Phase: 04.1 (Millores operatives d'Admin + preview CSS live code overlay) — Not planned yet (inserted, urgent)
+Plan: —
+Status: Pending plan
+Next recommended run: /gsd-plan-phase 04.1
+Last activity: 2026-07-06 — Phase 04.1 inserted after Phase 4 (URGENT)
 
 Progress: [████████░░] 80% (4 de 5 fases completes)
 
@@ -90,6 +91,10 @@ Cap blocker actiu. Els flags de recerca de Fases 2/3 es van resoldre en planific
 |---|-------------|------|--------|-----------|
 | 260703-uwn | Aplica el redisseny visual final del Bender al codi real de la Fase 2 (HTML drag drop): antena unica per CSS (7 peces en lloc de 8), boca sense text inicial, sense mirall CSS a les orelles, CSS complet del cap/ulls/nas/boca | 2026-07-03 | 402bc16 | [260703-uwn-aplica-el-redisseny-visual-final-del-ben](./quick/260703-uwn-aplica-el-redisseny-visual-final-del-ben/) |
 | 2 | Elimina forma/ompliment CSS de #robot-cap/ulls/nas/boca del preview Fase 2 (fix regressio D-13) | 2026-07-03 | b324e16 | — |
+
+### Roadmap Evolution
+
+- Phase 04.1 inserted after Phase 4: Millores operatives d'Admin (tornar fase anterior, reset servidor) + preview CSS live code overlay (URGENT)
 
 ## Deferred Items
 
