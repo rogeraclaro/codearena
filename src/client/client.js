@@ -1028,6 +1028,7 @@ function renderForatRow(holeId, hole, storedValue, frozen) {
     input.addEventListener('input', (e) => {
       applyCssHole(holeId, e.target.value);
       readout.textContent = e.target.value;
+      updateLiveOverlay(hole.group, holeId, e.target.value);
     });
     input.addEventListener('change', (e) => {
       socket.emit(EVENTS.TEAM_SET_CSS, { holeId, value: e.target.value });
@@ -1046,11 +1047,17 @@ function renderForatRow(holeId, hole, storedValue, frozen) {
       const v = fmt(e.target.value);
       applyCssHole(holeId, v);
       readout.textContent = v;
+      updateLiveOverlay(hole.group, holeId, v);
     });
     input.addEventListener('change', (e) => {
       socket.emit(EVENTS.TEAM_SET_CSS, { holeId, value: fmt(e.target.value) });
     });
   }
+
+  // Overlay lligat a la interacció (D-07): apareix en enfocar el control (dels
+  // dos tipus) i desapareix en perdre el focus, sigui quin sigui l'estat final.
+  input.addEventListener('focus', () => showOverlay(hole.group));
+  input.addEventListener('blur', () => hideOverlay());
 
   row.appendChild(input);
   row.appendChild(readout);
@@ -1147,6 +1154,37 @@ function buildOverlayBlock(group, liveValues) {
   const rows = Object.entries(CSS_HOLES).filter(([, h]) => h.group === group);
   const lines = rows.map(([id, h]) => `  ${h.prop}: ${liveValues[id] ?? h.default};`);
   return `${group} {\n${lines.join('\n')}\n}`;
+}
+
+// Mostra el requadre (D-07): un únic node `.css-live-overlay` dins `.active-split`
+// (mateix patró d'append que updateFrozenOverlay), amb l'etiqueta HTML de
+// l'element (D-09) seguida del bloc CSS sencer del grup actiu (D-08). Fade in
+// via la classe `--visible` (D-10).
+function showOverlay(group) {
+  const container = document.querySelector('.active-split');
+  if (!container) return;
+  let overlay = container.querySelector('.css-live-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'css-live-overlay';
+    container.appendChild(overlay);
+  }
+  overlay.textContent = `${GROUP_ELEMENT_LABEL[group]}\n${buildOverlayBlock(group, getLiveValues())}`;
+  overlay.classList.add('css-live-overlay--visible');
+}
+
+// Recalcula el bloc amb el valor que s'està movent en directe (D-08), sense
+// tocar la visibilitat.
+function updateLiveOverlay(group, holeId, value) {
+  const overlay = document.querySelector('.active-split .css-live-overlay');
+  if (!overlay) return;
+  overlay.textContent = `${GROUP_ELEMENT_LABEL[group]}\n${buildOverlayBlock(group, getLiveValues(holeId, value))}`;
+}
+
+// Amaga el requadre (fade out, D-10); no cal esborrar el node.
+function hideOverlay() {
+  const overlay = document.querySelector('.active-split .css-live-overlay');
+  if (overlay) overlay.classList.remove('css-live-overlay--visible');
 }
 
 // --- Fase JS: constructor de regles + intèrpret parent-driven (GAME-05) ---
