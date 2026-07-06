@@ -48,8 +48,8 @@ Microclasse gamificada d'HTML/CSS/JS per a equips en temps real.
 
 ### Desplegament (DEPL)
 
-- [ ] **DEPL-01**: L'app funciona desplegada al VPS rere Nginx amb l'upgrade WebSocket configurat i verificat (no fallback silenciós a polling)
-- [ ] **DEPL-02**: El procés Node el gestiona PM2 amb reinici automàtic
+- [x] **DEPL-01**: L'app funciona desplegada al VPS rere Nginx amb l'upgrade WebSocket configurat i verificat (no fallback silenciós a polling)
+- [x] **DEPL-02**: El procés Node el gestiona PM2 amb reinici automàtic
 
 ## v2 Requirements (deferred)
 

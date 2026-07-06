@@ -163,11 +163,11 @@ Plans:
   2. El procés Node s'executa sota PM2 i es reinicia automàticament si cau
   3. Una sessió completa (registre d'equips, les 3 fases de joc, resultats) es pot jugar de cap a cap contra el desplegament real sense errors de connexió
 
-**Plans**: 2 plans
+**Plans**: 1/2 plans executed
 
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Configuració de producció al repo: dotenv + PORT font única + secret protegit + deploy/deploy.sh (Wave 1)
+- [x] 05-01-PLAN.md — Configuració de producció al repo: dotenv + PORT font única + secret protegit + deploy/deploy.sh (Wave 1)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -184,4 +184,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
 | 4. Puntuació i rànquing final | 4/4 | Complete   | 2026-07-06 |
-| 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
+| 5. Desplegament a producció (VPS + Nginx + PM2) | 1/2 | In Progress|  |
