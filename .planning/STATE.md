@@ -91,6 +91,7 @@ Cap blocker actiu. Els flags de recerca de Fases 2/3 es van resoldre en planific
 |---|-------------|------|--------|-----------|
 | 260703-uwn | Aplica el redisseny visual final del Bender al codi real de la Fase 2 (HTML drag drop): antena unica per CSS (7 peces en lloc de 8), boca sense text inicial, sense mirall CSS a les orelles, CSS complet del cap/ulls/nas/boca | 2026-07-03 | 402bc16 | [260703-uwn-aplica-el-redisseny-visual-final-del-ben](./quick/260703-uwn-aplica-el-redisseny-visual-final-del-ben/) |
 | 2 | Elimina forma/ompliment CSS de #robot-cap/ulls/nas/boca del preview Fase 2 (fix regressio D-13) | 2026-07-03 | b324e16 | — |
+| 260706-hi0 | Omple per defecte el textarea de noms d'equips a l'Admin amb els 4 noms reals de l'equip | 2026-07-06 | 6df1069 | [260706-hi0-omple-per-defecte-el-textarea-de-noms-d-](./quick/260706-hi0-omple-per-defecte-el-textarea-de-noms-d-/) |
 
 ### Roadmap Evolution
 
@@ -112,4 +113,4 @@ Last session: 2026-07-06T08:48:59.257Z
 Stopped at: Phase 04.1 context gathered
 Resume file: .planning/phases/04.1-millores-operatives-d-admin-tornar-fase-anterior-reset-servi/04.1-CONTEXT.md
 
-Last activity: 2026-07-06 - Completed 04-04-PLAN.md: D-15 congelació voluntària CSS/JS + D-16 resultats sense detall — Phase 04 complete
+Last activity: 2026-07-06 - Completed quick task 260706-hi0: Omple per defecte el textarea de noms d'equips a l'Admin amb els 4 noms reals de l'equip
