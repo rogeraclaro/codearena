@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 04.1
-current_phase_name: millores-operatives-d-admin-tornar-fase-anterior-reset-servi
+current_phase: 5
+current_phase_name: VPS + Nginx + PM2
 status: verifying
 stopped_at: Completed 04.1-03-PLAN.md
-last_updated: "2026-07-06T13:30:30.827Z"
+last_updated: "2026-07-06T14:41:34.654Z"
 last_activity: 2026-07-06
-last_activity_desc: Phase 04.1 execution started
+last_activity_desc: Phase 04.1 complete, transitioned to Phase 5
 progress:
   total_phases: 6
   completed_phases: 5
@@ -21,26 +21,26 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-01)
+See: .planning/PROJECT.md (updated 2026-07-06)
 
 **Core value:** Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (HTML = estructura, CSS = aparença, JS = comportament) manipulant-los directament, sense poder cometre errors de sintaxi i sense frustració.
-**Current focus:** Phase 04.1 — millores-operatives-d-admin-tornar-fase-anterior-reset-servi
+**Current focus:** Phase 5 — Desplegament a producció (VPS + Nginx + PM2)
 
 ## Current Position
 
-Phase: 04.1 (millores-operatives-d-admin-tornar-fase-anterior-reset-servi) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
-Next recommended run: /gsd-plan-phase 04.1
-Last activity: 2026-07-06 — Phase 04.1 execution started
+Phase: 5 — Desplegament a producció (VPS + Nginx + PM2)
+Plan: Not started
+Status: Ready to plan
+Next recommended run: /gsd-plan-phase 5
+Last activity: 2026-07-06 — Phase 04.1 complete (UAT 2/2 passed, security verified), transitioned to Phase 5
 
-Progress: [████████░░] 80% (4 de 5 fases completes)
+Progress: [████████████████████] 17/17 plans (100%) — 5 de 6 fases completes
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 7
 - Average duration: - min
 - Total execution time: 0 hours
 
@@ -49,6 +49,7 @@ Progress: [████████░░] 80% (4 de 5 fases completes)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 02 | 3 | - | - |
+| 04.1 | 4 | - | - |
 
 **Recent Trend:**
 
@@ -85,6 +86,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Fase 04.1 Pla 04: GROUP_ELEMENT_LABEL reutilitza pieceLabel/containerLabel tal com son (D-11), sense variants netes; showOverlay/updateLiveOverlay/hideOverlay separats per mantenir el fade fluid sense recrear el DOM
 - [Phase ?]: Fase 04.1 Pla 03: index.js no requereix cap canvi per al reset -- process.exit(0) mata tot el proces, fent moot qualsevol interval potencialment penjat
 - [Phase ?]: Fase 04.1 Pla 03: el boto Reset es sempre visible a buildControlBar (mai gated per state.phase/finished) -- D-05 exigeix una eina d'emergencia disponible en qualsevol moment
+- Fase 04.1 tancada 2026-07-06: 4/4 plans, UAT 2/2 passats (overlay CSS i «Fase anterior» verificats visualment en navegador real), 04.1-SECURITY.md verificat (8 amenaces, threats_open: 0)
 
 ### Pending Todos
 
@@ -92,7 +94,10 @@ None yet.
 
 ### Blockers/Concerns
 
-Cap blocker actiu. Els flags de recerca de Fases 2/3 es van resoldre en planificar-les; el dubte de navegadors/hardware de l'aula es va confirmar 2026-07-06 (Windows + Chrome, no tàctil — vegeu PROJECT.md § Context).
+Cap blocker actiu per a Phase 5. Els flags de recerca de Fases 2/3 es van resoldre en planificar-les; el dubte de navegadors/hardware de l'aula es va confirmar 2026-07-06 (Windows + Chrome, no tàctil — vegeu PROJECT.md § Context).
+
+- ⚠️ [independent, no bloqueja cap fase] `04.1-REVIEW.md` CR-01/CR-02: el prellenat de noms d'equip per defecte a l'Admin (feature d'una tasca prèvia, no de Phase 04.1) està trencat — el textarea es buida abans de mostrar-se i 2 dels 4 noms superen el límit de 40 caràcters validat pel servidor. Pendent de `/gsd-code-review 04.1 --fix` o una tasca ràpida dedicada.
+- ⚠️ [Phase 04.1, WR-02, no bloqueja] `gameState.previousPhase()` no té guard `finished` server-side (només el botó de l'Admin s'amaga client-side) — hardening pendent, documentat a `04.1-REVIEW.md`.
 
 ### Quick Tasks Completed
 
@@ -118,8 +123,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T13:30:30.822Z
-Stopped at: Completed 04.1-03-PLAN.md
+Last session: 2026-07-06T16:10:00Z
+Stopped at: Phase 04.1 complete, ready to plan Phase 5
 Resume file: None
 
-Last activity: 2026-07-06 - Completed quick task 260706-hi0: Omple per defecte el textarea de noms d'equips a l'Admin amb els 4 noms reals de l'equip
+Last activity: 2026-07-06 - Phase 04.1 complete (UAT + security verified), transitioned to Phase 5

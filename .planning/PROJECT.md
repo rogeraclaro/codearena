@@ -27,6 +27,7 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 - [ ] Pantalla d'equip dividida: panell d'acció (esquerra) + preview en temps real (dreta)
 - [x] Fase HTML: blocs drag & drop estil Scratch amb snap fort (bloc mal deixat torna al calaix o encaixa a l'espai vàlid més proper) — validat Phase 2 (GAME-03)
 - [ ] Fase CSS: codi "foradat" — sintaxi CSS real amb valors controlats (color pickers, sliders)
+- [x] Fase CSS: overlay de codi CSS en directe a la preview en interactuar amb un forat (etiqueta HTML + bloc CSS sencer del grup, valor en viu, fade suau) — validat Phase 04.1
 - [ ] Fase JS: constructor de regles lògiques "Quan passi X → A l'element Y → Fes Z" amb desplegables
 - [ ] Cap escriptura lliure de codi en cap fase (validat per la Fase HTML a Phase 2; pendent per CSS/JS)
 
@@ -36,6 +37,8 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 - [ ] Controls "+1 minut" i "Pausar/Reprendre" el temporitzador
 - [ ] Vista d'estat/progrés general dels 4-6 equips d'un cop d'ull
 - [ ] Botó "Finalitzar i Mostrar Resultats"
+- [x] Botó "Fase anterior" amb confirmació, per corregir un avanç prematur sense reiniciar tot — validat Phase 04.1
+- [x] Botó "Reset" — restart real del procés (process.exit + PM2 revive) com a eina d'emergència, amb confirmació destructiva — validat Phase 04.1
 
 **Auto-scoring**
 - [ ] Comparació HTML: estructura del DOM de l'equip vs Plana Model
@@ -63,6 +66,7 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 - **Els equips no avancen sols**: les transicions de fase depenen exclusivament de l'admin. Si el temps s'esgota, passen de fase tal com estiguin.
 - **Desplegament**: VPS propi, possiblement sota domini tipus masellas.info, rere proxy invers Nginx. Codi preparat per a producció.
 - **Públic**: alumnes de FP sense coneixements previs de programació.
+- **PM2 en producció (Fase 5)**: cal injectar `ADMIN_SECRET` via `env` de l'ecosystem/secret manager — actualment el procés emet un `console.warn` si falta, però en dev l'autenticació admin queda deshabilitada sense ell (T-04.1-05, transferit a Fase 5 al `04.1-SECURITY.md`).
 
 ## Constraints
 
@@ -81,6 +85,7 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 | 1 exercici fix al codi | Microclasse única de 15-20 min; configurabilitat és complexitat innecessària a la v1 | — Pending |
 | Estat al servidor amb recuperació | Un F5 accidental no pot arruïnar una partida de 15 min; l'estat de cada equip viu en memòria al servidor | — Pending |
 | Node.js + Socket.io | Sincronització en temps real admin↔equips; ecosistema madur, desplegament senzill a VPS | — Pending |
+| PM2 com a supervisor de procés (dev i prod, mateix mecanisme) | El Reset real de l'Admin necessita que el procés Node pugui sortir net (`process.exit(0)`) i ser revivit automàticament — PM2 ho fa amb `autorestart` sense cap branca per NODE_ENV | ✓ Validat Phase 04.1 — `ecosystem.config.cjs` + `server.cjs` (fallback CJS obligatori: PM2 en mode fork trenca el guard `isMainModule` d'ESM) |
 
 ## Evolution
 
@@ -100,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-03 — Phase 2 (Joc — Fase HTML) complete, GAME-03/GAME-06 validated*
+*Last updated: 2026-07-06 — Phase 04.1 (Millores operatives d'Admin) complete: botó «Fase anterior», Reset real via PM2, overlay CSS en directe validats*
