@@ -449,6 +449,24 @@ function buildControlBar(socket, state) {
     bar.appendChild(prevBtn);
   }
 
+  // D-04/D-05: botó «Reset», eina d'emergència per reiniciar TOT el servidor durant una
+  // classe real. Sempre disponible (mai limitat per fase, D-05) — no depèn de state.phase
+  // ni de `finished`. Acció destructiva (perd tot l'estat en memòria): demana confirmació
+  // (D-04, reutilitzant showConfirm amb destructive=true) i, si es confirma, emet
+  // EVENTS.ADMIN_RESET_SERVER (constant, mai el literal). Sense segona confirmació ni
+  // gestió manual de reconnexió — socket.io-client ja auto-reconnecta.
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'btn btn-destructive';
+  resetBtn.textContent = 'Reset';
+  resetBtn.addEventListener('click', async () => {
+    const ok = await showConfirm('Segur que vols reiniciar el servidor?', 'Sí, reinicia', true);
+    if (ok) {
+      socket.emit(EVENTS.ADMIN_RESET_SERVER);
+    }
+  });
+  bar.appendChild(resetBtn);
+
   if (state.phase) {
     const pauseBtn = document.createElement('button');
     pauseBtn.type = 'button';
