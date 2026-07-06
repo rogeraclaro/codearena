@@ -486,6 +486,13 @@ function buildRegistrationBlock(socket) {
   textarea.id = 'team-names-input';
   textarea.rows = 6;
   textarea.placeholder = 'Equip 1\nEquip 2\n…';
+  const defaultTeamNames = [
+    'Els primers no sempre tenen perquè ser els últims',
+    'Segundas filas siempre fueron buenas',
+    'Que siguem de tercera fila NO té perquè ser negatiu!',
+    'Los ultimos de las filas',
+  ];
+  textarea.value = defaultTeamNames.join('\n');
 
   const registerBtn = document.createElement('button');
   registerBtn.type = 'button';
