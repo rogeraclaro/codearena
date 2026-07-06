@@ -20,7 +20,7 @@ Fer que l'app funcioni de manera fiable al VPS de producció (`classe.masellas.i
 
 ### Tipus de site a CloudPanel
 - **D-04:** Crear el site a CloudPanel com a **"Reverse Proxy"**, NO com a "Node.js" — el tipus "Node.js" de CloudPanel porta el seu propi supervisor de procés, que entraria en conflicte amb el PM2 + `ecosystem.config.cjs`/`server.cjs` ja construïts a la Fase 04.1 (el mecanisme de Reset de l'Admin depèn que sigui PM2 qui reviu el procés).
-- **D-05:** El reverse proxy de CloudPanel apunta cap al port on escolta PM2 (per defecte `3000`, definit a `ecosystem.config.cjs`).
+- **D-05:** El reverse proxy de CloudPanel apunta cap a `http://127.0.0.1:8011` — aquest és el port real assignat per CloudPanel per a aquest site, NO el `3000` per defecte d'`ecosystem.config.cjs`. Cal que el `.env` de producció defineixi `PORT=8011` (D-10) i que `ecosystem.config.cjs` en producció faci servir aquest valor (via el `.env`/`dotenv`, D-09) perquè el procés Node escolti al mateix port que CloudPanel espera.
 
 ### Nginx / WebSocket
 - **D-06:** No es versiona cap fitxer `.conf` d'Nginx al repo — CloudPanel gestiona el vhost via la seva UI. En comptes d'això, el CONTEXT.md/documentació d'aquesta fase llista les directives clau que cal **verificar/afegir** al vhost generat per CloudPanel si no hi són per defecte: capçaleres `Upgrade`/`Connection` per l'upgrade WebSocket, `proxy_read_timeout`/`proxy_send_timeout` alts (per no tallar connexions idle durant una sessió de 15-20 min), i `proxy_buffering off`.
@@ -31,7 +31,7 @@ Fer que l'app funcioni de manera fiable al VPS de producció (`classe.masellas.i
 
 ### Gestió de secrets (ADMIN_SECRET)
 - **D-09:** S'afegeix la dependència `dotenv` al projecte i es crida `dotenv.config()` a l'arrencada (`server.cjs`/`src/server/index.js`), de manera que un fitxer `.env` real al VPS (basat en `.env.example`, mai versionat) sigui llegit automàticament sense canviar com `process.env` s'exposa a la resta del codi.
-- **D-10:** Aquest `.env` de producció ha d'incloure com a mínim `ADMIN_SECRET` (obligatori — sense ell l'autenticació admin queda deshabilitada, T-04.1-05 transferit des de la Fase 04.1) i `PORT` si cal diferent de 3000.
+- **D-10:** Aquest `.env` de producció ha d'incloure com a mínim `ADMIN_SECRET` (obligatori — sense ell l'autenticació admin queda deshabilitada, T-04.1-05 transferit des de la Fase 04.1) i `PORT=8011` (obligatori en producció — ha de coincidir amb el port que espera el reverse proxy de CloudPanel, D-05).
 
 ### Procés de desplegament
 - **D-11:** Es crea un script de desplegament versionat (p.ex. `deploy/deploy.sh`) que fa `git pull`, `npm ci`, `npm run build`, i `pm2 reload codearena` (reload, no restart, per minimitzar el tall si mai es fa servir amb usuaris connectats — encara que en la pràctica el desplegament es farà sempre fora d'hores de classe). S'executa manualment via SSH, no hi ha CI/CD en aquesta fase.
@@ -75,7 +75,7 @@ Fer que l'app funcioni de manera fiable al VPS de producció (`classe.masellas.i
 - Cap variable d'entorn es carrega actualment via `dotenv` — `.env.example` documenta explícitament que el servidor llegeix `process.env` directament; D-09 introdueix `dotenv` per primer cop al projecte.
 
 ### Integration Points
-- El site "Reverse Proxy" de CloudPanel s'ha de configurar per apuntar a `localhost:3000` (o el `PORT` que s'especifiqui al `.env` de producció).
+- El site "Reverse Proxy" de CloudPanel ja apunta a `http://127.0.0.1:8011` (configurat per l'usuari) — el `.env`/PM2 en producció ha de fer escoltar el procés Node en aquest mateix port (`PORT=8011`).
 - El script de desplegament (D-11) opera dins la ruta on es clona el repo a l'usuari no-root (D-03), i assumeix que PM2 ja està arrencat allà amb `npm run server:pm2` (script ja existent a `package.json`).
 
 </code_context>

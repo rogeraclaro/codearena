@@ -134,6 +134,13 @@
 
 ---
 
+## Port del reverse proxy (correcció post-log)
+
+**User's choice:** "el reverse proxy apunta cap a http://127.0.0.1:8011"
+**Notes:** Corregeix la suposició inicial (port `3000` per defecte d'`ecosystem.config.cjs`) — el port real que CloudPanel espera és `8011`. Incorporat a CONTEXT.md com a D-05/D-10 actualitzats: `PORT=8011` és obligatori al `.env` de producció.
+
+---
+
 ## Claude's Discretion
 
 - Nom exacte i ubicació del script de desplegament dins de `deploy/`.
