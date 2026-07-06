@@ -26,6 +26,10 @@ export const EVENTS = Object.freeze({
   // ADMIN-07 (D-14): l'admin finalitza la partida i dispara els resultats a totes les
   // pantalles. Admin-only (re-validat per pertinença a la room 'admin', T-04-01).
   ADMIN_FINALIZE_GAME: 'admin:finalize-game',
+  // D-19: pas explícit de l'admin (mateix patró que ADMIN_FINALIZE_GAME) per mostrar la
+  // pantalla final "Moltes gràcies!!" a totes les pantalles DESPRÉS del rànquing. Admin-only
+  // (re-validat per pertinença a la room 'admin'); només vàlid amb la partida ja finalitzada.
+  ADMIN_SHOW_THANKS: 'admin:show-thanks',
 
   // --- Server -> Client (authoritative broadcasts) ---
   SESSION_FULL_STATE: 'session:full-state',
@@ -54,4 +58,8 @@ export const EVENTS = Object.freeze({
   // reconnectar, amb el ranking final congelat + el seu ownDetail, sense re-reproduir la
   // cerimònia (mostra l'estat final directament).
   GAME_RESULTS: 'game:results',
+  // D-19: difós a TOTES les pantalles (equips + Admin, room 'session') quan l'admin prem el
+  // pas final. Pantalla efímera "Moltes gràcies!!" — cap dada, purament celebrativa (mirall
+  // de la cerimònia D-14: broadcast → lockstep, sense estat de servidor persistit).
+  THANKS_SHOW: 'game:thanks',
 });

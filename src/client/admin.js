@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 import { createElement, CircleCheckBig, WifiOff, RefreshCw, Trophy } from 'lucide';
 import { renderCountdown } from './shared/timer.js';
 import { EVENTS } from '../server/events.js';
-import { playCeremony } from './shared/ceremony.js';
+import { playCeremony, showThanks } from './shared/ceremony.js';
 
 const STYLE_ID = 'admin-styles';
 
@@ -416,17 +416,27 @@ function buildControlBar(socket, state) {
   // ADMIN-07 (D-14): a l'última fase de joc (js) el CTA es repurposa a "Finalitzar i
   // Mostrar Resultats" i emet l'event de finalització (constant EVENTS, mai un literal)
   // després d'una confirmació. Fora d'aquesta fase manté el comportament d'avanç.
+  // D-19: un cop finalitzada la partida, el mateix CTA esdevé el pas final explícit que
+  // dispara "Moltes gràcies!!" a totes les pantalles (mateix patró de transició manual). El
+  // rànquing ja és a la pantalla; és un beat de tancament, sense confirmació (no destructiu).
+  // "finished" es deriva de finalRanking (mòdul, fixat a CEREMONY_START) o de state.finished
+  // (F5) perquè finalitzar NO emet session:full-state.
   const isLastPhase = state.phase === 'js';
+  const finished = state.finished || (Array.isArray(finalRanking) && finalRanking.length > 0);
   const ctaBtn = document.createElement('button');
   ctaBtn.type = 'button';
   ctaBtn.className = 'btn btn-accent';
-  ctaBtn.textContent = isLastPhase
-    ? 'Finalitzar i Mostrar Resultats'
-    : state.phase
-      ? 'Següent fase'
-      : 'Iniciar Fase';
+  ctaBtn.textContent = finished
+    ? 'Mostrar «Moltes gràcies!!»'
+    : isLastPhase
+      ? 'Finalitzar i Mostrar Resultats'
+      : state.phase
+        ? 'Següent fase'
+        : 'Iniciar Fase';
   ctaBtn.addEventListener('click', async () => {
-    if (isLastPhase) {
+    if (finished) {
+      socket.emit(EVENTS.ADMIN_SHOW_THANKS);
+    } else if (isLastPhase) {
       const confirmed = await showFinalizeConfirm();
       if (confirmed) socket.emit(EVENTS.ADMIN_FINALIZE_GAME);
     } else if (state.phase) {
@@ -752,6 +762,9 @@ function connectWithSecret(secret) {
     partialClosedPhase = closedPhase || null;
     if (latestState) renderAdmin(socket, latestState);
   });
+  // D-19: l'admin també veu "Moltes gràcies!!" (D-19: totes les pantalles), disparat pel
+  // mateix broadcast que els equips → lockstep. Overlay persistent per sobre del panell.
+  socket.on(EVENTS.THANKS_SHOW, () => showThanks());
   socket.on('connect_error', (err) => {
     // Only a rejected secret ('unauthorized' from the server middleware) should
     // clear the stored value and re-prompt. Transient network errors are left

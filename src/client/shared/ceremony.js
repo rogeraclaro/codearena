@@ -97,6 +97,17 @@ function ensureCeremonyStyles() {
       border-radius: 2px;
       opacity: 0;
     }
+    /* D-19: pantalla final "Moltes gràcies!!". Reutilitza el llenç de .ceremony-overlay però
+       és PALETA NEUTRA (--color-text sobre --color-bg): cap color chillón — la contenció es
+       manté, i el missatge de tancament és un beat calmat, no la festa del compte enrere. */
+    .thanks-text {
+      font-size: max(calc(var(--font-size-display) * 1.6), 12vmin);
+      font-weight: var(--font-weight-heading);
+      line-height: 1.1;
+      color: var(--color-text);
+      text-align: center;
+      padding: var(--space-xl);
+    }
     /* D-17: zoom MOLT més exagerat — el número entra, es queda un instant i surt
        completament del viewport cap a l'espectador (scale terminal ~10, no un zoom subtil). */
     @keyframes ceremony-zoom {
@@ -128,6 +139,9 @@ function ensureCeremonyStyles() {
       }
       .ceremony-confetti__piece {
         animation: ceremony-fall 4s linear forwards;
+      }
+      .thanks-text {
+        animation: ceremony-row-enter var(--motion-snap) var(--motion-ease);
       }
     }
   `;
@@ -246,4 +260,25 @@ export function playCeremony({ ranking, buildRow, onComplete }) {
     clearTimers();
     overlay.remove();
   };
+}
+
+// D-19: pantalla final "Moltes gràcies!!" compartida per equips (client.js) i Admin
+// (admin.js), disparada per UN sol broadcast THANKS_SHOW (mateix patró de lockstep que la
+// cerimònia). A diferència de la cerimònia, aquest overlay PERSISTEIX (és l'estat de repòs
+// final de la sessió) — es retira sol només en recarregar la pàgina. Idempotent: una segona
+// crida (re-broadcast o doble clic) reemplaça l'overlay existent en lloc d'apilar-ne un altre.
+// Sota reduced-motion el text apareix estàtic (sense fade-in), sense perdre res.
+export function showThanks(message = 'Moltes gràcies!!') {
+  ensureCeremonyStyles();
+  const existing = document.getElementById('thanks-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'thanks-overlay';
+  overlay.className = 'ceremony-overlay';
+  const text = document.createElement('div');
+  text.className = 'thanks-text';
+  text.textContent = message; // DOM text API (V5 anti-XSS)
+  overlay.appendChild(text);
+  document.body.appendChild(overlay);
 }

@@ -55,6 +55,17 @@ function onceOrTimeout(socket, event, ms = 600) {
   });
 }
 
+// Per esdeveniments sense payload (p.ex. THANKS_SHOW, D-19): distingeix "rebut" de "timeout".
+function receivedWithin(socket, event, ms = 400) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), ms);
+    socket.once(event, () => {
+      clearTimeout(timer);
+      resolve(true);
+    });
+  });
+}
+
 function connectAndAwait(auth, firstEvent) {
   const socket = ioClient(baseUrl, { auth, forceNew: true, transports: ['websocket'] });
   const ready = Promise.all([once(socket, 'connect'), once(socket, firstEvent)]).then(
@@ -240,6 +251,24 @@ test('F5-RECOVERY: reconnectar amb el token després de finalitzar rep GAME_RESU
   assert.ok(results.ownDetail && results.ownDetail.html, 'ownDetail propi recuperat a F5');
   assert.equal(results.ranking[0].id, team1Id, 'ranking final congelat manté l\'ordre');
   reconnect.socket.close();
+});
+
+test('THANKS-NON-ADMIN-REJECT (D-19): un equip que emet admin:show-thanks no difon res (V4)', async () => {
+  const t1 = receivedWithin(teamClient1, EVENTS.THANKS_SHOW, 300);
+  const ta = receivedWithin(adminSocket, EVENTS.THANKS_SHOW, 300);
+  teamClient1.emit(EVENTS.ADMIN_SHOW_THANKS);
+  const [got1, gotA] = await Promise.all([t1, ta]);
+  assert.equal(got1, false, 'un no-admin no pot disparar la pantalla de gràcies');
+  assert.equal(gotA, false, 'cap pantalla rep THANKS_SHOW d\'un show-thanks forjat');
+});
+
+test('THANKS-ROUNDTRIP (D-19): l\'admin difon THANKS_SHOW a totes les pantalles (equips + Admin)', async () => {
+  const t1 = receivedWithin(teamClient1, EVENTS.THANKS_SHOW, 600);
+  const t2 = receivedWithin(teamClient2, EVENTS.THANKS_SHOW, 600);
+  const ta = receivedWithin(adminSocket, EVENTS.THANKS_SHOW, 600);
+  adminSocket.emit(EVENTS.ADMIN_SHOW_THANKS);
+  const [got1, got2, gotA] = await Promise.all([t1, t2, ta]);
+  assert.ok(got1 && got2 && gotA, 'tots (equips + admin) reben THANKS_SHOW des d\'un sol broadcast');
 });
 
 test('cleanup: tanca sockets restants', () => {

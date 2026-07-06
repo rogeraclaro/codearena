@@ -270,6 +270,21 @@ export function registerSocketHandlers(io) {
       }),
     );
 
+    // --- D-19: pas final explícit de l'admin — mostra "Moltes gràcies!!" a totes les
+    // pantalles (equips + Admin, room 'session'). Mateix patró que ADMIN_FINALIZE_GAME:
+    // admin-only re-validat server-side (V4/T-04-01), envoltat de safeHandler (T-04-05). Guard
+    // d'ordre: només vàlid amb la partida ja finalitzada (no es pot saltar per davant del
+    // rànquing). Pantalla purament celebrativa, sense payload ni estat de servidor persistit
+    // (mirall efímer de la cerimònia): un sol broadcast → totes les pantalles en lockstep.
+    socket.on(
+      EVENTS.ADMIN_SHOW_THANKS,
+      safeHandler(() => {
+        if (!socket.rooms.has('admin')) return; // T-04-01
+        if (!gameState.getPublicState().finished) return; // ordre: només després del rànquing
+        io.to('session').emit(EVENTS.THANKS_SHOW);
+      }),
+    );
+
     // --- Fase HTML: col·locació de peça (GAME-03) ---
     // V4: la identitat SEMPRE ve de socket.data.teamId (middleware), MAI del
     // payload — un equip no pot mutar el board d'un altre. V5: slotId/pieceType

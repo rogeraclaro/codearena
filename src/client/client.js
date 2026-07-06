@@ -29,7 +29,7 @@ import {
 } from '../shared/robotTemplate.js';
 import { attachRule, applyAction } from '../shared/effects.js';
 import { isHtmlComplete } from '../shared/scoring.js';
-import { playCeremony } from './shared/ceremony.js';
+import { playCeremony, showThanks } from './shared/ceremony.js';
 
 const TOKEN_KEY = 'teamToken';
 const TEAM_ID_KEY = 'teamId';
@@ -1883,6 +1883,9 @@ function bootClient() {
     latestResults = payload || {};
     renderResultsScreen();
   });
+  // D-19: pas final de l'admin — pantalla "Moltes gràcies!!" a totes les pantalles alhora
+  // (un sol broadcast → lockstep). Overlay persistent per sobre de la pantalla de resultats.
+  socket.on(EVENTS.THANKS_SHOW, () => showThanks());
 
   socket.on('team:reload', () => {
     location.reload();
