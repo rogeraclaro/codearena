@@ -12,6 +12,20 @@ el procés Node.
 Totes les accions d'aquest runbook s'executen manualment via SSH al VPS i la UI de
 CloudPanel. No hi ha CI/CD en aquesta fase (D-11).
 
+> **Deviació de D-03 (decisió operativa presa durant el desplegament):** l'accés SSH
+> disponible al VPS és només com a `root`, així que el codi es desplega directament
+> sota `root` a `/root/codearena`, en comptes d'un usuari no-root dedicat. És una
+> decisió conscient de l'operador (professor), acceptant el risc residual descrit
+> més avall, no un descuit. Si en el futur es crea un usuari no-root, migra el
+> directori i repeteix les seccions 2-6 amb la nova ruta.
+>
+> **Risc acceptat:** el procés Node (únic component exposat a Internet via el
+> reverse proxy) corre amb privilegis totals del sistema; qualsevol compromís
+> remot de l'app o d'una dependència npm tindria abast de `root` sobre tot el VPS
+> (altres sites de CloudPanel inclosos), no només sobre el directori de l'app.
+> Acceptable per a l'escala i durada d'aquesta microclasse (sessions curtes,
+> sense dades sensibles), però a tenir en compte si el VPS allotja altres serveis.
+
 ---
 
 ## 1. Prerequisits
@@ -21,14 +35,13 @@ Abans de començar, confirma al VPS:
 - [ ] **DNS** — `classe.masellas.info` apunta a la IP del VPS (D-01). Comprova-ho
       amb `dig +short classe.masellas.info` o `nslookup classe.masellas.info`.
       L'emissió de Let's Encrypt (secció 4) fallarà si el DNS encara no resol.
-- [ ] **Usuari no-root dedicat** — el codi es desplega sota un usuari no-root, a la
-      ruta `/home/<usuari>/codearena` (D-03). No desplegar mai com a root.
+- [ ] **Accés root** — el codi es desplega directament com a `root`, a la ruta
+      `/root/codearena` (deviació de D-03, veure nota més amunt).
 - [ ] **Node LTS compatible** — `node --version` al VPS ha de mostrar una LTS recent
       (dev local és v22.17.0; el target del projecte és Node 24 LTS, A3). L'app no
       usa cap feature exòtica de Node, però verifica-ho igualment.
-- [ ] **PM2 instal·lat globalment sota l'usuari no-root** — `pm2 --version`. Si no
-      hi és: `npm install -g pm2` amb l'usuari no-root (no amb sudo/root, perquè el
-      supervisor ha de córrer sota el mateix usuari que el procés).
+- [ ] **PM2 instal·lat globalment** — `pm2 --version`. Si no hi és:
+      `npm install -g pm2`.
 
 ---
 
@@ -101,7 +114,7 @@ forci `https` (mitigació T-05-03: transport sense xifrar).
 
 ## 5. Secret i port — crear el `.env` de producció (D-09/D-10)
 
-Al directori del repo al VPS (`/home/<usuari>/codearena`), crea el fitxer `.env`
+Al directori del repo al VPS (`/root/codearena`), crea el fitxer `.env`
 basant-te en `.env.example`:
 
 ```bash
@@ -128,14 +141,14 @@ cp .env.example .env
 ### Primer desplegament (VPS net, encara no hi ha procés PM2)
 
 ```bash
-cd /home/<usuari>/codearena
+mkdir -p /root/codearena && cd /root/codearena
 git clone <url-del-repo> .        # o clona a la ruta i entra-hi
 # crea el .env (secció 5) abans d'arrencar
 npm ci                            # instal·la exactament el lockfile (dotenv 17.4.2)
 npm run build                     # genera dist/ amb Vite
 npm run server:pm2                # = pm2 start ecosystem.config.cjs
 pm2 save                          # persisteix la llista de processos
-pm2 startup                       # genera l'script d'arrencada en boot — segueix la instrucció que imprimeix
+pm2 startup                       # genera l'script d'arrencada en boot — com que ja ets root, executa directament la comanda que imprimeix (sense sudo)
 ```
 
 `pm2 save` + `pm2 startup` fan que l'app sobrevisqui reinicis del VPS (i que el Reset
@@ -144,7 +157,7 @@ de l'Admin, que fa `process.exit(0)`, sigui revifat per PM2).
 ### Desplegaments subsegüents
 
 ```bash
-cd /home/<usuari>/codearena
+cd /root/codearena
 bash deploy/deploy.sh
 ```
 
@@ -220,7 +233,7 @@ Des del domini real `https://classe.masellas.info`:
 | ID | Decisió |
 |----|---------|
 | D-01 | Subdomini de producció: `classe.masellas.info` |
-| D-03 | Usuari no-root dedicat, ruta `/home/<usuari>/codearena` |
+| D-03 | *(deviat)* Desplegament com a `root` a `/root/codearena` — accés SSH disponible és només root; risc acceptat per l'operador (veure nota a l'inici) |
 | D-04 | Site tipus «Reverse Proxy», NO «Node.js» |
 | D-05 | Reverse proxy → `http://127.0.0.1:8011` |
 | D-06 | Directives WS verificades/afegides al vhost (no es versiona cap `.conf`) |
