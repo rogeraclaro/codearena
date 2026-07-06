@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Nucli en temps real i control de sessió** - Servidor amb estat autoritatiu, identitat persistent, timer sincronitzat i panell Admin de control/recuperació (completed 2026-07-02)
 - [x] **Phase 2: Joc — Fase HTML (blocs drag & drop)** - Equips munten l'esquelet HTML amb blocs de snap fort, sense escriptura lliure (completed 2026-07-03)
 - [x] **Phase 3: Joc — Fases CSS i JS** - Equips vesteixen l'HTML amb CSS foradat i li donen comportament amb regles JS (completed 2026-07-04)
-- [ ] **Phase 4: Puntuació i rànquing final** - Motor de scoring estructural/d'estil/de comportament i pantalla de resultats
+- [x] **Phase 4: Puntuació i rànquing final** - Motor de scoring estructural/d'estil/de comportament i pantalla de resultats (completed 2026-07-06)
 - [ ] **Phase 5: Desplegament a producció (VPS + Nginx + PM2)** - App verificada en producció amb WebSocket real i reinici automàtic
 
 ## Phase Details
@@ -117,7 +117,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. La puntuació JS verifica que l'esdeveniment, l'element i l'acció triats coincideixen semànticament amb els de la Plana Model
   5. La pantalla de resultats mostra el percentatge d'encert i el rànquing de tots els equips, amb el detall de sub-checks superats per equip
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 **Wave 1**
 
@@ -129,7 +129,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 04-03-PLAN.md — Cerimònia d'entrega de premis (compte enrere + revelació inversa + confetti) abans del rànquing (Wave 3)
+- [x] 04-03-PLAN.md — Cerimònia d'entrega de premis (compte enrere + revelació inversa + confetti) abans del rànquing (Wave 3)
 
 **UI hint**: yes
 
@@ -157,5 +157,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Nucli en temps real i control de sessió | 4/4 | Complete | 2026-07-02 |
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
-| 4. Puntuació i rànquing final | 2/3 | In Progress|  |
+| 4. Puntuació i rànquing final | 3/3 | Complete   | 2026-07-06 |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |
