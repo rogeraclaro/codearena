@@ -39,7 +39,7 @@ const HOLD_MS = 3000; // el 0 estàtic
 const ZERO_EXIT_MS = 800; // sortida del 0 (zoom+fade)
 const STAGGER_MS = 600; // interval fix de la revelació invers
 const WINNER_PAUSE_MS = 1200; // pausa dramàtica just abans del #1
-const CONFETTI_TAIL_MS = 4000; // cua del confetti abans de retirar l'overlay
+const CONFETTI_TAIL_MS = 6000; // D-20: cua del confetti abans de retirar l'overlay (~6s)
 
 function ensureCeremonyStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -120,9 +120,13 @@ function ensureCeremonyStyles() {
       from { opacity: 0; transform: translateY(var(--space-md)); }
       to { opacity: 1; transform: translateY(0); }
     }
+    /* D-20: ja NO surten del viewport — es queden acumulades a la part inferior
+       (translateY final dins la pantalla, no per sota) per donar sensació que
+       s'omple la pantalla de confetti en lloc de desaparèixer. */
     @keyframes ceremony-fall {
       0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(720deg); opacity: 1; }
+      85% { transform: translateY(88vh) rotate(600deg); opacity: 1; }
+      100% { transform: translateY(90vh) rotate(720deg); opacity: 1; }
     }
     /* TOTA la motion de cerimònia dins no-preference (mirall del patró de client.css:554).
        Sota reduced-motion la cerimònia ni tan sols es munta (es salta a JS), però ho
@@ -138,7 +142,7 @@ function ensureCeremonyStyles() {
         animation: ceremony-row-enter var(--motion-snap) var(--motion-ease);
       }
       .ceremony-confetti__piece {
-        animation: ceremony-fall 4s linear forwards;
+        animation: ceremony-fall 6s linear forwards;
       }
       .thanks-text {
         animation: ceremony-row-enter var(--motion-snap) var(--motion-ease);
@@ -148,12 +152,13 @@ function ensureCeremonyStyles() {
   document.head.appendChild(style);
 }
 
-// Confetti dependency-free (RESEARCH §Code Examples): centenars de divs posicionats
-// absolutament amb left/background/animationDelay aleatoris del set chillón. Es netegen
-// soles en retirar-se `.ceremony-overlay` (són fills seus). Guard reduced-motion.
-// D-18: molt més confetti que la primera implementació (60 → 240 peces); els delays segueixen
-// dins de CONFETTI_TAIL_MS perquè cap peça es talli en retirar l'overlay.
-function fireConfetti(container, count = 240) {
+// Confetti dependency-free (RESEARCH §Code Examples): divs posicionats absolutament amb
+// left/background/animationDelay aleatoris del set chillón. Es netegen soles en retirar-se
+// `.ceremony-overlay` (són fills seus). Guard reduced-motion.
+// D-20 (refina D-18): torna a la quantitat original (60 peces — 240 quedava malament);
+// en canvi la caiguda ara s'acumula dins el viewport (no en surt) durant ~6s, els delays
+// segueixen dins CONFETTI_TAIL_MS perquè cap peça es talli en retirar l'overlay.
+function fireConfetti(container, count = 60) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   for (let i = 0; i < count; i++) {
     const piece = document.createElement('div');

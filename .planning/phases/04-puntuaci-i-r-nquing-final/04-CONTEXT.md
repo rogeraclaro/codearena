@@ -61,6 +61,9 @@ En finalitzar la partida, cada equip rep una puntuació calculada automàticamen
 - **D-18:** Molt **més quantitat** de confetti al final de la cerimònia — la primera implementació es considera insuficient.
 - **D-19:** Després de revelar el rànquing final, hi ha una **última pantalla** amb el text "Moltes gràcies!!" en mida gran, mostrada a totes les pantalles (equips + Admin). Es dispara des de l'Admin (mateix patró que totes les transicions anteriors — un nou pas explícit, no automàtic just després del rànquing).
 
+**REFINA D-18 (after live re-test, 2026-07-06).**
+- **D-20:** La quantitat de confetti torna a la xifra ORIGINAL (60 peces, no les 240 de D-18) — D-18 quedava malament amb massa peces. En canvi, la CAIGUDA s'allarga: les peces ja NO desapareixen en sortir per sota del viewport — es queden **acumulades a la part inferior de la pantalla** (posició de repòs dins el viewport, no per sota), donant sensació de "s'omple la pantalla" a mesura que cauen. Durada total de la seqüència de confetti: **~6 segons** (abans eren 4s de caiguda + 4s de cua).
+
 ### Claude's Discretion
 - Fórmula exacta de la bonificació de temps HTML (D-05): el llindar concret d'±5 punts i com escalar-lo (p.ex. lineal vs. esglaonat) es decideix en planificar.
 - Detall tècnic de la distància RGB normalitzada (D-02): quina fórmula de distància de color (Euclidiana simple vs. perceptual) — es decideix en planificar, prioritzant simplicitat.
