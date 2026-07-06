@@ -1118,6 +1118,37 @@ function syncCssPanelInputs(cssValues) {
   }
 }
 
+// --- Fase CSS: overlay de codi en directe a la preview (D-07..D-11) ---
+// Mapa grup→etiqueta HTML de l'element, un per cada CSS_GROUP_ORDER. Reutilitza
+// pieceLabel()/containerLabel() TAL COM SÓN (D-11) — mai una variant "neta"
+// pròpia: per a '.orella' l'etiqueta inclou el `src` fals que pieceLabel ja
+// afegeix avui a les peces img.
+const GROUP_ELEMENT_LABEL = {
+  '.antena': pieceLabel('antena-esquerra'),
+  '.orella': pieceLabel('orella-esquerra'),
+  '.contenidor-ulls': containerLabel('contenidor-ulls'),
+  '.ull': pieceLabel('ull'),
+  '#robot-cap': containerLabel('robot-cap'),
+  '#nas': pieceLabel('nas'),
+  '#boca': pieceLabel('boca'),
+};
+
+// Còpia de latestCssValues amb un override opcional (el valor viu del forat que
+// s'està movent, encara no assentat a l'estat autoritatiu del servidor).
+function getLiveValues(overrideId, overrideValue) {
+  const values = { ...latestCssValues };
+  if (overrideId !== undefined) values[overrideId] = overrideValue;
+  return values;
+}
+
+// Bloc CSS sencer del grup actiu (D-08): TEXT pla construït per concatenació,
+// mai interpretat com a markup (renderitzat sempre via textContent, T-04.1-06).
+function buildOverlayBlock(group, liveValues) {
+  const rows = Object.entries(CSS_HOLES).filter(([, h]) => h.group === group);
+  const lines = rows.map(([id, h]) => `  ${h.prop}: ${liveValues[id] ?? h.default};`);
+  return `${group} {\n${lines.join('\n')}\n}`;
+}
+
 // --- Fase JS: constructor de regles + intèrpret parent-driven (GAME-05) ---
 // latestJsRules = últim TEAM_JS_STATE autoritatiu (regles completes, usat en
 // preview/F5). jsPanelRows = còpia de treball LOCAL del panell (permet files

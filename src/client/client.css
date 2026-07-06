@@ -415,6 +415,30 @@
   }
 }
 
+/* Overlay de codi CSS en directe (D-07..D-11): requadre monospace ancorat a
+   baix de la columna de preview (dreta de `.active-split`), mirall de
+   `.frozen-overlay` — mai bloqueja el robot (pointer-events:none) i entra/surt
+   amb un fade curt (D-10), mai instantani. Nomes tokens — cap literal. */
+.css-live-overlay {
+  position: absolute;
+  bottom: var(--space-lg);
+  left: calc(50% + var(--space-lg));
+  right: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-md);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-label);
+  white-space: pre;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.css-live-overlay--visible {
+  opacity: 1;
+}
+
 /* --- Fase JS: panell de regles "Quan → a l'element → Fes" (GAME-05, UI-SPEC
    §Component Inventory JS). Només tokens existents — cap token nou. Els desplegables
    i "Veure" usen estil natiu/neutre amb outline de focus --color-text: el mustard
