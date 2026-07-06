@@ -216,6 +216,26 @@ export function registerSocketHandlers(io) {
       }),
     );
 
+    // --- D-04/D-05/D-06: Reset REAL del servidor — eina d'emergència del professor. ---
+    // Admin-only re-validat server-side (V4/T-04.1-03 — mai confiar en un flag de rol
+    // del client; un no-admin NO pot matar el procés compartit, DoS). NO té payload a
+    // validar. NO emet SESSION_FULL_STATE (anti-pattern RESEARCH: el reset és un cicle
+    // de vida de procés, no un canvi d'estat de joc) — només l'avís amable
+    // SERVER_RESTARTING abans de sortir. El setTimeout deixa sortir el broadcast abans
+    // que io.close() desconnecti net (els clients auto-reconnecten) i process.exit(0)
+    // mati el procés perquè PM2 el reviu net (D-04), amb tot l'estat en memòria buidat.
+    socket.on(
+      EVENTS.ADMIN_RESET_SERVER,
+      safeHandler(() => {
+        if (!socket.rooms.has('admin')) return; // V4/T-04.1-03
+        io.to('session').emit(EVENTS.SERVER_RESTARTING);
+        setTimeout(() => {
+          io.close();
+          process.exit(0);
+        }, 150);
+      }),
+    );
+
     socket.on(
       EVENTS.ADMIN_TIMER_PAUSE,
       safeHandler(() => {

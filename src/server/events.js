@@ -10,6 +10,9 @@ export const EVENTS = Object.freeze({
   ADMIN_NEXT_PHASE: 'admin:next-phase',
   // client→server, admin-only (re-validat per room 'admin')
   ADMIN_PREV_PHASE: 'admin:prev-phase',
+  // D-04/D-05/D-06: client→server, admin-only (re-validat per room 'admin') — dispara
+  // un restart REAL del procés (process.exit(0) + PM2 revive = wipe total de l'estat).
+  ADMIN_RESET_SERVER: 'admin:reset-server',
   ADMIN_TIMER_PAUSE: 'admin:timer-pause',
   ADMIN_TIMER_RESUME: 'admin:timer-resume',
   ADMIN_TIMER_EXTEND: 'admin:timer-extend',
@@ -34,6 +37,9 @@ export const EVENTS = Object.freeze({
   ADMIN_SHOW_THANKS: 'admin:show-thanks',
 
   // --- Server -> Client (authoritative broadcasts) ---
+  // D-04: avís amable abans que el procés surti per al restart PM2 — cicle de vida de
+  // procés, NO un canvi d'estat de joc (mai acompanyat de SESSION_FULL_STATE).
+  SERVER_RESTARTING: 'server:restarting',
   SESSION_FULL_STATE: 'session:full-state',
   TEAM_CLAIMED: 'team:claimed',
   TEAM_AVAILABLE_LIST: 'team:available-list',
