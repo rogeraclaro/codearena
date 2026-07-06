@@ -48,12 +48,28 @@ En finalitzar la partida, cada equip rep una puntuació calculada automàticamen
   6. Al final de la revelació, **confetti a pantalla completa**.
 - Disposició i seqüència exactes de la revelació del rànquing (un per un amb pausa, tots alhora amb stagger, etc.) es deixen a discreció de disseny — veure Claude's Discretion.
 
+### Esmenes post-implementació (feedback en viu durant execució, 2026-07-06)
+
+**SUPERSEDEIX D-08/D-09.**
+- **D-15:** Fase **CSS** i Fase **JS** recuperen un botó "Finalitzar" **voluntari**, sense gate de correcció (a diferència de D-07/HTML, que sí té gate 100%) — no hi ha manera d'exigir correcció exacta perquè ni CSS (distància contínua) ni JS (sense referència exacta, D-03) tenen un estat "100% correcte" verificable. En prémer'l, l'equip queda **congelat** (`doneAt.css`/`doneAt.js`): no pot seguir editant CSS ni afegint/editant regles JS. El timer global NO es toca (igual que D-07). **Sense bonificació de temps** — D-05/D-06 es mantenen intactes: la bonificació de temps segueix sent EXCLUSIVA de HTML; `doneAt.css`/`doneAt.js` només serveixen per congelar l'equip, mai entren a la fórmula de score.
+
+**SUPERSEDEIX D-10/D-11 (simplificació).**
+- **D-16:** La pantalla de resultats NO mostra el detall de sub-checks a NINGÚ (ni al propi equip). Totes les pantalles (equips + Admin) veuen NOMÉS el rànquing + percentatge global de cada equip. SCORE-05 ("detall de sub-checks per equip") queda satisfet igualment pel mini-ranking d'Admin (D-12/D-13) i pels checks en viu que cada equip ja veu DURANT el joc (progrés N/7 a HTML, feedback per forat a CSS/JS) — no calia repetir-ho a la pantalla final.
+
+**AMPLIA D-14 (cerimònia).**
+- **D-17:** Els números del compte enrere (5→0) han de ser **el doble de grans** que la primera implementació, i l'efecte de zoom molt més exagerat — com si el número sortís completament del viewport cap a l'espectador (no un zoom subtil).
+- **D-18:** Molt **més quantitat** de confetti al final de la cerimònia — la primera implementació es considera insuficient.
+- **D-19:** Després de revelar el rànquing final, hi ha una **última pantalla** amb el text "Moltes gràcies!!" en mida gran, mostrada a totes les pantalles (equips + Admin). Es dispara des de l'Admin (mateix patró que totes les transicions anteriors — un nou pas explícit, no automàtic just després del rànquing).
+
 ### Claude's Discretion
 - Fórmula exacta de la bonificació de temps HTML (D-05): el llindar concret d'±5 punts i com escalar-lo (p.ex. lineal vs. esglaonat) es decideix en planificar.
 - Detall tècnic de la distància RGB normalitzada (D-02): quina fórmula de distància de color (Euclidiana simple vs. perceptual) — es decideix en planificar, prioritzant simplicitat.
 - Format visual exacte del mini-ranking d'Admin (D-12): llista simple vs. barra de progrés per equip — decisió d'implementació, no de producte.
 - Cadència i disposició exactes de la revelació del rànquing post-cerimònia (D-14): temps entre cada equip revelat, si hi ha stagger o pausa dramàtica creixent cap al primer lloc, tipografia/mida de cada fila revelada — es decideix en planificar/dissenyar, prioritzant impacte pedagògic (celebrar el moment) sense allargar-se en excés (sessió de 15-20 min).
 - Implementació tècnica del confetti (CSS/canvas/llibreria mínima sense dependència pesada) i dels colors "chillons" del compte enrere — es decideix en planificar.
+- Magnitud exacta de l'augment de mida/zoom del compte enrere (D-17) i quantitat exacta de partícules de confetti (D-18): valors concrets a triar en planificar, prioritzant impacte visual sense malmetre el rendiment en un portàtil d'aula mitjà.
+- Mecanisme de disparo de la pantalla "Moltes gràcies!!" (D-19): botó Admin dedicat nou vs. reutilització del mateix control de transició de fase — es decideix en planificar, seguint el patró ja establert (D-14) d'un pas explícit per l'Admin.
+- Mida tipogràfica exacta de "Moltes gràcies!!" (D-19): "bastant gran" es tradueix a una mida concreta en planificar, coherent amb l'escala tipogràfica existent (`04-UI-SPEC.md`).
 
 ### Folded Todos
 - **Temps de finalització en el ranking** (`.planning/todos/pending/2026-07-03-puntuacio-considerar-temps-de-finalitzacio.md`): pregunta original de si el rànquing hauria de considerar temps més enllà d'un desempat pur. Resolta via D-05/D-06 — bonificació petita, només a HTML.
