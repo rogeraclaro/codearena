@@ -4,11 +4,11 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 05
 current_phase_name: desplegament-a-producci-vps-nginx-pm2
-status: executing
-stopped_at: Pla 05-02 pausat al checkpoint human-action (Task 2)
-last_updated: "2026-07-06T22:22:19.434Z"
+status: verifying
+stopped_at: Pla 05-02 completat — desplegament a producció verificat (WebSocket real, PM2, HTTPS)
+last_updated: "2026-07-06T23:44:32.590Z"
 last_activity: 2026-07-06
-last_activity_desc: Phase 05 execution started
+last_activity_desc: Pla 05-02 completat — CodeArena viu i verificat a classe.masellas.info
 progress:
   total_phases: 6
   completed_phases: 6
@@ -28,11 +28,11 @@ See: .planning/PROJECT.md (updated 2026-07-06)
 
 ## Current Position
 
-Phase: 05 (desplegament-a-producci-vps-nginx-pm2) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
-Next recommended run: /gsd-plan-phase 5
-Last activity: 2026-07-06 — Phase 05 execution started
+Phase: 05 (desplegament-a-producci-vps-nginx-pm2) — COMPLETE
+Plan: 2 of 2 (05-01 i 05-02 completats)
+Status: Phase complete — ready for verification
+Next recommended run: /gsd-verify-phase 5
+Last activity: 2026-07-06 — Pla 05-02 completat, desplegament a producció verificat
 
 Progress: [████████████████████] 17/17 plans (100%) — 5 de 6 fases completes
 
@@ -67,6 +67,7 @@ Progress: [████████████████████] 17/17 p
 | Phase 04.1 P04 | 1min | 2 tasks | 2 files |
 | Phase 04.1 P03 | 12min | 2 tasks | 3 files |
 | Phase 05 P01 | 2 | 3 tasks | 7 files |
+| Phase 05 P02 | 3 | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Fase 04.1 Pla 03: index.js no requereix cap canvi per al reset -- process.exit(0) mata tot el proces, fent moot qualsevol interval potencialment penjat
 - [Phase ?]: Fase 04.1 Pla 03: el boto Reset es sempre visible a buildControlBar (mai gated per state.phase/finished) -- D-05 exigeix una eina d'emergencia disponible en qualsevol moment
 - Fase 04.1 tancada 2026-07-06: 4/4 plans, UAT 2/2 passats (overlay CSS i «Fase anterior» verificats visualment en navegador real), 04.1-SECURITY.md verificat (8 amenaces, threats_open: 0)
+- [Phase ?]: Fase 05 Pla 02: deviació D-03 — desplegat com a root a /root/codearena (VPS només té accés SSH root); risc acceptat per l'operador
+- [Phase ?]: Fase 05 Pla 02: ADMIN_SECRET feble triat pel professor sobre secret fort recomanat (T-05-02 risc acceptat per sessió curta de baix risc)
 
 ### Pending Todos
 
@@ -124,7 +127,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T22:22:19.423Z
+Last session: 2026-07-06T23:44:16.253Z
 Stopped at: Pla 05-02 pausat al checkpoint human-action (Task 2)
 Resume file: 05-02-PLAN.md
 

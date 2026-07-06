@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Joc — Fase HTML (blocs drag & drop)** - Equips munten l'esquelet HTML amb blocs de snap fort, sense escriptura lliure (completed 2026-07-03)
 - [x] **Phase 3: Joc — Fases CSS i JS** - Equips vesteixen l'HTML amb CSS foradat i li donen comportament amb regles JS (completed 2026-07-04)
 - [x] **Phase 4: Puntuació i rànquing final** - Motor de scoring estructural/d'estil/de comportament i pantalla de resultats (completed 2026-07-06)
-- [ ] **Phase 5: Desplegament a producció (VPS + Nginx + PM2)** - App verificada en producció amb WebSocket real i reinici automàtic
+- [x] **Phase 5: Desplegament a producció (VPS + Nginx + PM2)** - App verificada en producció amb WebSocket real i reinici automàtic (completed 2026-07-06)
 
 ## Phase Details
 
@@ -163,7 +163,7 @@ Plans:
   2. El procés Node s'executa sota PM2 i es reinicia automàticament si cau
   3. Una sessió completa (registre d'equips, les 3 fases de joc, resultats) es pot jugar de cap a cap contra el desplegament real sense errors de connexió
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 
 **Wave 1**
 
@@ -171,7 +171,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 05-02-PLAN.md — Desplegament al VPS (CloudPanel Reverse Proxy) + verificació WebSocket real + PM2 auto-restart + sessió completa (Wave 2)
+- [x] 05-02-PLAN.md — Desplegament al VPS (CloudPanel Reverse Proxy) + verificació WebSocket real + PM2 auto-restart + sessió completa (Wave 2)
 
 ## Progress
 
@@ -184,4 +184,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
 | 4. Puntuació i rànquing final | 4/4 | Complete   | 2026-07-06 |
-| 5. Desplegament a producció (VPS + Nginx + PM2) | 1/2 | In Progress|  |
+| 5. Desplegament a producció (VPS + Nginx + PM2) | 2/2 | Complete   | 2026-07-06 |
