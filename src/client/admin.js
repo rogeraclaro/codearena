@@ -25,6 +25,9 @@ let partialClosedPhase = null;
 // Durada provisional de cada fase; el contingut real de joc (Fase 2+)
 // substituira aquest valor fix per una durada configurable per fase.
 const PHASE_DURATION_MS = 5 * 60 * 1000;
+// D-01: mapes locals per al botó «Fase anterior» — fase destí i etiqueta humana.
+const PREV_OF = { css: 'html', js: 'css' };
+const PHASE_LABELS = { html: 'HTML', css: 'CSS', js: 'JS' };
 
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -300,19 +303,21 @@ function statusIcon(connected) {
   return icon;
 }
 
-// Resync is the ONLY destructive-styled action in Phase 1 (D-04: no
-// release/delete team action exists). Uses a native <dialog> for modality
-// (Escape/backdrop dismiss for free) with the exact copy from the UI-SPEC
-// Copywriting Contract — resolves true only if the admin explicitly confirms.
-function showResyncConfirm() {
+// Confirmació genèrica abans d'una acció d'Admin (D-01/D-04, ADMIN-07). Uses a native
+// <dialog> for modality (Escape/backdrop dismiss for free) — resolves true només si
+// l'admin confirma explícitament. `destructive` tria l'estil del botó de confirmar
+// (btn-destructive quan l'acció perd dades — p.ex. resincronitzar —, btn en cas
+// contrari). Única font d'aquest patró: showResyncConfirm/showFinalizeConfirm hi
+// deleguen, i el botó «Fase anterior» (D-01) també.
+function showConfirm(message, confirmLabel, destructive) {
   return new Promise((resolve) => {
     const dialog = document.createElement('dialog');
     dialog.className = 'confirm-dialog';
 
-    const message = document.createElement('p');
-    message.className = 'confirm-message';
-    message.textContent = 'Resincronitzar equip? Recarregarà la seva pantalla immediatament.';
-    dialog.appendChild(message);
+    const messageEl = document.createElement('p');
+    messageEl.className = 'confirm-message';
+    messageEl.textContent = message;
+    dialog.appendChild(messageEl);
 
     const actions = document.createElement('div');
     actions.className = 'confirm-actions';
@@ -324,8 +329,8 @@ function showResyncConfirm() {
 
     const confirmBtn = document.createElement('button');
     confirmBtn.type = 'button';
-    confirmBtn.className = 'btn btn-destructive';
-    confirmBtn.textContent = 'Sí, resincronitza';
+    confirmBtn.className = destructive ? 'btn btn-destructive' : 'btn';
+    confirmBtn.textContent = confirmLabel;
 
     actions.appendChild(cancelBtn);
     actions.appendChild(confirmBtn);
@@ -345,49 +350,24 @@ function showResyncConfirm() {
   });
 }
 
+// Resync is the ONLY destructive-styled action in Phase 1 (D-04: no
+// release/delete team action exists). Copy exacta del Copywriting Contract de la UI-SPEC.
+function showResyncConfirm() {
+  return showConfirm(
+    'Resincronitzar equip? Recarregarà la seva pantalla immediatament.',
+    'Sí, resincronitza',
+    true,
+  );
+}
+
 // ADMIN-07: confirmació lleugera abans de finalitzar (acció irreversible de FLUX, no de
-// dades). Còpia el patró <dialog class="confirm-dialog"> de showResyncConfirm, però el
-// botó de confirmació és accent (no destructiu) — no es perd cap dada. Copy exacta del
-// Copywriting Contract de la UI-SPEC.
+// dades) — no es perd cap dada. Copy exacta del Copywriting Contract de la UI-SPEC.
 function showFinalizeConfirm() {
-  return new Promise((resolve) => {
-    const dialog = document.createElement('dialog');
-    dialog.className = 'confirm-dialog';
-
-    const message = document.createElement('p');
-    message.className = 'confirm-message';
-    message.textContent = 'Vols finalitzar la partida? Es mostraran els resultats a totes les pantalles.';
-    dialog.appendChild(message);
-
-    const actions = document.createElement('div');
-    actions.className = 'confirm-actions';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'btn';
-    cancelBtn.textContent = 'Cancel·lar';
-
-    const confirmBtn = document.createElement('button');
-    confirmBtn.type = 'button';
-    confirmBtn.className = 'btn btn-accent';
-    confirmBtn.textContent = 'Finalitzar';
-
-    actions.appendChild(cancelBtn);
-    actions.appendChild(confirmBtn);
-    dialog.appendChild(actions);
-    document.body.appendChild(dialog);
-
-    const settle = (result) => {
-      dialog.close();
-      dialog.remove();
-      resolve(result);
-    };
-    cancelBtn.addEventListener('click', () => settle(false));
-    confirmBtn.addEventListener('click', () => settle(true));
-    dialog.addEventListener('cancel', () => settle(false)); // Escape key
-
-    dialog.showModal();
-  });
+  return showConfirm(
+    'Vols finalitzar la partida? Es mostraran els resultats a totes les pantalles.',
+    'Finalitzar',
+    false,
+  );
 }
 
 function buildPhaseBadge(phase) {
@@ -446,6 +426,28 @@ function buildControlBar(socket, state) {
     }
   });
   bar.appendChild(ctaBtn);
+
+  // D-01: botó «Fase anterior», simètric al CTA. Visible NOMÉS quan hi ha una fase
+  // activa diferent de HTML i la partida encara no ha finalitzat (Pitfall 5 — mai
+  // retrocedir per sota de la primera fase, mai un cop mostrats els resultats).
+  if (state.phase && state.phase !== 'html' && !finished) {
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'btn';
+    prevBtn.textContent = 'Fase anterior';
+    prevBtn.addEventListener('click', async () => {
+      const targetPhase = PREV_OF[state.phase];
+      const confirmed = await showConfirm(
+        `Segur que vols tornar a la Fase ${PHASE_LABELS[targetPhase]}?`,
+        'Sí, torna enrere',
+        false,
+      );
+      if (confirmed) {
+        socket.emit(EVENTS.ADMIN_PREV_PHASE, { durationMs: PHASE_DURATION_MS });
+      }
+    });
+    bar.appendChild(prevBtn);
+  }
 
   if (state.phase) {
     const pauseBtn = document.createElement('button');
