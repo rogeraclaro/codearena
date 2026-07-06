@@ -6,7 +6,7 @@
 // compte (estat autoritatiu al servidor, T-04-03).
 
 import { io } from 'socket.io-client';
-import { createElement, Lock, MoveDown, Trophy, Check, Circle } from 'lucide';
+import { createElement, Lock, MoveDown, Trophy } from 'lucide';
 import Sortable from 'sortablejs';
 import DOMPurify from 'dompurify';
 import { renderCountdown } from './shared/timer.js';
@@ -1290,7 +1290,7 @@ function renderJsPanel(jsRules) {
       ? jsRules.map((r) => ({ event: r.event, origen: r.origen, desti: r.desti ?? '', accio: r.accio }))
       : [emptyJsRow()];
   }
-  const frozen = latestState?.timerStatus === 'frozen'; // D-11: congela els controls
+  const frozen = latestState?.timerStatus === 'frozen' || isPhaseDone('js'); // D-11 + Finalitzar (D-15)
   const wrap = document.createElement('div');
   wrap.className = 'js-rules';
   jsPanelRows.forEach((row, i) => wrap.appendChild(buildJsRuleRow(row, i, frozen)));
@@ -1368,23 +1368,26 @@ function isPhaseDone(phase) {
   return !!latestDoneAt?.[phase];
 }
 
-// Botó "Finalitzar" (NOMÉS HTML, D-07): marca la fase HTML com a feta per aquest equip
-// (font única de la bonificació de temps, D-06 — aquí només envia l'intent i bloqueja
-// localment; l'estat autoritatiu torna via TEAM_DONE_STATE). Gate D-07: el botó està
-// `disabled` fins que l'estructura és 100% correcta (isHtmlComplete) — sense text d'error,
-// els pips N/7 (.progress-pieces) ja comuniquen la proximitat (ètos sense-error). Un cop
-// finalitzada la fase, queda deshabilitat i mostra "Fet" (F5-safe: es reconstrueix sempre
-// a partir de `isPhaseDone`, mai d'un flag local aïllat). No es renderitza mai a CSS/JS
-// (D-08/D-09): el servidor també rebutja qualsevol doneAt no-HTML.
+// Botó "Finalitzar" per fase. Envia l'intent (EVENTS.TEAM_MARK_DONE) i bloqueja localment;
+// l'estat autoritatiu torna via TEAM_DONE_STATE. El GATE depèn de la fase:
+//  - HTML (D-07): `disabled` fins que l'estructura és 100% correcta (isHtmlComplete) — font
+//    única de la bonificació de temps (D-06). Sense text d'error: els pips N/7
+//    (.progress-pieces) ja comuniquen la proximitat (ètos sense-error).
+//  - CSS/JS (D-15, SUPERSEDEIX D-08/D-09): botó VOLUNTARI sense gate de correcció — sempre
+//    clicable mentre no s'hagi finalitzat (`disabled = done`). En prémer-lo l'equip queda
+//    congelat (doneAt.css/js), sense bonificació de temps.
+// Un cop finalitzada la fase, queda deshabilitat i mostra "Fet" (F5-safe: es reconstrueix
+// sempre a partir de `isPhaseDone`, mai d'un flag local aïllat).
 function renderFinishButton(phase) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'finish-phase-btn';
   const done = isPhaseDone(phase);
-  button.disabled = done || !isHtmlComplete(latestPlacement); // gate D-07
+  // HTML manté el gate D-07 (100% correcte); CSS/JS són voluntaris sense gate (D-15).
+  button.disabled = phase === 'html' ? done || !isHtmlComplete(latestPlacement) : done;
   button.textContent = done ? '✓ Fet' : 'Finalitzar';
   button.addEventListener('click', () => {
-    if (button.disabled) return; // gate D-07: mai enviar si no és 100%
+    if (button.disabled) return; // HTML: mai enviar si no és 100% (D-07); CSS/JS: si ja fet
     button.disabled = true;
     button.textContent = '✓ Fet';
     socket.emit(EVENTS.TEAM_MARK_DONE, {});
@@ -1475,14 +1478,16 @@ function renderActiveSplitScreen(team, state) {
     panel.appendChild(gameContainer);
     panel.appendChild(renderFinishButton('html'));
   } else if (state.phase === 'css') {
-    // D-08: cap botó "Finalitzar" a CSS — la puntuació és per proximitat contínua,
-    // "fet" no té sentit (sempre es pot millorar). Només el panell de forats.
+    // D-15 (SUPERSEDEIX D-08): botó "Finalitzar" VOLUNTARI a CSS — sempre clicable, en
+    // prémer-lo congela l'equip (doneAt.css) sense afectar el timer global ni els altres.
     panel.appendChild(renderCssPanel(latestCssValues));
+    panel.appendChild(renderFinishButton('css'));
   } else if (state.phase === 'js') {
     // Seed del panell des de les regles autoritatives (jsPanelRows null a l'entrada
     // de fase / F5; renderJsPanel el pobla). No es força null aquí: un re-render per
     // un session:full-state aliè no ha de clobberar edicions a mig fer.
     panel.appendChild(renderJsPanel(latestJsRules));
+    panel.appendChild(renderFinishButton('js')); // D-15: botó voluntari també a JS
   }
 
   const preview = document.createElement('iframe');
@@ -1539,10 +1544,10 @@ function clearInterstitialTimer() {
 // phase===null → waiting; canvi de phase → interstitial (~1.2s) → active
 // split; mateixa phase (reconnect o re-broadcast per pausa/congelat) → va
 // directe a active split sense repetir l'interstici (recuperacio neta).
-// --- Fase 4: pantalla de resultats (SCORE-05, D-10/D-11). Render PUR sobre el payload
-// autoritatiu (ranking + ownDetail) — el client MAI calcula cap puntuació. En aquest pla
-// els resultats apareixen DIRECTAMENT; el Pla 03 interceptarà CEREMONY_START per animar
-// la cerimònia abans d'aquest mateix render. ---
+// --- Fase 4: pantalla de resultats (SCORE-05, D-16). Render PUR sobre el payload
+// autoritatiu (ranking) — el client MAI calcula cap puntuació. D-16: NOMÉS rànquing +
+// percentatge global, sense detall de sub-checks. El Pla 03 intercepta CEREMONY_START per
+// animar la cerimònia abans d'aquest mateix render. ---
 
 function makeIcon(Icon, size, className) {
   const icon = createElement(Icon);
@@ -1550,75 +1555,6 @@ function makeIcon(Icon, size, className) {
   icon.setAttribute('height', String(size));
   if (className) icon.classList.add(className);
   return icon;
-}
-
-// Etiquetes curtes en català per als slots HTML del debrief (id de slot → nom llegible).
-const HTML_SLOT_LABELS = {
-  'antena-esquerra': 'Antena',
-  'orella-esquerra': 'Orella esquerra',
-  'orella-dreta': 'Orella dreta',
-  'ull-1': 'Ull esquerre',
-  'ull-2': 'Ull dret',
-  nas: 'Nas',
-  boca: 'Boca',
-};
-
-// Un sub-check: icona pass/miss (NEUTRE — mai vermell, D-10 no-frustració) + etiqueta +
-// identificador monospace opcional. passed → Check (--status-connected); miss → Circle
-// (--color-muted).
-function buildSubcheckItem(label, passed, identifier) {
-  const item = document.createElement('div');
-  item.className = 'subcheck-item';
-  item.dataset.state = passed ? 'passed' : 'missed';
-  item.appendChild(makeIcon(passed ? Check : Circle, 16, 'subcheck-icon'));
-  const lbl = document.createElement('span');
-  lbl.className = 'subcheck-label';
-  lbl.textContent = label; // DOM text API (V5 anti-XSS)
-  item.appendChild(lbl);
-  if (identifier) {
-    const id = document.createElement('code');
-    id.className = 'subcheck-id';
-    id.textContent = identifier;
-    item.appendChild(id);
-  }
-  return item;
-}
-
-function buildSubcheckGroup(phase, items) {
-  const group = document.createElement('div');
-  group.className = 'subcheck-group';
-  const badge = document.createElement('span');
-  badge.className = 'phase-badge';
-  badge.dataset.phase = phase;
-  badge.textContent = phase.toUpperCase();
-  group.appendChild(badge);
-  const list = document.createElement('div');
-  list.className = 'subcheck-items';
-  for (const it of items) list.appendChild(it);
-  group.appendChild(list);
-  return group;
-}
-
-// Detall privat agrupat per fase (NOMÉS del propi equip, D-10). HTML: slot pass/miss.
-// CSS: forat pass/miss + propietat real com a identificador monospace. JS: comptadors de
-// varietat (passed si >0, el valor com a identificador).
-function buildOwnDetail(ownDetail) {
-  const detail = document.createElement('div');
-  detail.className = 'subcheck-detail';
-
-  const htmlItems = (ownDetail.html?.subchecks || []).map((c) =>
-    buildSubcheckItem(HTML_SLOT_LABELS[c.slot] || c.slot, c.passed));
-  detail.appendChild(buildSubcheckGroup('html', htmlItems));
-
-  const cssItems = (ownDetail.css?.subchecks || []).map((c) =>
-    buildSubcheckItem(c.hole, c.passed, CSS_HOLES[c.hole]?.prop));
-  detail.appendChild(buildSubcheckGroup('css', cssItems));
-
-  const jsItems = (ownDetail.js?.subchecks || []).map((c) =>
-    buildSubcheckItem(c.label, Number(c.value) > 0, String(c.value)));
-  detail.appendChild(buildSubcheckGroup('js', jsItems));
-
-  return detail;
 }
 
 // Una fila del rànquing global (visible per a TOTHOM): rank #, Trophy NOMÉS al #1, nom,
@@ -1658,15 +1594,13 @@ function buildRankRow(row, index, myId) {
 }
 
 // Pinta la pantalla de resultats des del payload autoritatiu (latestResults) amb fallback
-// al ranking congelat de session:full-state (F5, abans que arribi GAME_RESULTS amb el
-// detall propi). No renderitza res fins que hi ha un ranking real; l'ownDetail es completa
-// quan arriba (re-render idempotent).
+// al ranking congelat de session:full-state (F5). No renderitza res fins que hi ha un
+// ranking real. D-16: NOMÉS rànquing + percentatge global propi, cap detall de sub-checks.
 function renderResultsScreen(stateArg) {
   const st = stateArg || latestState;
   const results = latestResults || {};
   const ranking = results.ranking || st?.finalRanking || [];
   if (!ranking.length) return; // encara no hi ha payload autoritatiu
-  const ownDetail = results.ownDetail || null;
   const myId = localStorage.getItem(TEAM_ID_KEY);
 
   teardownBoard();
@@ -1685,8 +1619,8 @@ function renderResultsScreen(stateArg) {
   ranking.forEach((row, i) => list.appendChild(buildRankRow(row, i, myId)));
   screen.appendChild(list);
 
-  // Bloc propi: % global (Display) + detall privat (D-11: global únic, sense desglossament
-  // per fase visible com a percentatge).
+  // Bloc propi: NOMÉS el % global (Display). D-16 (SUPERSEDEIX D-10/D-11): cap detall de
+  // sub-checks a la pantalla final per a ningú — rànquing + percentatge global i prou.
   const myRow = ranking.find((r) => r.id === myId);
   if (myRow) {
     const ownHeading = document.createElement('h2');
@@ -1698,14 +1632,6 @@ function renderResultsScreen(stateArg) {
     ownPct.className = 'own-percent';
     ownPct.textContent = `${Math.round(myRow.globalPct)}%`;
     screen.appendChild(ownPct);
-  }
-
-  if (ownDetail) {
-    const detailHeading = document.createElement('h2');
-    detailHeading.className = 'results-heading results-heading--own';
-    detailHeading.textContent = 'El teu detall';
-    screen.appendChild(detailHeading);
-    screen.appendChild(buildOwnDetail(ownDetail));
   }
 
   app.appendChild(screen);
@@ -1860,6 +1786,12 @@ function bootClient() {
     } else if (phase === 'css') {
       document.querySelectorAll('.css-panel input').forEach((input) => {
         input.disabled = true;
+      });
+    } else if (phase === 'js') {
+      // D-15: congela tots els controls interactius del panell JS (selects + botons
+      // "Afegir JavaScript"/"Veure"/treure), mirall de com la branca css bloqueja els inputs.
+      document.querySelectorAll('.js-rules select, .js-rules button').forEach((el) => {
+        el.disabled = true;
       });
     }
   });
