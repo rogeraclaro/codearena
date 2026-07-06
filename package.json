@@ -9,7 +9,9 @@
     "server": "node src/server/index.js",
     "build": "vite build",
     "start": "node src/server/index.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "server:pm2": "pm2 start ecosystem.config.cjs",
+    "server:pm2-stop": "pm2 delete codearena"
   },
   "dependencies": {
     "express": "4.22.2",
