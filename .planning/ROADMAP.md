@@ -139,14 +139,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ### Phase 04.1: Millores operatives d'Admin (tornar fase anterior, reset servidor) + preview CSS live code overlay (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** L'admin disposa de tres eines operatives/pedagògiques —botó «Fase anterior» (amb confirmació), botó «Reset» que reinicia el procés real via PM2, i un overlay de codi CSS en directe a la preview durant la Fase CSS— sense tocar l'abast del joc.
+**Requirements**: Sense IDs formals a REQUIREMENTS.md (fase urgent inserida); es tracten les decisions D-01…D-11 de CONTEXT.md com el conjunt de requisits.
 **Depends on:** Phase 4
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 04.1 to break down)
+- [ ] 04.1-01-PLAN.md — Botó «Fase anterior» (previousPhase + handler + botó + showConfirm) [D-01/D-02/D-03]
+- [ ] 04.1-02-PLAN.md — Infraestructura PM2 (ecosystem.config.cjs + scripts + checkpoints legitimitat/boot) [D-05/D-06]
+- [ ] 04.1-03-PLAN.md — Botó «Reset» + restart real via process.exit + PM2 [D-04/D-05/D-06]
+- [ ] 04.1-04-PLAN.md — Overlay de codi CSS en directe a la preview [D-07/D-08/D-09/D-10/D-11]
 
 ### Phase 5: Desplegament a producció (VPS + Nginx + PM2)
 
