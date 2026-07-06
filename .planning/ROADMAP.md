@@ -117,7 +117,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. La puntuació JS verifica que l'esdeveniment, l'element i l'acció triats coincideixen semànticament amb els de la Plana Model
   5. La pantalla de resultats mostra el percentatge d'encert i el rànquing de tots els equips, amb el detall de sub-checks superats per equip
 
-**Plans**: 3/3 complete + 1 addendum pendent (04-04)
+**Plans**: 4/4 plans complete
 
 **Wave 1**
 
@@ -133,7 +133,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 4** *(addendum post-implementació — feedback en viu 2026-07-06, supersedeix D-08/D-09 i D-10/D-11)*
 
-- [ ] 04-04-PLAN.md — D-15 botó "Finalitzar" voluntari CSS/JS (congela l'equip, sense gate) + D-16 pantalla de resultats sense detall de sub-checks (Wave 4)
+- [x] 04-04-PLAN.md — D-15 botó "Finalitzar" voluntari CSS/JS (congela l'equip, sense gate) + D-16 pantalla de resultats sense detall de sub-checks (Wave 4)
 
 **UI hint**: yes
 
@@ -161,5 +161,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Nucli en temps real i control de sessió | 4/4 | Complete | 2026-07-02 |
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
-| 4. Puntuació i rànquing final | 3/3 | Complete   | 2026-07-06 |
+| 4. Puntuació i rànquing final | 4/4 | Complete   | 2026-07-06 |
 | 5. Desplegament a producció (VPS + Nginx + PM2) | 0/TBD | Not started | - |

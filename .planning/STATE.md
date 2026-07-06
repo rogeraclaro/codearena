@@ -5,15 +5,15 @@ milestone_name: milestone
 current_phase: 04
 current_phase_name: Puntuació i rànquing final
 status: verifying
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-07-06T01:08:12.069Z"
+stopped_at: Completed 04-04-PLAN.md — Phase 04 complete (4/4 plans)
+last_updated: "2026-07-06T01:51:28.929Z"
 last_activity: 2026-07-06
-last_activity_desc: Phase 04 plan 02 complete
+last_activity_desc: Phase 04 plan 04 complete — Phase 04 done (4/4 plans)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 13
+  completed_plans: 13
   percent: 80
 ---
 
@@ -28,12 +28,12 @@ See: .planning/PROJECT.md (updated 2026-07-01)
 
 ## Current Position
 
-Phase: 04 (Puntuació i rànquing final) — EXECUTING
-Plan: 3 of 3
+Phase: 04 (Puntuació i rànquing final) — COMPLETE (4/4 plans)
+Plan: 4 of 4
 Status: Phase complete — ready for verification
-Last activity: 2026-07-06 — Phase 04 plan 02 complete
+Last activity: 2026-07-06 — Phase 04 plan 04 complete (D-15 congelació voluntària + D-16 resultats sense detall)
 
-Progress: [██████░░░░] 60% (3 de 5 fases completes)
+Progress: [████████░░] 80% (4 de 5 fases completes)
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████░░░░] 60% (3 de 5 fases completes)
 | Phase 02 P03 | 10h | 3 tasks | 4 files |
 | Phase 04 P01 | 40 | 3 tasks | 10 files |
 | Phase 04 P04-03 | 35 | 3 tasks | 6 files |
+| Phase 04 P04 | 21 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - Project init: estat de partida 100% en memòria al servidor, sense BD — sessions de 15-20 min no la necessiten
 - Roadmap: fases seqüencials 1→5, ordenades per dependència tècnica real (nucli → HTML → CSS/JS → scoring → desplegament), no per capes horitzontals
 - [Phase ?]: Fase 4: scoring pur (scoring.js) llegeix estat autoritatiu; el render del client mai calcula score
+- [Phase ?]: Fase 4 D-15: CSS/JS tenen botó 'Finalitzar' voluntari sense gate que congela l'equip server-side pero mai puntua (supersedeix D-08/D-09)
+- [Phase ?]: Fase 4 D-16: resultats mostren NOMES ranquing + percentatge global a tothom; ownDetail retirat de tots els payloads (supersedeix D-10/D-11)
 
 ### Pending Todos
 
@@ -102,8 +105,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T01:08:05.566Z
-Stopped at: Completed 04-01-PLAN.md
-Resume file: .planning/phases/04-puntuaci-i-r-nquing-final/04-01-PLAN.md
+Last session: 2026-07-06T01:51:28.924Z
+Stopped at: Completed 04-04-PLAN.md — Phase 04 complete (4/4 plans)
+Resume file: None
 
-Last activity: 2026-07-03 - Completed quick task 260703-uwn: Aplica el redisseny visual final del Bender al codi real de la Fase 2
+Last activity: 2026-07-06 - Completed 04-04-PLAN.md: D-15 congelació voluntària CSS/JS + D-16 resultats sense detall — Phase 04 complete
