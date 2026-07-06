@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 04
-current_phase_name: Puntuació i rànquing final
+current_phase: 04.1
+current_phase_name: Millores operatives d'Admin + preview CSS live code overlay
 status: verifying
-stopped_at: Completed 04-04-PLAN.md — Phase 04 complete (4/4 plans)
-last_updated: "2026-07-06T08:05:12.509Z"
+stopped_at: Phase 04.1 context gathered
+last_updated: "2026-07-06T08:48:59.267Z"
 last_activity: 2026-07-06
-last_activity_desc: Phase 04 plan 04 complete (D-15 congelació voluntària + D-16 resultats sense detall)
+last_activity_desc: Phase 04.1 inserted after Phase 4 (URGENT)
 progress:
   total_phases: 6
   completed_phases: 4
@@ -108,8 +108,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T01:51:28.924Z
-Stopped at: Completed 04-04-PLAN.md — Phase 04 complete (4/4 plans)
-Resume file: None
+Last session: 2026-07-06T08:48:59.257Z
+Stopped at: Phase 04.1 context gathered
+Resume file: .planning/phases/04.1-millores-operatives-d-admin-tornar-fase-anterior-reset-servi/04.1-CONTEXT.md
 
 Last activity: 2026-07-06 - Completed 04-04-PLAN.md: D-15 congelació voluntària CSS/JS + D-16 resultats sense detall — Phase 04 complete
