@@ -27,14 +27,36 @@ set -euo pipefail
 # el directori de treball des d'on s'invoqui l'script.
 cd "$(dirname "$0")/.."
 
+# Pre-flight (WR-03): refusa desplegar si .env no existeix o ADMIN_SECRET és buit/absent.
+# socketHandlers.js només avisa (fail-open) i continua servint admin a qualsevol client;
+# aquesta comprovació fa que un secret oblidat aturi el desplegament ABANS de tocar dist/,
+# així un deploy insegur mai arriba a producció. Ancorat a inici de línia (^ADMIN_SECRET=)
+# amb almenys un caràcter després per no fer match amb referències comentades ni valors buits.
+if [[ ! -f .env ]] || ! grep -Eq '^ADMIN_SECRET=.+' .env; then
+  echo "ERROR: .env no existeix o ADMIN_SECRET és buit/absent — desplegament avortat." >&2
+  echo "       Defineix ADMIN_SECRET al .env abans de desplegar (secció 5 de DEPLOY.md)." >&2
+  exit 1
+fi
+
 echo "==> [1/4] git pull"
 git pull
 
 echo "==> [2/4] npm ci"
 npm ci
 
-echo "==> [3/4] npm run build"
-npm run build
+echo "==> [3/4] npm run build (atomic swap)"
+# CR-01: no buidem el dist/ viu (servit per express.static via PM2) fins que el nou build
+# sigui complet. Construïm a dist.new i, només si el build té èxit, fem el swap atòmic
+# conservant el build anterior a dist.bak com a fallback. Amb `set -euo pipefail`, un build
+# fallit avorta aquí i deixa el dist/ viu intacte.
+#
+# vite.config.js té `root: 'src/client'`, per tant el CLI `--outDir` es resol RELATIU a root:
+# `../../dist.new` aterra a l'arrel del repo. `--emptyOutDir` cal perquè el destí és fora de
+# root (Vite ho demanaria interactivament altrament), coherent amb el `emptyOutDir: true` del config.
+npm run build -- --outDir ../../dist.new --emptyOutDir
+rm -rf dist.bak
+[[ -d dist ]] && mv dist dist.bak
+mv dist.new dist
 
 echo "==> [4/4] pm2 reload codearena"
 pm2 reload codearena
