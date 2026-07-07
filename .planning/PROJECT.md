@@ -64,9 +64,9 @@ Que alumnes sense cap experiència entenguin els tres rols fonamentals del web (
 - **Entorn d'aula**: ordinadors Windows idèntics, un per equip, amb navegador Chrome, no tàctils (confirmat pel propietari 2026-07-06). El professor projecta la Plana Model a la pantalla de classe.
 - **Dinàmica curta**: 15-20 minuts en total. Cada segon compta — la UI ha de ser immediata i sense fricció.
 - **Els equips no avancen sols**: les transicions de fase depenen exclusivament de l'admin. Si el temps s'esgota, passen de fase tal com estiguin.
-- **Desplegament**: VPS propi, possiblement sota domini tipus masellas.info, rere proxy invers Nginx. Codi preparat per a producció.
+- **Desplegament**: LIVE a `classe.masellas.info`, VPS propi rere proxy invers Nginx (CloudPanel), des de Phase 5 (2026-07-06). WebSocket real (`101 Switching Protocols`) i reinici automàtic via PM2 verificats contra producció.
 - **Públic**: alumnes de FP sense coneixements previs de programació.
-- **PM2 en producció (Fase 5)**: cal injectar `ADMIN_SECRET` via `env` de l'ecosystem/secret manager — actualment el procés emet un `console.warn` si falta, però en dev l'autenticació admin queda deshabilitada sense ell (T-04.1-05, transferit a Fase 5 al `04.1-SECURITY.md`).
+- **PM2 en producció**: `ADMIN_SECRET` configurat al `.env` del VPS (Phase 5) — l'autenticació admin ja no queda deshabilitada (T-04.1-05 tancat). Nota: l'operador va triar conscientment un secret feble per simplicitat operativa d'una sessió curta; el mecanisme de protecció en si funciona correctament.
 
 ## Constraints
 
@@ -105,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-06 — Phase 04.1 (Millores operatives d'Admin) complete: botó «Fase anterior», Reset real via PM2, overlay CSS en directe validats*
+*Last updated: 2026-07-06 — Phase 05 (Desplegament a producció) complete: app LIVE a classe.masellas.info amb WebSocket real i PM2 verificats contra producció (DEPL-01, DEPL-02)*
