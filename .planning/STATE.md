@@ -32,7 +32,7 @@ Phase: 05
 Plan: Complete (05-01, 05-02)
 Status: Phase 05 verified (passed, 8/8 must-haves) — milestone v1.0 shipped, live at classe.masellas.info
 Next recommended run: none — 6/6 fases completes; consultar Pending Todos per feina oberta
-Last activity: 2026-07-08 — Debug resolt (parpelleig-desincronitzacio-f5), desplegat i verificat a classe.masellas.info
+Last activity: 2026-07-08 — Debug resolt (events-fase-js-no-funcionen): #robot-fons fixed→absolute, events reals (hover/mouseleave/dblclick/click) verificats a la fase JS
 
 Progress: [████████████████████] 19/19 plans (100%) — 6/6 fases completes
 
@@ -112,6 +112,7 @@ Cap blocker actiu. Els flags de recerca de Fases 2/3 es van resoldre en planific
 | 260707-otq | Endureix deploy/deploy.sh (05-REVIEW.md): swap atòmic de dist/ amb rollback (CR-01), guard ADMIN_SECRET pre-flight (WR-03), .catch a l'arrencada directa (WR-01), avís PORT no definit (WR-02), i DEPLOY.md corregit sobre el comportament fail-open (WR-04) | 2026-07-07 | 08df821 | [260707-otq-harden-deploy-deploy-sh-and-related-file](./quick/260707-otq-harden-deploy-deploy-sh-and-related-file/) |
 | — | Fix debug (parpelleig-desincronitzacio-f5): broadcasts de cicle de vida (disconnect/reconnect) enrutats només a 'admin' en lloc de tota 'session' — elimina el parpelleig creuat i el revert de valor CSS/JS en fer F5 amb latència real. Verificat manualment a classe.masellas.info | 2026-07-08 | f6e2c8f | [.planning/debug/resolved/parpelleig-desincronitzacio-f5.md](./debug/resolved/parpelleig-desincronitzacio-f5.md) |
 | 260707-rz1 | Treu el botó "Veure" de la fase JS (client.js: botó + previewSingleRule + param `immediate` de rebuildJsPreview; client.css: estils .js-rule__veure) | 2026-07-07 | a00d07e | [260707-rz1-treure-el-boto-veure-de-la-fase-js](./quick/260707-rz1-treure-el-boto-veure-de-la-fase-js/) |
+| — | Fix debug (events-fase-js-no-funcionen): #robot-fons (wrapPreview) de position:fixed a absolute i treu background-attachment:fixed — evitava que Chrome promogués la capa de fons a composited i li encaminés tots els events reals de ratolí (hover/mouseleave/dblclick/click), en comptes d'a les peces del robot. Verificat amb els 4 tipus d'event al preview real | 2026-07-08 | (pendent) | [events-fase-js-no-funcionen](./debug/resolved/events-fase-js-no-funcionen.md) |
 | 260707-uve | Afegeix guard server-side `if (state.finished) return false;` a gameState.previousPhase() (WR-02 de 04.1-REVIEW.md), amb test de regressió PREV-FINISHED-GUARD | 2026-07-07 | e87e3bd | [260707-uve-afegeix-guard-server-side-finished-a-gam](./quick/260707-uve-afegeix-guard-server-side-finished-a-gam/) |
 
 ### Roadmap Evolution
@@ -130,8 +131,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-08T00:00:00.000Z
-Stopped at: Cap treball en curs — milestone v1.0 tancada, 6/6 fases completes, Fase 05 verificada, WR-02 i bug F5 resolts i desplegats
+Last session: 2026-07-08T01:45:00.000Z
+Stopped at: Fix del bug d'events de la fase JS aplicat i verificat en local — pendent de commit/desplegament
 Resume file: —
 
-Last activity: 2026-07-08 - Debug resolt (parpelleig-desincronitzacio-f5): broadcasts de connexió limitats a 'admin', desplegat i verificat a classe.masellas.info
+Last activity: 2026-07-08 - Debug resolt (events-fase-js-no-funcionen): #robot-fons fixed→absolute, events de ratolí reals de la fase JS ja arriben a les peces del robot

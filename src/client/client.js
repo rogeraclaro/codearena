@@ -664,14 +664,22 @@ function wrapPreview(inner, phase) {
       justify-content: center;
       align-items: center;
     }
-    /* Capa de fons fixa (D-03) — asset local, sense dependència de xarxa. */
+    /* Capa de fons (D-03) — asset local, sense dependència de xarxa.
+       IMPORTANT (bug events-fase-js): position:fixed + background-attachment:fixed
+       promovien aquest element a una capa COMPOSITED pròpia a Chrome; una capa
+       fixed composited que cobreix tot el viewport captura el hit-test al compositor
+       i encaminava TOTS els events de ratolí reals aquí (#robot-fons), tot i que
+       #robot-cap es pinta a sobre (elementFromPoint retornava el descendent correcte,
+       però els events reals no). L'iframe MAI fa scroll, així que absolute + attachment
+       per defecte donen un resultat VISUAL idèntic (inset:0 cobreix el viewport, cover +
+       center calculen igual) sense promoure la capa — restaurant el routing correcte
+       d'events a les peces del robot (hover/mouseleave/dblclick/click de la Fase JS). */
     #robot-fons {
-      position: fixed;
+      position: absolute;
       inset: 0;
       background-image: url('/robot-fons.png');
       background-size: cover;
       background-position: center;
-      background-attachment: fixed;
       background-repeat: no-repeat;
       background-color: rgba(30, 40, 50, 0.75);
       background-blend-mode: overlay;
