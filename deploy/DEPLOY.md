@@ -124,9 +124,13 @@ cp .env.example .env
 #   ADMIN_SECRET=<un secret fort i únic>   # p.ex. `openssl rand -hex 32`
 ```
 
-> - `ADMIN_SECRET` és **obligatori** en producció: sense ell, l'autenticació admin
->   queda DESHABILITADA i qualsevol client podria reclamar el rol admin
->   (T-05-02 / T-04.1-05).
+> - `ADMIN_SECRET` **cal definir-lo sempre** en producció, però el servidor **NO
+>   refusa arrencar sense ell** (comportament fail-open): si `ADMIN_SECRET` no està
+>   definit, l'app arrenca igualment amb l'autenticació admin **DESHABILITADA** i
+>   qualsevol client podria reclamar el rol admin (T-05-02 / T-04.1-05). Per tant,
+>   **verifica sempre** després d'arrencar amb la comprovació de logs de la **secció 8**
+>   (`pm2 logs codearena`): si hi apareix el warning d'`ADMIN_SECRET`, el secret no
+>   s'ha carregat i l'admin està obert.
 > - `.env` **ja està a `.gitignore`** des del Pla 01 — **mai el versionis**. El
 >   secret viu només al VPS.
 > - `dotenv` carrega `.env` a l'arrencada (`import 'dotenv/config'` és el primer
