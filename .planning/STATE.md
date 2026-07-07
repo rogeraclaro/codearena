@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 05
-status: verifying
-stopped_at: Pla 05-02 pausat al checkpoint human-action (Task 2)
-last_updated: "2026-07-07T00:01:15.034Z"
+status: verified
+stopped_at: null
+last_updated: "2026-07-07T18:15:00.000Z"
 last_activity: 2026-07-07
-last_activity_desc: Phase 05 complete
+last_activity_desc: "Quick task 260707-rz1: Treu el botó \"Veure\" de la fase JS"
 progress:
   total_phases: 6
   completed_phases: 6
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-07-06)
 ## Current Position
 
 Phase: 05
-Plan: Not started
-Status: Phase complete — ready for verification
-Next recommended run: /gsd-verify-phase 5
-Last activity: 2026-07-07 — Phase 05 complete
+Plan: Complete (05-01, 05-02)
+Status: Phase 05 verified (passed, 8/8 must-haves) — milestone v1.0 shipped, live at classe.masellas.info
+Next recommended run: none — 6/6 fases completes; consultar Pending Todos per feina oberta
+Last activity: 2026-07-07 — Quick task 260707-uve: Guard server-side finished a previousPhase() (WR-02)
 
-Progress: [████████████████████] 17/17 plans (100%) — 5 de 6 fases completes
+Progress: [████████████████████] 19/19 plans (100%) — 6/6 fases completes
 
 ## Performance Metrics
 
@@ -95,13 +95,13 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- `.planning/todos/pending/2026-07-07-parpelleig-i-desincronitzacio-panell-en-reconnexio-f5.md` — bug de lògica de joc preexistent (no introduït per la Fase 5): quan un equip fa F5, `session:full-state` es difon a TOTA la room `'session'` (socketHandlers.js:431 disconnect, :111 reconnect), provocant parpelleig creuat a la resta d'equips i una possible desincronització del propi panell en recuperar l'estat. Root-caused, no arreglat — pendent de sessió `/gsd-debug` dedicada.
 
 ### Blockers/Concerns
 
 Cap blocker actiu per a Phase 5. Els flags de recerca de Fases 2/3 es van resoldre en planificar-les; el dubte de navegadors/hardware de l'aula es va confirmar 2026-07-06 (Windows + Chrome, no tàctil — vegeu PROJECT.md § Context).
 
-- ⚠️ [Phase 04.1, WR-02, no bloqueja] `gameState.previousPhase()` no té guard `finished` server-side (només el botó de l'Admin s'amaga client-side) — hardening pendent, documentat a `04.1-REVIEW.md`.
+- ⚠️ Veure Pending Todos: parpelleig/desincronització de pantalla en reconnexió F5 — no bloqueja (Fase 5 verificada amb WebSocket real, PM2 i HTTPS OK), però és un bug de joc real visible amb latència de xarxa real.
 
 ### Quick Tasks Completed
 
@@ -113,6 +113,7 @@ Cap blocker actiu per a Phase 5. Els flags de recerca de Fases 2/3 es van resold
 | 260707-36d | Fix admin.js renderAdmin(): els noms d'equip per defecte es buidaven al primer render (CR-02 restore sense gate); actualitzats a 5 noms, tots ≤40 caràcters | 2026-07-07 | 04ae87b | [260707-36d-fix-admin-js-renderadmin-bug-the-4-defau](./quick/260707-36d-fix-admin-js-renderadmin-bug-the-4-defau/) |
 | 260707-otq | Endureix deploy/deploy.sh (05-REVIEW.md): swap atòmic de dist/ amb rollback (CR-01), guard ADMIN_SECRET pre-flight (WR-03), .catch a l'arrencada directa (WR-01), avís PORT no definit (WR-02), i DEPLOY.md corregit sobre el comportament fail-open (WR-04) | 2026-07-07 | 08df821 | [260707-otq-harden-deploy-deploy-sh-and-related-file](./quick/260707-otq-harden-deploy-deploy-sh-and-related-file/) |
 | 260707-rz1 | Treu el botó "Veure" de la fase JS (client.js: botó + previewSingleRule + param `immediate` de rebuildJsPreview; client.css: estils .js-rule__veure) | 2026-07-07 | a00d07e | [260707-rz1-treure-el-boto-veure-de-la-fase-js](./quick/260707-rz1-treure-el-boto-veure-de-la-fase-js/) |
+| 260707-uve | Afegeix guard server-side `if (state.finished) return false;` a gameState.previousPhase() (WR-02 de 04.1-REVIEW.md), amb test de regressió PREV-FINISHED-GUARD | 2026-07-07 | e87e3bd | [260707-uve-afegeix-guard-server-side-finished-a-gam](./quick/260707-uve-afegeix-guard-server-side-finished-a-gam/) |
 
 ### Roadmap Evolution
 
@@ -130,8 +131,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-06T23:44:16.253Z
-Stopped at: Pla 05-02 pausat al checkpoint human-action (Task 2)
-Resume file: 05-02-PLAN.md
+Last session: 2026-07-07T18:15:00.000Z
+Stopped at: Cap treball en curs — milestone v1.0 tancada, 6/6 fases completes i Fase 05 verificada
+Resume file: —
 
-Last activity: 2026-07-07 - Completed quick task 260707-rz1: Treu el botó "Veure" de la fase JS
+Last activity: 2026-07-07 - Completed quick task 260707-uve: Guard server-side finished a previousPhase() (WR-02)
