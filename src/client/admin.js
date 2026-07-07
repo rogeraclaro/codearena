@@ -744,7 +744,7 @@ function renderAdmin(socket, state) {
 
   // Restore preserved input state now that the new textarea is in the document.
   const newInput = document.getElementById('team-names-input');
-  if (newInput) {
+  if (existingInput && newInput) {
     newInput.value = preservedValue;
     if (hadFocus) {
       newInput.focus();
