@@ -163,6 +163,31 @@ test('PREV-INVALID-DURATION: un durationMs invalid no muta ni difon (V5, T-04.1-
   assert.equal(gameState.getPublicState().phase, phaseBefore);
 });
 
+// WR-02: la darrera peça de defensa server-side. Ha de córrer AL FINAL (just abans
+// del cleanup) perquè condueix state.finished=true via finalizeGame() — un estat
+// TERMINAL sense reset dins del test, així que no pot enverinar els PREV-* anteriors
+// que exigeixen finished=false.
+test('PREV-FINISHED-GUARD: previousPhase retorna false i no muta res un cop finalitzat (WR-02)', () => {
+  assert.equal(gameState.startPhase('css', 60000), true); // fase coneguda i no-primera
+  assert.equal(gameState.finalizeGame(), true, 'finalizeGame ha de marcar l estat terminal');
+
+  const before = gameState.getPublicState();
+  assert.equal(
+    gameState.previousPhase(60000),
+    false,
+    'WR-02: retrocedir despres de finalitzar ha de ser un no-op (V4 — mai confiar en el client)',
+  );
+  const after = gameState.getPublicState();
+  assert.equal(after.phase, before.phase, 'la fase no ha de canviar despres de finalitzar');
+  assert.equal(after.phaseEndsAt, before.phaseEndsAt, 'phaseEndsAt no ha de canviar');
+  assert.equal(after.timerStatus, before.timerStatus, 'timerStatus no ha de canviar');
+  assert.equal(
+    after.remainingMsAtPause,
+    before.remainingMsAtPause,
+    'remainingMsAtPause no ha de canviar',
+  );
+});
+
 test('cleanup: tanca sockets restants', () => {
   adminSocket?.close();
   teamClient1?.close();

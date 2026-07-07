@@ -319,6 +319,7 @@ function nextPhase(durationMs) {
 // de doneAt en aquest camí. No-op (false) si ja és la primera fase o no hi ha cap fase
 // activa (Pitfall 5).
 function previousPhase(durationMs) {
+  if (state.finished) return false; // WR-02: mai retrocedir un cop finalitzat (V4 — mirall del guard de finalizeGame)
   const currentIndex = state.phase ? PHASE_ORDER.indexOf(state.phase) : -1;
   const prevIndex = currentIndex - 1;
   if (prevIndex < 0) return false;
