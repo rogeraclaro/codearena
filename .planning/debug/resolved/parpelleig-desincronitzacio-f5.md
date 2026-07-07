@@ -1,8 +1,8 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "Parpelleig de pantalla i desincronitzacio del panell despres d'un F5 (reconnexio) — .planning/todos/pending/2026-07-07-parpelleig-i-desincronitzacio-panell-en-reconnexio-f5.md"
 created: 2026-07-07
-updated: 2026-07-07
+updated: 2026-07-08
 ---
 
 # Debug Session: parpelleig-desincronitzacio-f5
@@ -92,5 +92,5 @@ tdd_checkpoint: null
 
 root_cause: "Els broadcasts de SESSION_FULL_STATE lligats al cicle de vida de la connexió (disconnect socketHandlers.js:431 i reconnect :111) es difonen a TOTA la room 'session' (equips espectadors inclosos), i el client no té camí de render surgical per a les fases css/js (només html) — així que cada full-state de la mateixa fase fa un teardown+rebuild complet del panell. A més, amb connectionStateRecovery ON, el `disconnect` del socket vell post-F5 és DIFERIT i s'executa quan l'equip ja s'ha reconnectat, disparant un setConnected(false)+broadcast sobrant. Resultat: (1) parpelleig creuat als espectadors a cada F5; (2) el rebuild reconstrueix el panell CSS des de latestCssValues, que amb latència real encara conté el valor previ mentre l'echo del canvi de l'usuari viatja → el control reverteix."
 fix: "src/server/socketHandlers.js — (1) disconnect handler: guard de room-size (si l'equip encara té un socket viu a `team:<id>`, no marcar offline ni difondre: el disconnect del socket vell post-F5 esdevé no-op) i, quan realment es desconnecta, difondre a 'admin' en lloc de 'session'. (2) reconnexió línia 111: difondre a 'admin' en lloc de 'session'. Els equips espectadors ja no reben mai l'estat de connexió d'un altre equip; l'admin (que sí el necessita) el segueix rebent. Els broadcasts de fase/timer resten intactes a 'session'."
-verification: "Auto-verificat: suite completa 99/99 OK (95 previs intactes + 4 nous de regressió a test/reconnectSync.test.js). Els nous tests bloquegen: (a) un equip espectador NO rep session:full-state quan un altre es desconnecta (mentre l'admin SÍ), (b) el disconnect d'un socket vell amb un socket viu present NO marca l'equip offline (guard de solapament post-F5). PENDENT: verificació humana end-to-end amb 2 navegadors contra l'endpoint desplegat (latència real) per confirmar que el parpelleig creuat i el revert del control CSS han desaparegut."
+verification: "Auto-verificat: suite completa 99/99 OK (95 previs intactes + 4 nous de regressió a test/reconnectSync.test.js). Els nous tests bloquegen: (a) un equip espectador NO rep session:full-state quan un altre es desconnecta (mentre l'admin SÍ), (b) el disconnect d'un socket vell amb un socket viu present NO marca l'equip offline (guard de solapament post-F5). Verificació humana end-to-end (2026-07-08): fix desplegat a classe.masellas.info (VPS, deploy.sh + pm2 reload); usuari ha provat amb 2 navegadors reals contra latència real i confirma que el parpelleig creuat i el revert del control CSS han desaparegut."
 files_changed: ["src/server/socketHandlers.js", "test/reconnectSync.test.js"]
