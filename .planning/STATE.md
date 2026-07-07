@@ -112,6 +112,7 @@ Cap blocker actiu per a Phase 5. Els flags de recerca de Fases 2/3 es van resold
 | 260706-hi0 | Omple per defecte el textarea de noms d'equips a l'Admin amb els 4 noms reals de l'equip | 2026-07-06 | 6df1069 | [260706-hi0-omple-per-defecte-el-textarea-de-noms-d-](./quick/260706-hi0-omple-per-defecte-el-textarea-de-noms-d-/) |
 | 260707-36d | Fix admin.js renderAdmin(): els noms d'equip per defecte es buidaven al primer render (CR-02 restore sense gate); actualitzats a 5 noms, tots ≤40 caràcters | 2026-07-07 | 04ae87b | [260707-36d-fix-admin-js-renderadmin-bug-the-4-defau](./quick/260707-36d-fix-admin-js-renderadmin-bug-the-4-defau/) |
 | 260707-otq | Endureix deploy/deploy.sh (05-REVIEW.md): swap atòmic de dist/ amb rollback (CR-01), guard ADMIN_SECRET pre-flight (WR-03), .catch a l'arrencada directa (WR-01), avís PORT no definit (WR-02), i DEPLOY.md corregit sobre el comportament fail-open (WR-04) | 2026-07-07 | 08df821 | [260707-otq-harden-deploy-deploy-sh-and-related-file](./quick/260707-otq-harden-deploy-deploy-sh-and-related-file/) |
+| 260707-rz1 | Treu el botó "Veure" de la fase JS (client.js: botó + previewSingleRule + param `immediate` de rebuildJsPreview; client.css: estils .js-rule__veure) | 2026-07-07 | a00d07e | [260707-rz1-treure-el-boto-veure-de-la-fase-js](./quick/260707-rz1-treure-el-boto-veure-de-la-fase-js/) |
 
 ### Roadmap Evolution
 
@@ -133,4 +134,4 @@ Last session: 2026-07-06T23:44:16.253Z
 Stopped at: Pla 05-02 pausat al checkpoint human-action (Task 2)
 Resume file: 05-02-PLAN.md
 
-Last activity: 2026-07-07 - Completed quick task 260707-otq: Harden deploy/deploy.sh per 05-REVIEW.md findings
+Last activity: 2026-07-07 - Completed quick task 260707-rz1: Treu el botó "Veure" de la fase JS
