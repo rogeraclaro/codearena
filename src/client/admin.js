@@ -507,10 +507,11 @@ function buildRegistrationBlock(socket) {
   textarea.rows = 6;
   textarea.placeholder = 'Equip 1\nEquip 2\n…';
   const defaultTeamNames = [
-    'Els primers no sempre tenen perquè ser els últims',
+    'Els primers no sempre seran els ultims',
     'Segundas filas siempre fueron buenas',
-    'Que siguem de tercera fila NO té perquè ser negatiu!',
+    'Tercera fila NO té perque ser negatiu',
     'Los ultimos de las filas',
+    'Conectamos con Evovisión',
   ];
   textarea.value = defaultTeamNames.join('\n');
 
