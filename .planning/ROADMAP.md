@@ -184,4 +184,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Joc — Fase HTML (blocs drag & drop) | 3/3 | Complete    | 2026-07-03 |
 | 3. Joc — Fases CSS i JS | 2/2 | Complete   | 2026-07-04 |
 | 4. Puntuació i rànquing final | 4/4 | Complete   | 2026-07-06 |
-| 5. Desplegament a producció (VPS + Nginx + PM2) | 2/2 | Complete   | 2026-07-06 |
+| 5. Desplegament a producció (VPS + Nginx + PM2) | 2/2 | Complete    | 2026-07-06 |
