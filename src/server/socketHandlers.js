@@ -108,7 +108,12 @@ export function registerSocketHandlers(io) {
         if (gameState.getPublicState().finished) {
           socket.emit(EVENTS.GAME_RESULTS, { ranking: gameState.buildRanking() });
         }
-        socket.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
+        // Anunci de reconnexió: NOMÉS a l'admin (que pinta l'estat de connexió per
+        // equip). Els equips espectadors mai depenen de l'estat de connexió d'un
+        // ALTRE equip — el seu render només pinta el propi equip + fase/timer — així
+        // que difondre-ho a 'session' només provocava re-renders sobrants (parpelleig
+        // creuat a cada F5, i clobber d'un control CSS/JS a mig editar amb latència).
+        socket.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       } else {
         // Unclaimed PC awaiting selection (D-01) — no token minted yet.
         socket.join('session');
@@ -426,10 +431,22 @@ export function registerSocketHandlers(io) {
     socket.on(
       'disconnect',
       safeHandler(() => {
-        if (socket.data.teamId) {
-          gameState.setConnected(socket.data.teamId, false);
-          io.to('session').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
-        }
+        const teamId = socket.data.teamId;
+        if (!teamId) return;
+        // F5 + connectionStateRecovery: el socket VELL no dispara 'disconnect' a
+        // l'instant sinó ~ping-timeout després, quan l'equip JA s'ha reconnectat en
+        // un socket NOU. Si l'equip encara té un socket viu a la seva room, aquest
+        // disconnect és un solapament obsolet: NO marquem offline ni difonem res
+        // (aquest broadcast sobrant era el que re-renderitzava els espectadors i,
+        // amb latència real, clobberava el control CSS/JS que l'equip re-manipulava
+        // just després del F5 amb el valor previ). En 'disconnect' el socket ja ha
+        // sortit de les seves rooms, així que room.size compta només els ALTRES.
+        const room = io.sockets.adapter.rooms.get(`team:${teamId}`);
+        if (room && room.size > 0) return;
+        gameState.setConnected(teamId, false);
+        // Desconnexió real: NOMÉS l'admin necessita l'estat de connexió per equip
+        // (mateix criteri que la reconnexió) — mai els equips espectadors.
+        io.to('admin').emit(EVENTS.SESSION_FULL_STATE, gameState.getPublicState());
       }),
     );
   });
