@@ -101,7 +101,6 @@ None yet.
 
 Cap blocker actiu per a Phase 5. Els flags de recerca de Fases 2/3 es van resoldre en planificar-les; el dubte de navegadors/hardware de l'aula es va confirmar 2026-07-06 (Windows + Chrome, no tàctil — vegeu PROJECT.md § Context).
 
-- ⚠️ [independent, no bloqueja cap fase] `04.1-REVIEW.md` CR-01/CR-02: el prellenat de noms d'equip per defecte a l'Admin (feature d'una tasca prèvia, no de Phase 04.1) està trencat — el textarea es buida abans de mostrar-se i 2 dels 4 noms superen el límit de 40 caràcters validat pel servidor. Pendent de `/gsd-code-review 04.1 --fix` o una tasca ràpida dedicada.
 - ⚠️ [Phase 04.1, WR-02, no bloqueja] `gameState.previousPhase()` no té guard `finished` server-side (només el botó de l'Admin s'amaga client-side) — hardening pendent, documentat a `04.1-REVIEW.md`.
 
 ### Quick Tasks Completed
@@ -111,6 +110,7 @@ Cap blocker actiu per a Phase 5. Els flags de recerca de Fases 2/3 es van resold
 | 260703-uwn | Aplica el redisseny visual final del Bender al codi real de la Fase 2 (HTML drag drop): antena unica per CSS (7 peces en lloc de 8), boca sense text inicial, sense mirall CSS a les orelles, CSS complet del cap/ulls/nas/boca | 2026-07-03 | 402bc16 | [260703-uwn-aplica-el-redisseny-visual-final-del-ben](./quick/260703-uwn-aplica-el-redisseny-visual-final-del-ben/) |
 | 2 | Elimina forma/ompliment CSS de #robot-cap/ulls/nas/boca del preview Fase 2 (fix regressio D-13) | 2026-07-03 | b324e16 | — |
 | 260706-hi0 | Omple per defecte el textarea de noms d'equips a l'Admin amb els 4 noms reals de l'equip | 2026-07-06 | 6df1069 | [260706-hi0-omple-per-defecte-el-textarea-de-noms-d-](./quick/260706-hi0-omple-per-defecte-el-textarea-de-noms-d-/) |
+| 260707-36d | Fix admin.js renderAdmin(): els noms d'equip per defecte es buidaven al primer render (CR-02 restore sense gate); actualitzats a 5 noms, tots ≤40 caràcters | 2026-07-07 | 04ae87b | [260707-36d-fix-admin-js-renderadmin-bug-the-4-defau](./quick/260707-36d-fix-admin-js-renderadmin-bug-the-4-defau/) |
 
 ### Roadmap Evolution
 
@@ -132,4 +132,4 @@ Last session: 2026-07-06T23:44:16.253Z
 Stopped at: Pla 05-02 pausat al checkpoint human-action (Task 2)
 Resume file: 05-02-PLAN.md
 
-Last activity: 2026-07-06 - Phase 04.1 complete (UAT + security verified), transitioned to Phase 5
+Last activity: 2026-07-07 - Completed quick task 260707-36d: Fix admin.js renderAdmin() default team names bug
