@@ -46,8 +46,21 @@ export function startServer(port = process.env.PORT || 3000) {
 
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 if (isMainModule) {
-  startServer().then(({ port }) => {
+  if (!process.env.PORT) {
     // eslint-disable-next-line no-console
-    console.log(`CodeArena server listening on http://localhost:${port}`);
-  });
+    console.warn(
+      '[index.js] PORT not set — defaulting to 3000. ' +
+        'In production it MUST match the Nginx reverse-proxy target (see deploy/DEPLOY.md secció 5).',
+    );
+  }
+  startServer()
+    .then(({ port }) => {
+      // eslint-disable-next-line no-console
+      console.log(`CodeArena server listening on http://localhost:${port}`);
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('[index.js] failed to start server:', err);
+      process.exit(1);
+    });
 }
